@@ -10,12 +10,6 @@ import { useEffect, useRef } from 'react';
  * 3. Update coordinates below to your location
  */
 
-declare global {
-  interface Window {
-    AMap: any;
-  }
-}
-
 interface MapCNProps {
   /** Map center coordinates [longitude, latitude] */
   center?: [number, number];

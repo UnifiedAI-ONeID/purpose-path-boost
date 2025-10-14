@@ -1,12 +1,6 @@
 // China-specific analytics using Baidu Tongji
 // Only used in China build (cn.zhengrowth.com)
 
-declare global {
-  interface Window {
-    _hmt: any[];
-  }
-}
-
 export const trackEventCN = (category: string, action: string, label?: string, value?: number) => {
   if (typeof window !== 'undefined' && window._hmt) {
     const params: (string | number)[] = [category, action];

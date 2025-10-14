@@ -2,118 +2,97 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Light (default) */
+:root {
+  --bg: 0 0% 100%;
+  --fg: 0 0% 6%;
+  --muted: 220 9% 40%;
 
-@layer base {
-  :root {
-    /* Core Brand Colors - ZhenGrowth */
-    --brand-primary: 185 81% 13%; /* #0B3D3C - Deep Teal */
-    --brand-accent: 41 72% 60%; /* #E8B44D - Warm Gold */
-    --brand-cta: 10 68% 51%; /* #D9462E - Bold Red */
-    --brand-dark: 0 0% 6%; /* #0E0E0F - Rich Black */
-    --brand-light: 0 0% 97%; /* #F7F7F8 - Soft White */
-    
-    /* Semantic Tokens */
-    --background: 0 0% 100%;
-    --foreground: 185 81% 13%;
+  --brand: 185 81% 13%;     /* 深綠 */
+  --accent: 41 72% 60%;     /* 金色 */
+  --cta: 10 68% 51%;        /* 行動 */
+  --surface: 0 0% 97%;      /* 霧白 */
+  --border: 220 13% 91%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 185 81% 13%;
+  --radius: 16px;
+  --shadow: 0 6px 24px rgba(0,0,0,.08);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 185 81% 13%;
+  /* Legacy compatibility */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg);
+  --card-foreground: var(--fg);
+  --popover: var(--bg);
+  --popover-foreground: var(--fg);
+  --primary: var(--brand);
+  --primary-foreground: var(--surface);
+  --secondary: var(--accent);
+  --secondary-foreground: var(--brand);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--brand);
+  --destructive: var(--cta);
+  --destructive-foreground: var(--surface);
+  --input: var(--border);
+  --ring: var(--brand);
 
-    --primary: 185 81% 13%;
-    --primary-foreground: 0 0% 97%;
+  --sidebar-background: var(--surface);
+  --sidebar-foreground: var(--fg);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--surface);
+  --sidebar-accent: var(--surface);
+  --sidebar-accent-foreground: var(--fg);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--brand);
+}
 
-    --secondary: 41 72% 60%;
-    --secondary-foreground: 185 81% 13%;
+/* Dark */
+:root.dark {
+  --bg: 0 0% 4%;
+  --fg: 220 13% 95%;
+  --muted: 220 9% 77%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
+  --brand: 174 76% 60%;
+  --accent: 45 100% 72%;
+  --cta: 14 90% 63%;
+  --surface: 0 0% 9%;
+  --border: 220 9% 18%;
 
-    --accent: 41 72% 60%;
-    --accent-foreground: 185 81% 13%;
+  --shadow: 0 8px 28px rgba(0,0,0,.35);
 
-    --destructive: 10 68% 51%;
-    --destructive-foreground: 0 0% 97%;
+  /* Legacy compatibility */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--surface);
+  --card-foreground: var(--fg);
+  --popover: var(--bg);
+  --popover-foreground: var(--fg);
+  --primary: var(--accent);
+  --primary-foreground: var(--bg);
+  --secondary: 185 81% 20%;
+  --secondary-foreground: var(--fg);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--bg);
+  --destructive: var(--cta);
+  --destructive-foreground: var(--fg);
+  --input: var(--border);
+  --ring: var(--accent);
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 185 81% 13%;
+  --sidebar-background: 240 5.9% 10%;
+  --sidebar-foreground: 240 4.8% 95.9%;
+  --sidebar-primary: 224.3 76.3% 48%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 240 4.8% 95.9%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+}
 
-    --radius: 1rem;
-
-    /* Custom Design System */
-    --gradient-primary: linear-gradient(135deg, hsl(185 81% 13%) 0%, hsl(0 0% 6%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(41 72% 60%) 0%, hsl(41 72% 50%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(185 81% 13% / 0.95) 0%, hsl(0 0% 6% / 0.98) 100%);
-    
-    --shadow-soft: 0 4px 20px hsl(185 81% 13% / 0.08);
-    --shadow-medium: 0 8px 30px hsl(185 81% 13% / 0.12);
-    --shadow-strong: 0 12px 40px hsl(185 81% 13% / 0.16);
-    
-    --transition-smooth: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
-    
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 97%;
-
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 97%;
-
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 97%;
-
-    --primary: 41 72% 60%;
-    --primary-foreground: 0 0% 6%;
-
-    --secondary: 185 81% 20%;
-    --secondary-foreground: 0 0% 97%;
-
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 41 72% 60%;
-    --accent-foreground: 0 0% 6%;
-
-    --destructive: 10 68% 51%;
-    --destructive-foreground: 0 0% 97%;
-
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 41 72% 60%;
-
-    --gradient-primary: linear-gradient(135deg, hsl(185 81% 13%) 0%, hsl(0 0% 3%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(41 72% 60%) 0%, hsl(41 72% 50%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(185 81% 13% / 0.9) 0%, hsl(0 0% 3% / 0.95) 100%);
-    
-    --shadow-soft: 0 4px 20px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 8px 30px hsl(0 0% 0% / 0.4);
-    --shadow-strong: 0 12px 40px hsl(0 0% 0% / 0.5);
-    
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+/* China-friendly font stack */
+:root, :root.dark {
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC",
+               "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", STSong, "Times New Roman", serif;
 }
 
 @layer base {
@@ -122,7 +101,8 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC", "Helvetica Neue", Arial, sans-serif;
+    background: hsl(var(--bg));
+    color: hsl(var(--fg));
+    font-family: var(--font-sans);
   }
 }

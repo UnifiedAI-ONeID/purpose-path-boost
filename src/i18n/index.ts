@@ -10,6 +10,12 @@ import aboutEN from './en/about.json';
 import coachingEN from './en/coaching.json';
 import quizEN from './en/quiz.json';
 
+// Chinese Simplified
+import aboutCN from './zh-CN/about.json';
+
+// Chinese Traditional
+import aboutTW from './zh-TW/about.json';
+
 const TRANSLATE_API = import.meta.env.VITE_TRANSLATE_API || 'https://libretranslate.com';
 
 // Auto-translate helper
@@ -57,6 +63,12 @@ i18n
         about: aboutEN,
         coaching: coachingEN,
         quiz: quizEN,
+      },
+      'zh-CN': {
+        about: aboutCN,
+      },
+      'zh-TW': {
+        about: aboutTW,
       },
     },
     fallbackLng: 'en',
