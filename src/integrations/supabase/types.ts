@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      leads: {
+        Row: {
+          booking_challenge: string | null
+          booking_goal: string | null
+          booking_timeline: string | null
+          clarity_score: number | null
+          created_at: string | null
+          email: string
+          id: string
+          language: string | null
+          name: string
+          quiz_answers: Json | null
+          source: string | null
+          wechat: string | null
+        }
+        Insert: {
+          booking_challenge?: string | null
+          booking_goal?: string | null
+          booking_timeline?: string | null
+          clarity_score?: number | null
+          created_at?: string | null
+          email: string
+          id?: string
+          language?: string | null
+          name: string
+          quiz_answers?: Json | null
+          source?: string | null
+          wechat?: string | null
+        }
+        Update: {
+          booking_challenge?: string | null
+          booking_goal?: string | null
+          booking_timeline?: string | null
+          clarity_score?: number | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          language?: string | null
+          name?: string
+          quiz_answers?: Json | null
+          source?: string | null
+          wechat?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
