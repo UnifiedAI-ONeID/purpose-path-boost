@@ -16,9 +16,7 @@ import Contact from "./pages/Contact";
 import Book from "./pages/Book";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
-import { lazy, Suspense, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { track } from './analytics/events';
+import { lazy, Suspense } from 'react';
 
 // Lazy load China-specific components
 const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
@@ -35,18 +33,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
-// Track page views
-const PageViewTracker = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    // Track page view on route change
-    track('nav_click', { path: location.pathname });
-  }, [location]);
-
-  return null;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nextProvider i18n={i18n}>
@@ -54,7 +40,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <PageViewTracker />
           <Routes>
             {/* Auth routes (no layout) */}
             <Route path="/auth" element={<Auth />} />

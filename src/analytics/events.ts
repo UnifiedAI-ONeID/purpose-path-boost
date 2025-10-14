@@ -31,13 +31,21 @@ export interface EventProperties {
 
 export const track = async (eventName: EventName, properties?: EventProperties) => {
   // Track with Umami
-  if (window.umami) {
-    window.umami(eventName, properties);
+  if (typeof window !== 'undefined' && window.umami && typeof window.umami === 'function') {
+    try {
+      window.umami(eventName, properties);
+    } catch (e) {
+      console.error('[Analytics] Umami error:', e);
+    }
   }
 
   // Track with PostHog
-  if (window.posthog) {
-    window.posthog.capture(eventName, properties);
+  if (typeof window !== 'undefined' && window.posthog) {
+    try {
+      window.posthog.capture(eventName, properties);
+    } catch (e) {
+      console.error('[Analytics] PostHog error:', e);
+    }
   }
 
   // Development logging
