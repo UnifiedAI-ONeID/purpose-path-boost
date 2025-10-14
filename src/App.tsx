@@ -14,6 +14,14 @@ import BlogList from "./pages/BlogList";
 import Contact from "./pages/Contact";
 import Book from "./pages/Book";
 import BookSession from "./pages/BookSession";
+import { isChinaBuild } from './lib/region';
+import { lazy, Suspense } from 'react';
+
+// Lazy load China-specific components
+const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
+
+// Choose booking component based on region
+const BookingPage = isChinaBuild() ? BookSessionCN : BookSession;
 import ThankYou from "./pages/ThankYou";
 import Payment from "./pages/Payment";
 import Privacy from "./pages/Privacy";
@@ -38,7 +46,11 @@ const App = () => (
               <Route path="/blog" element={<BlogList />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/book" element={<Book />} />
-              <Route path="/book-session" element={<BookSession />} />
+              <Route path="/book-session" element={
+                <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
+                  <BookingPage />
+                </Suspense>
+              } />
               <Route path="/thank-you" element={<ThankYou />} />
               <Route path="/pay" element={<Payment />} />
               <Route path="/privacy" element={<Privacy />} />

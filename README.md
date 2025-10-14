@@ -22,6 +22,26 @@ npm run dev
 
 The app will be available at `http://localhost:8080`
 
+### 🌏 Building for Different Regions
+
+**Global Build** (default):
+```bash
+npm run build
+```
+
+**China Build** (optimized for China):
+```bash
+VITE_REGION=china npm run build
+```
+
+The China build automatically uses:
+- Baidu Tongji instead of Umami/PostHog
+- Feishu forms instead of Cal.com
+- AMap instead of Google Maps
+- BootCDN for faster asset loading
+
+See **IMPLEMENTATION.md** section 13 for full China deployment guide.
+
 ## 🎯 What's Built
 
 ### Core Features
@@ -112,11 +132,13 @@ src/
 ├── components/       # Reusable UI components
 │   ├── Header.tsx   # Sticky header with language switcher
 │   ├── Footer.tsx   # Footer with social links
+│   ├── MapCN.tsx    # AMap component for China
 │   └── ui/          # shadcn/ui components
 ├── pages/           # Page components
 │   ├── Home.tsx              # Landing page
 │   ├── CoachingPrograms.tsx  # Coaching packages
-│   ├── BookSession.tsx       # Multi-step booking
+│   ├── BookSession.tsx       # Cal.com booking (global)
+│   ├── BookSession.cn.tsx    # Feishu booking (China)
 │   ├── Payment.tsx           # Payment page
 │   ├── Quiz.tsx              # Lead magnet quiz
 │   ├── BlogList.tsx          # Blog listing
@@ -126,7 +148,9 @@ src/
 │   └── en/          # English translations
 ├── lib/             # Utilities
 │   ├── airwallex.ts # Payment integration
-│   └── analytics.ts # Analytics utilities
+│   ├── analytics.ts # Analytics utilities
+│   ├── analytics-cn.ts # Baidu Tongji (China)
+│   └── region.ts    # Region detection
 ├── analytics/       # Event tracking
 │   └── events.ts    # Unified tracking
 └── layouts/         # Layout wrappers
@@ -135,9 +159,14 @@ src/
 api/
 └── create-payment-link.ts  # Airwallex API endpoint
 
+edge/
+└── country-redirect-worker.js  # Cloudflare geo-routing
+
 public/
 ├── sitemap.xml      # SEO sitemap
 └── robots.txt       # Crawler config
+
+index-cn.html        # China-specific HTML with Baidu Tongji
 ```
 
 ## Tech Stack
