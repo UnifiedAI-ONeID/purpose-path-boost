@@ -60,7 +60,6 @@ const BookSession = () => {
   }, []);
 
   const onSubmit = (data: BookingFormData) => {
-    console.log('Booking data:', data);
     track('book_start', {
       goal: data.goal.substring(0, 50),
       timeline: data.timeline,

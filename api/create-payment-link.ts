@@ -11,6 +11,58 @@
  * For development, it returns a mock payment URL.
  */
 
+import { z } from 'zod';
+
+// Validation schema
+const VALID_CURRENCIES = ['USD', 'CNY', 'HKD', 'EUR', 'GBP'] as const;
+const PACKAGE_IDS = ['discovery', 'single', 'monthly', 'quarterly'] as const;
+
+const PaymentRequestSchema = z.object({
+  packageId: z.enum(PACKAGE_IDS),
+  customerEmail: z.string().email().max(255),
+  customerName: z.string().trim().min(2).max(100),
+  currency: z.enum(VALID_CURRENCIES),
+  metadata: z.record(z.string()).optional()
+});
+
+// Package pricing (server-side source of truth)
+const PACKAGE_PRICING: Record<string, { price: number; description: string }> = {
+  discovery: { price: 0, description: 'Free Discovery Session' },
+  single: { price: 200, description: 'Single Coaching Session' },
+  monthly: { price: 800, description: 'Monthly Coaching Package (4 sessions)' },
+  quarterly: { price: 2100, description: 'Quarterly Coaching Package (12 sessions)' }
+};
+
+// Rate limiter
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string, maxRequests = 10, windowMs = 60000): boolean {
+  const now = Date.now();
+  const limit = rateLimits.get(ip);
+  
+  if (!limit || now > limit.resetAt) {
+    rateLimits.set(ip, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  
+  if (limit.count >= maxRequests) {
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+}
+
+// Sanitize name
+function sanitizeName(name: string): { first: string; last: string } {
+  const cleaned = name.trim().replace(/[^a-zA-Z\s'-]/g, '');
+  const parts = cleaned.split(/\s+/);
+  return {
+    first: parts[0] || 'Customer',
+    last: parts.slice(1).join(' ') || parts[0]
+  };
+}
+
 export default async function handler(req: any, res: any) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -27,13 +79,28 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { amount, currency, description, customerEmail, customerName, metadata } = req.body;
+    // Rate limiting
+    const clientIp = (req.headers['x-forwarded-for'] as string) || 'unknown';
+    if (!checkRateLimit(clientIp)) {
+      return res.status(429).json({ error: 'Rate limit exceeded' });
+    }
 
-    // Validate required fields
-    if (!amount || !currency || !customerEmail || !customerName) {
-      return res.status(400).json({
-        error: 'Missing required fields: amount, currency, customerEmail, customerName',
-      });
+    // Validate input
+    const validated = PaymentRequestSchema.parse(req.body);
+    const { packageId, customerEmail, customerName, currency, metadata } = validated;
+
+    // Get server-side pricing (never trust client)
+    const pkg = PACKAGE_PRICING[packageId];
+    if (!pkg) {
+      return res.status(400).json({ error: 'Invalid package' });
+    }
+
+    const amount = pkg.price;
+    const description = pkg.description;
+
+    // Validate amount bounds
+    if (amount < 0 || amount > 10000) {
+      return res.status(400).json({ error: 'Invalid amount range' });
     }
 
     // Check if API credentials are configured
@@ -49,6 +116,9 @@ export default async function handler(req: any, res: any) {
         message: 'Development mode: Configure AIRWALLEX_API_KEY to use real payments',
       });
     }
+
+    // Sanitize customer name
+    const { first, last } = sanitizeName(customerName);
 
     // Production: Call Airwallex API
     // First, get access token
@@ -80,12 +150,15 @@ export default async function handler(req: any, res: any) {
         merchant_order_id: `order_${Date.now()}`,
         customer: {
           email: customerEmail,
-          first_name: customerName.split(' ')[0],
-          last_name: customerName.split(' ').slice(1).join(' ') || customerName,
+          first_name: first,
+          last_name: last,
         },
         reference_id: `ref_${Date.now()}`,
         description,
-        metadata,
+        metadata: {
+          ...metadata,
+          packageId
+        },
         return_url: `${process.env.VITE_SITE_URL || 'https://zhengrowth.com'}/thank-you?payment=success`,
       }),
     });
@@ -102,10 +175,17 @@ export default async function handler(req: any, res: any) {
       url: paymentLink.url,
     });
   } catch (error: any) {
-    console.error('Payment link creation error:', error);
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        error: 'Invalid input',
+        details: error.errors
+      });
+    }
+
+    console.error('Payment link creation error:', error.message || 'Unknown error');
     return res.status(500).json({
-      error: 'Failed to create payment link',
-      message: error.message,
+      error: 'Failed to create payment link'
     });
   }
 }

@@ -84,8 +84,6 @@ const Quiz = () => {
     const score = calculateScore();
     
     try {
-      console.log('Submitting quiz lead...', { email: data.email, score });
-
       // Call Lovable Cloud edge function to capture lead and send email
       const { data: responseData, error } = await supabase.functions.invoke('capture-quiz-lead', {
         body: {
@@ -104,11 +102,9 @@ const Quiz = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        console.error('Quiz submission failed');
         throw error;
       }
-
-      console.log('Lead captured successfully:', responseData);
 
       // Track successful submission
       track('lm_submit', { score });
@@ -117,7 +113,7 @@ const Quiz = () => {
       toast.success(t('results.success') || 'Success! Check your email for the 7-Day Clarity Sprint guide.');
       setShowForm(false);
     } catch (error) {
-      console.error('Form submission error:', error);
+      console.error('Form submission error');
       toast.error(t('results.error') || 'Something went wrong. Please try again.');
     }
   };
