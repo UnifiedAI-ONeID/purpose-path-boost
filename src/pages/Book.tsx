@@ -259,18 +259,18 @@ const Book = () => {
               {sessionTypes.map((session, index) => {
                 const Icon = session.icon;
                 return (
-                  <Card key={index} className="hover:shadow-soft transition-smooth border-border">
-                    <CardHeader>
-                      <Icon className="h-12 w-12 text-accent mb-4" />
-                      <CardTitle className="text-fg">{session.title}</CardTitle>
+                  <Card key={index} className="hover:shadow-lg hover:scale-105 transition-all duration-300 border-border">
+                    <CardHeader className="pb-4">
+                      <Icon className="h-14 w-14 text-accent mb-4" />
+                      <CardTitle className="text-xl text-fg">{session.title}</CardTitle>
                       <p className="text-sm text-muted">{session.duration}</p>
-                      <p className="text-2xl font-bold text-accent mt-2">{session.price}</p>
+                      <p className="text-3xl font-bold text-accent mt-3">{session.price}</p>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted mb-6">{session.description}</p>
+                      <p className="text-muted mb-8 min-h-[60px]">{session.description}</p>
                       <Button 
                         onClick={() => handleBooking(session)}
-                        className="w-full bg-cta text-white hover:opacity-90"
+                        className="w-full h-12 text-lg font-semibold bg-cta text-white hover:opacity-90 hover:scale-105 transition-all shadow-lg"
                         disabled={!calReady && session.priceAmount === 0}
                       >
                         {!calReady && session.priceAmount === 0 
@@ -286,18 +286,18 @@ const Book = () => {
               })}
             </div>
 
-            <Card className="bg-surface border-border">
-              <CardContent className="pt-6 text-center">
-                <p className="text-muted mb-4">
+            <Card className="bg-gradient-to-br from-accent/10 to-brand/10 border-accent/30 shadow-xl">
+              <CardContent className="pt-8 pb-8 text-center">
+                <p className="text-lg text-fg mb-6 font-medium">
                   Not sure which option is right for you? Start with a free discovery session.
                 </p>
                 <Button 
                   onClick={() => handleBooking(sessionTypes[0])}
-                  className="bg-brand text-white hover:opacity-90"
+                  className="bg-brand text-white hover:opacity-90 hover:scale-105 transition-all h-14 px-8 text-lg font-semibold shadow-xl"
                   size="lg"
                   disabled={!calReady}
                 >
-                  {!calReady ? 'Loading...' : 'Book Free Discovery Call'}
+                  {!calReady ? 'Loading...' : '🎯 Book Free Discovery Call'}
                 </Button>
               </CardContent>
             </Card>
@@ -349,19 +349,19 @@ const Book = () => {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex gap-3 pt-6">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleCancelPayment}
-                      className="flex-1 border-border text-fg"
+                      className="flex-1 h-12 border-border text-fg hover:bg-muted"
                       disabled={isProcessing}
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-cta text-white hover:opacity-90"
+                      className="flex-1 h-12 text-lg font-semibold bg-cta text-white hover:opacity-90 hover:scale-105 transition-all shadow-lg"
                       disabled={isProcessing}
                     >
                       {isProcessing ? (
