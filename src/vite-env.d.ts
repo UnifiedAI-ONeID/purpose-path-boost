@@ -21,4 +21,5 @@ interface Window {
   posthog?: any;
   _hmt?: any[]; // Baidu Tongji
   AMap?: any; // AMap (高德地图)
+  Cal?: any; // Cal.com
 }

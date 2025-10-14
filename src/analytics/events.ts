@@ -9,6 +9,7 @@ export type EventName =
   | 'book_view'
   | 'book_start'
   | 'book_complete'
+  | 'booking_initiated'
   // Payment
   | 'pay_click'
   | 'pay_success'
@@ -23,7 +24,8 @@ export type EventName =
   | 'session_bucket_5m_plus'
   // Navigation
   | 'nav_click'
-  | 'cta_click';
+  | 'cta_click'
+  | 'page_view';
 
 export interface EventProperties {
   [key: string]: string | number | boolean | undefined;
