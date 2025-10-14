@@ -161,7 +161,7 @@ const BlogList = () => {
             size="lg"
             onClick={() => track('cta_click', { button: 'Blog CTA Book Session', location: 'blog_footer' })}
           >
-            <Link to="/book-session">Book a Free Session</Link>
+            <Link to="/book">Book a Free Session</Link>
           </Button>
         </div>
       </div>

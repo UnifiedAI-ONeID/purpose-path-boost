@@ -159,7 +159,7 @@ export default async function handler(req: any, res: any) {
           ...metadata,
           packageId
         },
-        return_url: `${process.env.VITE_SITE_URL || 'https://zhengrowth.com'}/thank-you?payment=success`,
+        return_url: `${process.env.VITE_SITE_URL || 'https://zhengrowth.com'}/book?payment=success`,
       }),
     });
 

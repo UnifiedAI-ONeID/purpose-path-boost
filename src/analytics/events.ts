@@ -14,6 +14,9 @@ export type EventName =
   | 'pay_click'
   | 'pay_success'
   | 'pay_fail'
+  | 'payment_initiated'
+  | 'payment_redirect'
+  | 'payment_failed'
   // Blog
   | 'blog_read'
   | 'blog_category_click'

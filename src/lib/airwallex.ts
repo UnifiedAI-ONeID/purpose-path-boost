@@ -69,7 +69,7 @@ export const COACHING_PACKAGES = {
   monthly: {
     id: 'monthly',
     name: 'Monthly Package',
-    price: 700,
+    price: 800,
     currency: 'USD',
     description: '4 sessions + ongoing support',
     duration: '4 × 60 minutes',

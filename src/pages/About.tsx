@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
 import { useEffect } from 'react';
 import { track } from '@/analytics/events';
@@ -31,13 +32,13 @@ export default function About(){
           <p className="text-fg">{t('life')}</p>
           <p className="text-lg font-medium text-fg">{t('mission')}</p>
 
-          <a 
-            href="/book" 
+          <Link
+            to="/book" 
             className="inline-flex mt-4 items-center gap-2 px-5 py-3 rounded-xl bg-cta text-white shadow-soft hover:opacity-90 transition-opacity"
             onClick={() => track('cta_click', { button: 'Book Free Call', location: 'about_page' })}
           >
             {t('cta')}
-          </a>
+          </Link>
         </div>
 
         <aside className="space-y-4">

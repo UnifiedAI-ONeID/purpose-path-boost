@@ -147,7 +147,7 @@ const CoachingPrograms = () => {
                             track('cta_click', { package: pkg.id, action: 'book' })
                           }
                         >
-                          <Link to="/book-session">Book Free Call</Link>
+                          <Link to="/book">Book Free Call</Link>
                         </Button>
                       ) : (
                         <>
@@ -172,7 +172,7 @@ const CoachingPrograms = () => {
                               })
                             }
                           >
-                            <Link to="/book-session">Free Call First</Link>
+                            <Link to="/book">Free Call First</Link>
                           </Button>
                         </>
                       )}
@@ -271,7 +271,7 @@ const CoachingPrograms = () => {
               your goals
             </p>
             <Button asChild variant="hero" size="lg">
-              <Link to="/book-session">
+              <Link to="/book">
                 Book Your Free Session
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
