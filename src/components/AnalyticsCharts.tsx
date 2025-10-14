@@ -77,16 +77,36 @@ export const AnalyticsCharts = ({ events }: AnalyticsChartsProps) => {
       .slice(0, 5);
   }, [events]);
 
-  // Conversion funnel
+  // Conversion funnel with rates
   const conversionFunnel = useMemo(() => {
+    const quizViews = events.filter(e => e.event_name === 'lm_view').length;
+    const quizCompletes = events.filter(e => e.event_name === 'quiz_complete').length;
+    const bookViews = events.filter(e => e.event_name === 'book_view').length;
+    const bookStarts = events.filter(e => e.event_name === 'book_start').length;
+    const bookCompletes = events.filter(e => e.event_name === 'book_complete').length;
+
     const funnel = [
-      { stage: 'Page Views', count: events.length },
-      { stage: 'Quiz Views', count: events.filter(e => e.event_name === 'lm_view').length },
-      { stage: 'Quiz Completed', count: events.filter(e => e.event_name === 'quiz_complete').length },
-      { stage: 'Book View', count: events.filter(e => e.event_name === 'book_view').length },
-      { stage: 'Book Started', count: events.filter(e => e.event_name === 'book_start').length },
+      { stage: 'Quiz Views', count: quizViews, rate: 100 },
+      { stage: 'Quiz Completed', count: quizCompletes, rate: quizViews > 0 ? (quizCompletes / quizViews * 100) : 0 },
+      { stage: 'Book View', count: bookViews, rate: quizCompletes > 0 ? (bookViews / quizCompletes * 100) : 0 },
+      { stage: 'Book Started', count: bookStarts, rate: bookViews > 0 ? (bookStarts / bookViews * 100) : 0 },
+      { stage: 'Booking Complete', count: bookCompletes, rate: bookStarts > 0 ? (bookCompletes / bookStarts * 100) : 0 },
     ];
     return funnel;
+  }, [events]);
+
+  // CTA clicks
+  const ctaClicks = useMemo(() => {
+    const clicks = events.filter(e => e.event_name === 'cta_click');
+    const clicksByButton: Record<string, number> = {};
+    clicks.forEach((event) => {
+      const button = event.properties?.button || 'Unknown';
+      clicksByButton[button] = (clicksByButton[button] || 0) + 1;
+    });
+    return Object.entries(clicksByButton)
+      .map(([button, clicks]) => ({ button, clicks }))
+      .sort((a, b) => b.clicks - a.clicks)
+      .slice(0, 5);
   }, [events]);
 
   return (
@@ -163,7 +183,7 @@ export const AnalyticsCharts = ({ events }: AnalyticsChartsProps) => {
       <Card className="md:col-span-2">
         <CardHeader>
           <CardTitle>Conversion Funnel</CardTitle>
-          <CardDescription>User journey through the site</CardDescription>
+          <CardDescription>User journey with conversion rates</CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
@@ -171,12 +191,51 @@ export const AnalyticsCharts = ({ events }: AnalyticsChartsProps) => {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="stage" />
               <YAxis />
-              <Tooltip />
+              <Tooltip 
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-background border rounded-lg p-3 shadow-lg">
+                        <p className="font-medium">{data.stage}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Count: {data.count}
+                        </p>
+                        <p className="text-sm text-brand-accent">
+                          Rate: {data.rate.toFixed(1)}%
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
               <Bar dataKey="count" fill="#8b5cf6" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      {/* CTA Performance */}
+      {ctaClicks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>CTA Performance</CardTitle>
+            <CardDescription>Most clicked call-to-actions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={ctaClicks} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="button" type="category" width={120} />
+                <Tooltip />
+                <Bar dataKey="clicks" fill="#d946ef" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

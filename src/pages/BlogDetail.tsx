@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
+import { track } from '@/analytics/events';
 
 interface BlogPost {
   id: string;
@@ -160,12 +161,17 @@ const BlogDetail = () => {
             <h2 className="text-3xl font-serif font-bold mb-4">
               Ready to Transform Your Career?
             </h2>
-            <p className="text-xl mb-8 text-white/90">
-              Get personalized guidance to achieve your goals
-            </p>
-            <Button asChild variant="hero" size="lg">
-              <Link to="/book-session">Book a Free Session</Link>
-            </Button>
+          <p className="text-xl mb-8 text-white/90">
+            Get personalized guidance to achieve your goals
+          </p>
+          <Button 
+            asChild 
+            variant="hero" 
+            size="lg"
+            onClick={() => track('cta_click', { button: 'Blog Detail CTA Book Session', location: 'blog_detail_footer' })}
+          >
+            <Link to="/book-session">Book a Free Session</Link>
+          </Button>
           </div>
         </motion.div>
       </article>

@@ -8,6 +8,7 @@ import heroImage from '@/assets/images/hero.jpg';
 import clarityIcon from '@/assets/images/icon-clarity.png';
 import confidenceIcon from '@/assets/images/icon-confidence.png';
 import growthIcon from '@/assets/images/icon-growth.png';
+import { track } from '@/analytics/events';
 
 const Home = () => {
   const { t } = useTranslation(['home', 'common']);
@@ -93,10 +94,21 @@ const Home = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild variant="hero" size="lg">
+                <Button 
+                  asChild 
+                  variant="hero" 
+                  size="lg"
+                  onClick={() => track('cta_click', { button: 'Hero Book Session', location: 'hero' })}
+                >
                   <Link to="/book">{t('common:cta.book')}</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="lg" 
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  onClick={() => track('cta_click', { button: 'Hero Take Quiz', location: 'hero' })}
+                >
                   <Link to="/quiz">{t('common:cta.quiz')}</Link>
                 </Button>
               </div>
@@ -193,7 +205,12 @@ const Home = () => {
             <p className="text-xl mb-8 text-white/90">
               {t('home:cta.subtitle')}
             </p>
-            <Button asChild variant="hero" size="lg">
+            <Button 
+              asChild 
+              variant="hero" 
+              size="lg"
+              onClick={() => track('cta_click', { button: 'Footer Take Quiz', location: 'footer' })}
+            >
               <Link to="/quiz">{t('common:cta.quiz')}</Link>
             </Button>
           </motion.div>

@@ -12,6 +12,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RealtimeMetrics } from '@/components/RealtimeMetrics';
 import { AnalyticsCharts } from '@/components/AnalyticsCharts';
+import { LeadSourceChart } from '@/components/LeadSourceChart';
+import { SessionDurationChart } from '@/components/SessionDurationChart';
 
 interface Lead {
   id: string;
@@ -410,6 +412,11 @@ const AdminDashboard = () => {
                 </div>
 
                 <RealtimeMetrics />
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <LeadSourceChart leads={leads} />
+                  <SessionDurationChart events={analyticsEvents} />
+                </div>
 
                 <AnalyticsCharts events={analyticsEvents} />
 

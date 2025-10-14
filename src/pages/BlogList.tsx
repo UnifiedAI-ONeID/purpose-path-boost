@@ -155,7 +155,12 @@ const BlogList = () => {
           <p className="text-xl mb-8 text-white/90">
             Get personalized guidance to achieve your goals
           </p>
-          <Button asChild variant="hero" size="lg">
+          <Button 
+            asChild 
+            variant="hero" 
+            size="lg"
+            onClick={() => track('cta_click', { button: 'Blog CTA Book Session', location: 'blog_footer' })}
+          >
             <Link to="/book-session">Book a Free Session</Link>
           </Button>
         </div>
