@@ -66,42 +66,62 @@ Create `.env` from `.env.example`:
 cp .env.example .env
 ```
 
-Update with your credentials (see IMPLEMENTATION.md for detailed setup).
+**Required for Production:**
+- `RESEND_API_KEY` - Already configured in Lovable Cloud secrets
+- Update Umami Website ID in `index.html` (replace `YOUR_UMAMI_WEBSITE_ID`)
 
-### 2. Cal.com Integration
+**Optional:**
+- `VITE_POSTHOG_KEY` - For advanced analytics funnels
+- `AIRWALLEX_API_KEY` + `AIRWALLEX_CLIENT_ID` - For payments
+- `VITE_HCAPTCHA_SITE_KEY` - For spam protection
 
-1. Sign up at https://cal.com
-2. Create "discovery" event type
-3. Update username in `src/pages/BookSession.tsx`
+See **DEPLOYMENT.md** for complete checklist.
 
-### 3. Payment Setup
+### 2. Required Actions Before Launch
 
-1. Sign up at https://www.airwallex.com/
-2. Get API credentials
-3. Add to `.env`:
-   ```env
-   AIRWALLEX_API_KEY=your_key
-   AIRWALLEX_CLIENT_ID=your_id
+1. **Verify Resend Domain** (Critical for emails)
+   ```
+   1. Go to https://resend.com/domains
+   2. Add and verify zhengrowth.com
+   3. Update edge function "from" address to hello@zhengrowth.com
    ```
 
-### 4. Analytics
+2. **Create Lead Magnet PDF**
+   ```
+   - Add to: /public/downloads/7-day-clarity-sprint.pdf
+   - See: /public/downloads/README.md for content ideas
+   ```
 
-**Umami (Free):**
-- Sign up at https://cloud.umami.is/
-- Replace website ID in `index.html`
+3. **Configure Cal.com**
+   ```
+   1. Sign up at https://cal.com
+   2. Create "discovery" event type (30min)
+   3. Update in src/pages/BookSession.tsx:
+      <Cal calLink="YOUR-USERNAME/discovery" />
+   ```
 
-**PostHog (Optional):**
-- Sign up at https://posthog.com/
-- Add key to `.env`
+4. **Setup Umami Analytics**
+   ```
+   1. Sign up: https://cloud.umami.is/
+   2. Add website
+   3. Replace YOUR_UMAMI_WEBSITE_ID in index.html with actual ID
+   ```
 
-### 5. Backend (Lead Capture)
+### 3. Test the Full Flow
 
-Enable Lovable Cloud for:
-- Lead database
-- Email automation (Resend)
-- Edge functions
+```bash
+# 1. Start dev server
+npm run dev
 
-See IMPLEMENTATION.md for detailed backend setup.
+# 2. Take quiz at /quiz
+# 3. Submit form
+# 4. Check email (if Resend domain verified)
+# 5. Monitor backend:
+```
+
+<lov-actions>
+  <lov-open-backend>View Backend</lov-open-backend>
+</lov-actions>
 
 ## 📊 Key Metrics Tracked
 
@@ -221,14 +241,41 @@ Target CVR: 20-30%
 - `lead_magnet_submit` - Quiz completion with email
 - Custom events can be added via `trackEvent()` utility
 
-## Deployment
+## 🚀 Quick Deploy
 
-Built with Lovable - deploy directly from the platform or build locally:
+**Option 1: Deploy via Lovable** (Easiest)
+1. Click **Publish** button in Lovable editor
+2. Connect custom domain
+3. Done! 🎉
 
+**Option 2: Deploy to Vercel/Netlify**
+See **DEPLOYMENT.md** for step-by-step instructions.
+
+**Option 3: China Mirror Build**
 ```bash
-npm run build
-# Deploy the `dist` folder to your hosting provider
+VITE_REGION=china npm run build
+# Deploy to cn.zhengrowth.com
 ```
+
+## 📚 Documentation
+
+- **DEPLOYMENT.md** - Complete deployment checklist with all required configurations
+- **IMPLEMENTATION.md** - Detailed technical implementation guide including China deployment
+- **public/downloads/README.md** - Guide to creating your lead magnet PDF
+
+## 🎯 What's Next?
+
+After deploying, follow **DEPLOYMENT.md** to:
+1. ✅ Configure all API integrations
+2. ✅ Create lead magnet PDF
+3. ✅ Test quiz → email flow
+4. ✅ Monitor analytics and conversions
+5. ✅ Publish blog content for SEO
+
+Target metrics (first 30 days):
+- Lead magnet CVR: 20-30%
+- Email open rate: 40-60%
+- Booking rate: 15-25% of leads
 
 ## License
 

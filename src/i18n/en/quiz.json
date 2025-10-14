@@ -32,6 +32,8 @@
     "low": "You're experiencing significant uncertainty in your career path. The good news? Small shifts can create massive clarity.",
     "medium": "You have some direction but could benefit from more strategic clarity and confidence in your decisions.",
     "high": "You have strong clarity! Now it's about optimizing and accelerating your growth trajectory.",
-    "download": "Download Your Free 7-Day Clarity Sprint Guide"
+    "download": "Download Your Free 7-Day Clarity Sprint Guide",
+    "success": "Success! Check your email for the 7-Day Clarity Sprint guide.",
+    "error": "Something went wrong. Please try again."
   }
 }
