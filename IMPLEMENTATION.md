@@ -376,6 +376,321 @@ Track these KPIs in your analytics:
 - Rate limiting on API endpoints
 - Input validation on all forms
 
+## 🇨🇳 China Deployment & Optimization
+
+### 13.1 Dual-Site Strategy
+
+**Primary Site**: `https://zhengrowth.com` (Global CDN)  
+**China Mirror**: `https://cn.zhengrowth.com` (Hong Kong/Mainland hosting)
+
+#### Why Separate China Build?
+- **Speed**: China CDNs (BootCDN, Staticfile) avoid Great Firewall latency
+- **Compliance**: Use Baidu Tongji instead of Google Analytics
+- **UX**: Feishu forms instead of Cal.com, AMap instead of Google Maps
+- **ICP**: Easier licensing with China-hosted domain
+
+### 13.2 Edge Worker (Cloudflare/Vercel)
+
+Deploy `/edge/country-redirect-worker.js` to automatically redirect Chinese visitors:
+
+```javascript
+// Already created in /edge/country-redirect-worker.js
+export default {
+  async fetch(request, env) {
+    const country = request.cf?.country || '';
+    if (country === 'CN' && url.hostname !== 'cn.zhengrowth.com') {
+      url.hostname = 'cn.zhengrowth.com';
+      return Response.redirect(url.toString(), 302);
+    }
+    return fetch(request);
+  }
+}
+```
+
+**Deploy to Cloudflare Workers**:
+```bash
+npm install -g wrangler
+wrangler login
+wrangler deploy edge/country-redirect-worker.js
+```
+
+**Or Vercel Edge Config**: Add to `vercel.json`:
+```json
+{
+  "functions": {
+    "edge/*": {
+      "runtime": "edge"
+    }
+  }
+}
+```
+
+### 13.3 China-Friendly CDNs
+
+Replace global CDNs in China build `index.html`:
+
+**BootCDN** (NetEase-backed - recommended):
+```html
+<link rel="preconnect" href="https://cdn.bootcdn.net">
+<script src="https://cdn.bootcdn.net/ajax/libs/react/18.3.1/umd/react.production.min.js" 
+        integrity="sha384-..." crossorigin="anonymous"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"
+        integrity="sha384-..." crossorigin="anonymous"></script>
+```
+
+**Staticfile CDN** (Qihoo 360):
+```html
+<script src="https://cdn.staticfile.net/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.staticfile.net/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+```
+
+### 13.4 Analytics: Baidu Tongji
+
+**Global Build**: Umami + PostHog  
+**China Build**: Baidu Tongji (百度统计)
+
+Add to China build `index.html` (before `</head>`):
+
+```html
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?YOUR_TONGJI_SITE_ID";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+```
+
+**Setup Steps**:
+1. Sign up: https://tongji.baidu.com
+2. Create site for `cn.zhengrowth.com`
+3. Copy site ID → replace `YOUR_TONGJI_SITE_ID` in script above
+4. Use provided tracking functions in `src/lib/analytics-cn.ts`
+
+**Track Events** (already implemented in `analytics-cn.ts`):
+```typescript
+import { EVENTS_CN } from '@/lib/analytics-cn';
+
+EVENTS_CN.lm_submit(); // Lead magnet submit
+EVENTS_CN.book_start(); // Booking started
+EVENTS_CN.pay_click('1-on-1 coaching'); // Payment clicked
+```
+
+### 13.5 Booking: Feishu Forms
+
+Replace Cal.com with **Feishu (飞书/Lark)** for China visitors:
+
+**Create** `src/pages/BookSession.cn.tsx`:
+
+```tsx
+import { useEffect } from 'react';
+import { EVENTS_CN } from '@/lib/analytics-cn';
+
+export default function BookSessionCN() {
+  useEffect(() => {
+    EVENTS_CN.book_view();
+  }, []);
+
+  return (
+    <div className="container mx-auto py-12 px-4">
+      <h1 className="text-4xl font-serif mb-4">预约咨询</h1>
+      <p className="text-muted-foreground mb-8">
+        填写表单预约免费发现会议
+      </p>
+      
+      <iframe
+        title="飞书预约表单"
+        src="https://p3-feishu-sign.feishu.cn/share/base/form/YOUR_FORM_ID?from=cn"
+        className="w-full h-[1100px] border-0 rounded-2xl shadow-lg"
+        allow="clipboard-read; clipboard-write"
+        loading="lazy"
+      />
+    </div>
+  );
+}
+```
+
+**Setup Feishu**:
+1. Sign up: https://www.feishu.cn/
+2. Go to **多维表格 (Bitable)** → Create form
+3. Add fields: 姓名 (Name), 邮箱 (Email), 微信 (WeChat), 目标/挑战 (Goal/Challenge)
+4. Click **分享 (Share)** → Copy form URL
+5. Extract `YOUR_FORM_ID` from URL → update component above
+6. **Route conditionally**: Use `VITE_REGION=china` env to load `BookSession.cn.tsx` instead
+
+### 13.6 Maps: AMap (高德地图)
+
+Replace Google Maps with **AMap** for China:
+
+**Add to China build `index.html`**:
+```html
+<script src="https://webapi.amap.com/maps?v=2.0&key=YOUR_AMAP_KEY"></script>
+```
+
+**Create** `src/components/MapCN.tsx`:
+```tsx
+import { useEffect, useRef } from 'react';
+
+export default function MapCN() {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mapRef.current && window.AMap) {
+      const map = new window.AMap.Map(mapRef.current, {
+        zoom: 12,
+        center: [121.4737, 31.2304], // Shanghai coordinates (customize)
+        mapStyle: 'amap://styles/light',
+      });
+
+      // Optional: Add marker
+      new window.AMap.Marker({
+        position: [121.4737, 31.2304],
+        title: 'ZhenGrowth Office',
+        map: map,
+      });
+    }
+  }, []);
+
+  return (
+    <div ref={mapRef} className="w-full h-[360px] rounded-xl shadow-md" />
+  );
+}
+```
+
+**Get AMap API Key**:
+1. Sign up: https://lbs.amap.com/
+2. Console → 应用管理 → 创建新应用
+3. Add key for **Web端 (JS API)**
+4. Copy key → replace `YOUR_AMAP_KEY`
+
+### 13.7 Typography (Already Implemented)
+
+Font stack in `src/index.css` optimized for Chinese:
+
+```css
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 
+    "PingFang SC",        /* macOS/iOS Simplified Chinese */
+    "Hiragino Sans GB",   /* macOS Traditional Chinese */
+    "Microsoft YaHei",    /* Windows */
+    "Noto Sans CJK SC",   /* Android Simplified */
+    "Noto Sans CJK TC",   /* Android Traditional */
+    "Helvetica Neue", Arial, sans-serif;
+}
+```
+
+**Headings**: `Noto Serif SC` (already in Google Fonts import)
+
+### 13.8 ICP Licensing (Required for Mainland Hosting)
+
+If hosting `cn.zhengrowth.com` **inside Mainland China**:
+
+1. **Required**: ICP Beian (ICP备案) from MIIT
+2. **Process**:
+   - Submit through hosting provider (Aliyun, Tencent Cloud, etc.)
+   - Provide: Business license, ID, domain proof, hosting contract
+   - Timeline: 20-30 days
+3. **Footer**: Add `ICP备案号: 京ICP备XXXXXXXX号` after approval
+4. **Portal**: https://beian.miit.gov.cn/
+
+**Alternative** (Easier): Host in **Hong Kong**
+- No ICP required
+- Fast enough for Mainland visitors (~50-100ms latency)
+- Recommended providers: Vercel HK, AWS HK, Aliyun HK
+
+### 13.9 Payment (WeChat Pay Priority)
+
+Airwallex supports both, but for China build:
+
+**Prioritize** in UI:
+1. **微信支付 (WeChat Pay)** - most popular
+2. **支付宝 (Alipay)** - second choice
+3. **银行卡 (Cards)** - last option
+
+Update button labels in `src/pages/Payment.tsx` for China:
+```tsx
+const isChinaBuild = import.meta.env.VITE_REGION === 'china';
+
+<Button>
+  {isChinaBuild ? '微信/支付宝支付' : 'Pay Now'}
+</Button>
+```
+
+### 13.10 Build Configuration
+
+**Two Approaches**:
+
+#### Option A: Separate Repos (Simpler)
+- `zhengrowth.com` → Current repo  
+- `cn.zhengrowth.com` → Fork with China swaps
+
+#### Option B: Single Repo with Env Flags (Recommended)
+
+**Add to `package.json`**:
+```json
+{
+  "scripts": {
+    "build": "vite build",
+    "build:global": "VITE_REGION=global vite build",
+    "build:china": "VITE_REGION=china vite build"
+  }
+}
+```
+
+**Conditional imports** in components:
+```tsx
+// src/App.tsx
+const BookSession = import.meta.env.VITE_REGION === 'china'
+  ? lazy(() => import('./pages/BookSession.cn'))
+  : lazy(() => import('./pages/BookSession'));
+```
+
+**Conditional analytics** in `src/main.tsx`:
+```tsx
+if (import.meta.env.VITE_REGION === 'china') {
+  // Load Baidu Tongji (already in index.html)
+} else {
+  // Load Umami + PostHog
+  initAnalytics();
+}
+```
+
+### 13.11 Performance Targets (China)
+
+**From Beijing/Shanghai**:
+- **LCP**: <3s (vs <2.5s global due to GFW)
+- **FID**: <100ms
+- **CLS**: <0.1
+- **CDN**: BootCDN or Aliyun CDN
+- **Hosting**: Vercel HK, Tencent Cloud, or Aliyun
+
+### 13.12 Testing (Critical!)
+
+**⚠️ VPN is NOT accurate!** Use real China network:
+
+**Methods**:
+1. **AWS EC2 Beijing**: Launch instance + Chrome remote debug
+2. **WebPageTest**: https://www.webpagetest.org/ → Select Beijing/Shanghai
+3. **Alibaba Cloud Speed Test**: https://boce.aliyun.com/
+4. **Real device**: Partner with someone in China for UAT
+
+### 13.13 Deployment Checklist
+
+- [ ] Edge worker deployed (Cloudflare/Vercel)
+- [ ] China build hosted on HK/Mainland server
+- [ ] Baidu Tongji script added to `index.html`
+- [ ] Feishu form created and embedded
+- [ ] AMap API key obtained and configured
+- [ ] Font stack verified for Chinese characters
+- [ ] WeChat Pay/Alipay prioritized in payment UI
+- [ ] ICP Beian filed (if Mainland hosting)
+- [ ] Speed tested from Beijing/Shanghai
+- [ ] DNS configured for `cn.zhengrowth.com`
+
+---
+
 ## 🎯 Next Steps
 
 1. **Week 1:**
@@ -398,6 +713,13 @@ Track these KPIs in your analytics:
    - Add blog content (3-5 posts)
    - Set up custom domain
    - Launch marketing campaigns
+
+5. **China Launch (Optional):**
+   - Deploy edge worker for geo-redirect
+   - Set up Baidu Tongji account
+   - Create Feishu booking form
+   - Configure `cn.zhengrowth.com` DNS
+   - Test from real China network
 
 ## 💡 Tips for Success
 
