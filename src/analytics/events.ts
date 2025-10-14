@@ -29,7 +29,7 @@ export interface EventProperties {
   [key: string]: string | number | boolean | undefined;
 }
 
-export const track = (eventName: EventName, properties?: EventProperties) => {
+export const track = async (eventName: EventName, properties?: EventProperties) => {
   // Track with Umami
   if (window.umami) {
     window.umami(eventName, properties);
@@ -43,6 +43,32 @@ export const track = (eventName: EventName, properties?: EventProperties) => {
   // Development logging
   if (import.meta.env.DEV) {
     console.log(`[Analytics] ${eventName}`, properties);
+  }
+
+  // Save to database for admin dashboard
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    // Generate session ID if not exists
+    let sessionId = sessionStorage.getItem('analytics_session_id');
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem('analytics_session_id', sessionId);
+    }
+
+    await supabase.from('analytics_events').insert({
+      event_name: eventName,
+      properties: properties || {},
+      session_id: sessionId,
+      page_url: window.location.href,
+      referrer: document.referrer || null,
+      user_agent: navigator.userAgent,
+    });
+  } catch (error) {
+    // Fail silently - analytics shouldn't break the app
+    if (import.meta.env.DEV) {
+      console.error('[Analytics] Failed to save event:', error);
+    }
   }
 };
 

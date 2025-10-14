@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { User, Session } from '@supabase/supabase-js';
-import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye } from 'lucide-react';
+import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { RealtimeMetrics } from '@/components/RealtimeMetrics';
+import { AnalyticsCharts } from '@/components/AnalyticsCharts';
 
 interface Lead {
   id: string;
@@ -32,17 +34,27 @@ interface BlogPost {
   published_at: string | null;
 }
 
+interface AnalyticsEvent {
+  id: string;
+  event_name: string;
+  properties: any;
+  created_at: string;
+  page_url: string;
+  session_id: string;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics'>('leads');
 
   useEffect(() => {
     // Set up auth state listener
@@ -100,7 +112,7 @@ const AdminDashboard = () => {
       }
 
       setIsAdmin(true);
-      fetchLeads();
+      loadData();
     } catch (error) {
       console.error('Admin check failed');
       toast.error('Failed to verify admin access');
@@ -135,6 +147,26 @@ const AdminDashboard = () => {
     } catch (error: any) {
       console.error('Failed to fetch blog posts');
       toast.error('Failed to load blog posts');
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      // Get last 30 days of analytics
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data, error } = await supabase
+        .from('analytics_events')
+        .select('*')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAnalyticsEvents(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch analytics');
+      toast.error('Failed to load analytics');
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +174,7 @@ const AdminDashboard = () => {
 
   const loadData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchLeads(), fetchBlogPosts()]);
+    await Promise.all([fetchLeads(), fetchBlogPosts(), fetchAnalytics()]);
   };
 
   const handleDeleteBlog = async (id: string) => {
@@ -229,6 +261,17 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('blog')}
             >
               Blog Management
+            </button>
+            <button
+              className={`pb-2 px-4 font-medium transition-colors flex items-center gap-2 ${
+                activeTab === 'analytics'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Analytics
             </button>
           </div>
 
@@ -354,6 +397,52 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
+            </>
+          ) : activeTab === 'analytics' ? (
+            <>
+              {/* Analytics Dashboard */}
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold mb-2">Real-time Analytics</h2>
+                  <p className="text-muted-foreground">
+                    Live tracking of user behavior and engagement
+                  </p>
+                </div>
+
+                <RealtimeMetrics />
+
+                <AnalyticsCharts events={analyticsEvents} />
+
+                {/* Recent Events */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Events</CardTitle>
+                    <CardDescription>Latest user activities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {analyticsEvents.slice(0, 10).map((event) => (
+                        <div
+                          key={event.id}
+                          className="flex items-center justify-between py-2 border-b last:border-0"
+                        >
+                          <div className="flex-1">
+                            <span className="font-medium">{event.event_name}</span>
+                            {event.page_url && (
+                              <p className="text-sm text-muted-foreground truncate max-w-md">
+                                {new URL(event.page_url).pathname}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(event.created_at).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </>
           ) : (
             <>
