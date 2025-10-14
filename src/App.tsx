@@ -8,11 +8,14 @@ import i18n from './i18n';
 import { MainLayout } from './layouts/MainLayout';
 import Home from "./pages/Home";
 import About from "./pages/About";
-import Coaching from "./pages/Coaching";
+import CoachingPrograms from "./pages/CoachingPrograms";
 import Quiz from "./pages/Quiz";
-import Blog from "./pages/Blog";
+import BlogList from "./pages/BlogList";
 import Contact from "./pages/Contact";
 import Book from "./pages/Book";
+import BookSession from "./pages/BookSession";
+import ThankYou from "./pages/ThankYou";
+import Payment from "./pages/Payment";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
@@ -30,11 +33,14 @@ const App = () => (
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
-              <Route path="/coaching" element={<Coaching />} />
+              <Route path="/coaching" element={<CoachingPrograms />} />
               <Route path="/quiz" element={<Quiz />} />
-              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog" element={<BlogList />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/book" element={<Book />} />
+              <Route path="/book-session" element={<BookSession />} />
+              <Route path="/thank-you" element={<ThankYou />} />
+              <Route path="/pay" element={<Payment />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="*" element={<NotFound />} />

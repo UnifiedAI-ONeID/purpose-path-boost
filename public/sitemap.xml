@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://zhengrowth.com/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/?lang=zh-CN" />
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- About -->
+  <url>
+    <loc>https://zhengrowth.com/about</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/about?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/about?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/about?lang=zh-CN" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Coaching Programs -->
+  <url>
+    <loc>https://zhengrowth.com/coaching</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/coaching?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/coaching?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/coaching?lang=zh-CN" />
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Quiz -->
+  <url>
+    <loc>https://zhengrowth.com/quiz</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/quiz?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/quiz?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/quiz?lang=zh-CN" />
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog -->
+  <url>
+    <loc>https://zhengrowth.com/blog</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/blog?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/blog?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/blog?lang=zh-CN" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>https://zhengrowth.com/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/contact?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/contact?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/contact?lang=zh-CN" />
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Book Session -->
+  <url>
+    <loc>https://zhengrowth.com/book-session</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://zhengrowth.com/book-session?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://zhengrowth.com/book-session?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://zhengrowth.com/book-session?lang=zh-CN" />
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://zhengrowth.com/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Terms of Service -->
+  <url>
+    <loc>https://zhengrowth.com/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <!-- Blog Posts -->
+  <url>
+    <loc>https://zhengrowth.com/blog/5-signs-you-need-career-coach</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>
