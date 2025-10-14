@@ -15,10 +15,41 @@ const Book = () => {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [calReady, setCalReady] = useState(false);
 
   useEffect(() => {
     track('page_view', { page: 'book' });
-  }, []);
+    
+    // Check if Cal.com is ready
+    const checkCalReady = () => {
+      if (typeof window !== 'undefined' && window.Cal) {
+        console.log('[Cal.com] Ready');
+        setCalReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (!checkCalReady()) {
+      // If not ready, check periodically
+      const interval = setInterval(() => {
+        if (checkCalReady()) {
+          clearInterval(interval);
+        }
+      }, 500);
+
+      // Stop checking after 10 seconds
+      setTimeout(() => {
+        clearInterval(interval);
+        if (!calReady) {
+          console.error('[Cal.com] Failed to load after 10 seconds');
+        }
+      }, 10000);
+
+      return () => clearInterval(interval);
+    }
+  }, [calReady]);
 
   const sessionTypes = [
     {
@@ -57,6 +88,8 @@ const Book = () => {
   ];
 
   const handleBooking = async (session: typeof sessionTypes[0]) => {
+    console.log('[Booking] Session selected:', session.title, 'Price:', session.priceAmount);
+    
     track('booking_initiated', {
       session_type: session.eventType,
       price: session.price,
@@ -65,23 +98,41 @@ const Book = () => {
 
     // Free session - go straight to Cal.com
     if (session.priceAmount === 0) {
+      console.log('[Booking] Free session - opening Cal.com modal');
+      
       if (typeof window !== 'undefined' && window.Cal) {
-        window.Cal('modal', {
-          calLink: session.calLink,
-          config: {
-            name: customerName || '',
-            email: customerEmail || '',
-            notes: '',
-            guests: [],
-            theme: 'light',
-          },
-        });
+        try {
+          console.log('[Cal.com] Opening modal for:', session.calLink);
+          window.Cal('modal', {
+            calLink: session.calLink,
+            config: {
+              name: customerName || '',
+              email: customerEmail || '',
+              notes: '',
+              guests: [],
+              theme: 'light',
+            },
+          });
+          console.log('[Cal.com] Modal opened successfully');
+        } catch (error) {
+          console.error('[Cal.com] Error opening modal:', error);
+          toast.error('Failed to open booking calendar. Please try again.');
+        }
+      } else {
+        console.error('[Cal.com] Not available. window.Cal:', typeof window !== 'undefined' ? window.Cal : 'undefined');
+        toast.error('Booking system is loading. Please wait a moment and try again.');
       }
       return;
     }
 
     // Paid session - show payment form
+    console.log('[Booking] Paid session - showing payment form');
     setSelectedSession(session);
+    
+    // Scroll to payment form
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   const handlePayment = async (e: React.FormEvent) => {
@@ -220,8 +271,14 @@ const Book = () => {
                       <Button 
                         onClick={() => handleBooking(session)}
                         className="w-full bg-cta text-white hover:opacity-90"
+                        disabled={!calReady && session.priceAmount === 0}
                       >
-                        {session.priceAmount === 0 ? 'Schedule Now' : 'Pay & Schedule'}
+                        {!calReady && session.priceAmount === 0 
+                          ? 'Loading...' 
+                          : session.priceAmount === 0 
+                            ? 'Schedule Now' 
+                            : 'Pay & Schedule'
+                        }
                       </Button>
                     </CardContent>
                   </Card>
@@ -238,8 +295,9 @@ const Book = () => {
                   onClick={() => handleBooking(sessionTypes[0])}
                   className="bg-brand text-white hover:opacity-90"
                   size="lg"
+                  disabled={!calReady}
                 >
-                  Book Free Discovery Call
+                  {!calReady ? 'Loading...' : 'Book Free Discovery Call'}
                 </Button>
               </CardContent>
             </Card>

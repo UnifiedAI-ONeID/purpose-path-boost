@@ -14,7 +14,26 @@
     
     <!-- Cal.com Integration -->
     <script type="text/javascript">
-      (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.q) { cal.q = []; } p(cal, ar); }; let s = d.createElement(A); s.src = L; s.async = 1; d.head.appendChild(s); })(window, 'script', 'https://app.cal.com/embed/embed.js');
+      (function (C, A, L) { 
+        let p = function (a, ar) { a.q.push(ar); }; 
+        let d = C.document; 
+        C.Cal = C.Cal || function () { 
+          let cal = C.Cal; 
+          let ar = arguments; 
+          if (!cal.q) { cal.q = []; } 
+          p(cal, ar); 
+        }; 
+        let s = d.createElement(A); 
+        s.src = L; 
+        s.async = 1;
+        s.onload = function() {
+          console.log('[Cal.com] Script loaded successfully');
+        };
+        s.onerror = function() {
+          console.error('[Cal.com] Failed to load script');
+        };
+        d.head.appendChild(s); 
+      })(window, 'script', 'https://app.cal.com/embed/embed.js');
     </script>
     
     <!-- Umami Analytics -->
