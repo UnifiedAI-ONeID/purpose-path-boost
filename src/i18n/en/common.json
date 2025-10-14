@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "coaching": "Coaching",
+    "speaking": "Speaking",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "cta": {
+    "book": "Book a Session",
+    "quiz": "Take the Quiz",
+    "learn_more": "Learn More",
+    "get_started": "Get Started"
+  },
+  "footer": {
+    "rights": "© 2025 ZhenGrowth. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "connect": "Connect with me",
+    "wechat": "WeChat",
+    "email": "Email"
+  }
+}

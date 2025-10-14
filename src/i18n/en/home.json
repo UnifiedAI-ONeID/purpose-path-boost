@@ -1,0 +1,31 @@
+{
+  "hero": {
+    "title": "Grow with Clarity, Confidence, and Purpose",
+    "subtitle": "Transform your career and life with personalized coaching designed for ambitious professionals",
+    "bullet1": "Gain clarity on your career path and life goals",
+    "bullet2": "Build unshakeable confidence in your decisions",
+    "bullet3": "Create sustainable growth strategies that work"
+  },
+  "values": {
+    "title": "What You'll Gain",
+    "clarity_title": "Crystal Clear Vision",
+    "clarity_desc": "Cut through the noise and discover what truly matters in your career and life",
+    "confidence_title": "Lasting Confidence",
+    "confidence_desc": "Build the self-assurance to make bold moves and stand by your decisions",
+    "growth_title": "Sustainable Growth",
+    "growth_desc": "Develop systems and habits that create long-term success without burnout"
+  },
+  "testimonials": {
+    "title": "What Clients Say",
+    "testimonial1": "Working with ZhenGrowth completely transformed how I approach my career. I finally have the clarity and confidence I've been searching for.",
+    "author1": "Sarah Chen, Tech Director",
+    "testimonial2": "The coaching helped me land my dream role and negotiate a 40% salary increase. More importantly, I know exactly where I'm headed.",
+    "author2": "Michael Wong, Product Manager",
+    "testimonial3": "I went from feeling stuck to having a clear 5-year plan and the tools to execute it. Best investment in myself I've ever made.",
+    "author3": "Lisa Zhang, Entrepreneur"
+  },
+  "cta": {
+    "title": "Ready to Transform Your Career?",
+    "subtitle": "Start with our free 7-Day Clarity Sprint"
+  }
+}

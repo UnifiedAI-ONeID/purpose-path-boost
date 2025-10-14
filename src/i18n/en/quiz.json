@@ -1,0 +1,37 @@
+{
+  "title": "Clarity Assessment",
+  "subtitle": "Discover your clarity score and get your free 7-Day Clarity Sprint guide",
+  "questions": {
+    "q1": "How clear are you about your career goals for the next 2-3 years?",
+    "q2": "How confident do you feel making important career decisions?",
+    "q3": "How satisfied are you with your work-life balance?",
+    "q4": "How effectively do you handle professional challenges and setbacks?",
+    "q5": "How aligned is your current role with your values and strengths?",
+    "q6": "How often do you take strategic actions toward your long-term goals?",
+    "q7": "How confident are you in your ability to negotiate for what you deserve?",
+    "q8": "How well do you manage stress and avoid burnout?",
+    "q9": "How clear are you about your unique professional value proposition?",
+    "q10": "How satisfied are you with your professional growth rate?"
+  },
+  "options": {
+    "not_at_all": "Not at all",
+    "somewhat": "Somewhat",
+    "moderately": "Moderately",
+    "very": "Very",
+    "extremely": "Extremely"
+  },
+  "form": {
+    "name": "Full Name",
+    "email": "Email Address",
+    "language": "Preferred Language",
+    "wechat": "WeChat ID (Optional)",
+    "submit": "Get My Results"
+  },
+  "results": {
+    "your_score": "Your Clarity Score",
+    "low": "You're experiencing significant uncertainty in your career path. The good news? Small shifts can create massive clarity.",
+    "medium": "You have some direction but could benefit from more strategic clarity and confidence in your decisions.",
+    "high": "You have strong clarity! Now it's about optimizing and accelerating your growth trajectory.",
+    "download": "Download Your Free 7-Day Clarity Sprint Guide"
+  }
+}

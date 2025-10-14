@@ -1,73 +1,113 @@
-# Welcome to your Lovable project
+# ZhenGrowth - Professional Coaching Platform
 
-## Project info
+A premium multi-language coaching website built with React, TypeScript, and TailwindCSS.
 
-**URL**: https://lovable.dev/projects/bb52925c-3d79-488e-89b4-1f023557924f
+## Features
 
-## How can I edit this code?
+- 🌍 **Multi-language Support** (EN, 繁體中文, 简体中文) with automatic translation
+- 🎨 **Beautiful Design System** with custom color palette and animations
+- 📊 **Lead Generation Quiz** with clarity assessment
+- 📧 **Email Collection** with lead magnet (7-Day Clarity Sprint)
+- 📈 **Analytics Integration** (Umami + PostHog)
+- 💳 **Payment Ready** (Airwallex integration prepared)
+- ⚡ **Fast & Modern** (Vite, React 18, TypeScript)
+- 📱 **Fully Responsive** with mobile-first design
 
-There are several ways of editing your application.
+## Quick Start
 
-**Use Lovable**
+```bash
+# Install dependencies
+npm install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bb52925c-3d79-488e-89b4-1f023557924f) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Copy `.env.example` to `.env`
+2. Configure your environment variables:
+   - Analytics keys (optional)
+   - Translation API (free tier available)
+   - Payment gateway credentials
 
-**Use GitHub Codespaces**
+## Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+src/
+├── components/       # Reusable UI components
+├── pages/           # Page components
+├── i18n/            # Internationalization
+│   └── en/         # English translations
+├── lib/            # Utilities and helpers
+├── assets/         # Images and media
+└── analytics/      # Analytics utilities
+```
 
-## What technologies are used for this project?
+## Tech Stack
 
-This project is built with:
+- **Frontend**: React 18, TypeScript, TailwindCSS
+- **Routing**: React Router v6
+- **Forms**: React Hook Form + Zod
+- **i18n**: i18next with auto-translation
+- **Animations**: Framer Motion
+- **Analytics**: Umami + PostHog
+- **Build**: Vite
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Key Pages
 
-## How can I deploy this project?
+- `/` - Home with hero section and testimonials
+- `/quiz` - Interactive clarity assessment
+- `/coaching` - Coaching services
+- `/book` - Session booking
+- `/blog` - Blog and resources
+- `/about` - About page
+- `/contact` - Contact form
 
-Simply open [Lovable](https://lovable.dev/projects/bb52925c-3d79-488e-89b4-1f023557924f) and click on Share -> Publish.
+## Design System
 
-## Can I connect a custom domain to my Lovable project?
+The project uses a comprehensive design system defined in:
+- `src/index.css` - CSS variables and tokens
+- `tailwind.config.ts` - TailwindCSS configuration
 
-Yes, you can!
+### Brand Colors
+- Primary: Deep Teal (#0B3D3C)
+- Accent: Warm Gold (#E8B44D)
+- CTA: Bold Red (#D9462E)
+- Dark: Rich Black (#0E0E0F)
+- Light: Soft White (#F7F7F8)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Typography
+- Headings: Noto Serif SC
+- Body: Inter
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Lead Capture Flow
+
+1. User takes the clarity quiz (10 questions)
+2. Receives personalized score and interpretation
+3. Enters contact details to get the free 7-Day Clarity Sprint PDF
+4. Lead data saved and confirmation email sent
+5. Analytics events tracked for conversion optimization
+
+Target CVR: 20-30%
+
+## Analytics Events
+
+- `lead_magnet_submit` - Quiz completion with email
+- Custom events can be added via `trackEvent()` utility
+
+## Deployment
+
+Built with Lovable - deploy directly from the platform or build locally:
+
+```bash
+npm run build
+# Deploy the `dist` folder to your hosting provider
+```
+
+## License
+
+© 2025 ZhenGrowth. All rights reserved.
