@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { track } from '@/analytics/events';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -26,6 +28,11 @@ const Quiz = () => {
   const [answers, setAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Track quiz page view
+  useEffect(() => {
+    track('lm_view');
+  }, []);
 
   const questions = Array.from({ length: 10 }, (_, i) => ({
     id: i + 1,
@@ -77,18 +84,41 @@ const Quiz = () => {
     const score = calculateScore();
     
     try {
-      // Track event
-      if (window.umami) {
-        window.umami('lead_magnet_submit');
+      console.log('Submitting quiz lead...', { email: data.email, score });
+
+      // Call Lovable Cloud edge function to capture lead and send email
+      const { data: responseData, error } = await supabase.functions.invoke('capture-quiz-lead', {
+        body: {
+          name: data.name,
+          email: data.email,
+          language: data.language,
+          wechat: data.wechat || null,
+          clarityScore: score,
+          answers: {
+            questions: questions.map((q, i) => ({
+              question: q.text,
+              answer: answers[i],
+            })),
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
       }
 
-      // In production, this would save to Supabase and send email
-      console.log('Lead data:', { ...data, score, answers });
+      console.log('Lead captured successfully:', responseData);
+
+      // Track successful submission
+      track('lm_submit', { score });
+      track('quiz_complete', { score });
       
-      toast.success('Success! Check your email for the 7-Day Clarity Sprint guide.');
+      toast.success(t('results.success') || 'Success! Check your email for the 7-Day Clarity Sprint guide.');
       setShowForm(false);
     } catch (error) {
-      toast.error('Something went wrong. Please try again.');
+      console.error('Form submission error:', error);
+      toast.error(t('results.error') || 'Something went wrong. Please try again.');
     }
   };
 

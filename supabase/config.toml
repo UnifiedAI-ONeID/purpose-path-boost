@@ -1,1 +1,4 @@
 project_id = "jwpnybimcqzcmbkjcqyj"
+
+[functions.capture-quiz-lead]
+verify_jwt = false
