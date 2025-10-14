@@ -11,6 +11,67 @@ npm run dev
 
 The app will be available at `http://localhost:8080`
 
+## 🔐 Admin Access Setup
+
+### Creating Your First Admin User
+
+Your admin authentication system is now ready! The **first user to sign up will automatically become an admin**.
+
+**Steps to create your admin account:**
+
+1. **Navigate to the auth page**: Go to `http://localhost:8080/auth` (or `/auth` on your deployed site)
+2. **Create account**: Click "Create Admin Account" and sign up with your email and password
+3. **Your account becomes admin automatically**: The system will automatically grant admin privileges to the first user
+4. **Access admin dashboard**: After signing in, you'll be redirected to `/admin`
+
+**Password Requirements:**
+- Minimum 8 characters
+- Use a strong, unique password!
+
+**Admin Dashboard URL:** `/admin`
+
+### Admin Dashboard Features
+
+✅ **Lead Management**
+- View all quiz submissions
+- See clarity scores and lead details  
+- Access email addresses for follow-up
+- Filter by source (quiz, contact form, etc.)
+
+✅ **Analytics Dashboard**
+- Total leads count
+- Quiz completion rate
+- Average clarity scores
+- Recent activity timeline
+
+✅ **Secure Access Control**
+- Email/password authentication
+- Automatic session management
+- Secure logout
+- Admin-only RLS policies
+
+### Adding Additional Admins
+
+After the first admin is created, you can add more admins via SQL in your backend:
+
+```sql
+-- Get the user ID from the auth.users table
+SELECT id, email FROM auth.users;
+
+-- Add admin role for that user
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('USER_ID_HERE', 'admin');
+```
+
+### Security Features Implemented
+
+✅ Row Level Security (RLS) - Only admins can view/manage leads
+✅ Input validation on all forms
+✅ Rate limiting on public endpoints  
+✅ HTML sanitization to prevent XSS
+✅ Duplicate submission prevention
+✅ Secure password hashing (handled by Supabase Auth)
+
 ## 📋 Environment Variables
 
 Create a `.env` file in the root directory (use `.env.example` as template):
