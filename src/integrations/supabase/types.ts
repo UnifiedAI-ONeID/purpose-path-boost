@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_posts: {
+        Row: {
+          author: string
+          category: string
+          content: string
+          created_at: string | null
+          excerpt: string
+          id: string
+          image_url: string | null
+          meta_description: string | null
+          meta_title: string | null
+          published: boolean | null
+          published_at: string | null
+          read_time: number | null
+          slug: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          author?: string
+          category: string
+          content: string
+          created_at?: string | null
+          excerpt: string
+          id?: string
+          image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          read_time?: number | null
+          slug: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          category?: string
+          content?: string
+          created_at?: string | null
+          excerpt?: string
+          id?: string
+          image_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          read_time?: number | null
+          slug?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           booking_challenge: string | null
@@ -58,6 +112,50 @@ export type Database = {
           wechat?: string | null
         }
         Relationships: []
+      }
+      social_media_posts: {
+        Row: {
+          blog_post_id: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          platform: string
+          post_id: string | null
+          post_url: string | null
+          posted_at: string | null
+          status: string
+        }
+        Insert: {
+          blog_post_id: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          platform: string
+          post_id?: string | null
+          post_url?: string | null
+          posted_at?: string | null
+          status?: string
+        }
+        Update: {
+          blog_post_id?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          platform?: string
+          post_id?: string | null
+          post_url?: string | null
+          posted_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_posts_blog_post_id_fkey"
+            columns: ["blog_post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
