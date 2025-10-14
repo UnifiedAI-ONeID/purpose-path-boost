@@ -2,3 +2,6 @@ project_id = "jwpnybimcqzcmbkjcqyj"
 
 [functions.capture-quiz-lead]
 verify_jwt = false
+
+[functions.post-to-social]
+verify_jwt = true

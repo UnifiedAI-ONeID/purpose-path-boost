@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { User, Session } from '@supabase/supabase-js';
-import { LogOut, Mail, Calendar, Award, MessageSquare } from 'lucide-react';
+import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye } from 'lucide-react';
+import { BlogEditor } from '@/components/BlogEditor';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Lead {
   id: string;
@@ -19,13 +22,27 @@ interface Lead {
   source: string;
 }
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  published: boolean;
+  created_at: string;
+  published_at: string | null;
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showBlogEditor, setShowBlogEditor] = useState(false);
+  const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog'>('leads');
 
   useEffect(() => {
     // Set up auth state listener
@@ -92,23 +109,57 @@ const AdminDashboard = () => {
   };
 
   const fetchLeads = async () => {
-    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('leads')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       setLeads(data || []);
     } catch (error: any) {
       console.error('Failed to fetch leads');
       toast.error('Failed to load leads');
+    }
+  };
+
+  const fetchBlogPosts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, category, published, created_at, published_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBlogPosts(data || []);
+    } catch (error: any) {
+      console.error('Failed to fetch blog posts');
+      toast.error('Failed to load blog posts');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadData = async () => {
+    setIsLoading(true);
+    await Promise.all([fetchLeads(), fetchBlogPosts()]);
+  };
+
+  const handleDeleteBlog = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this blog post?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success('Blog post deleted');
+      fetchBlogPosts();
+    } catch (error) {
+      console.error('Failed to delete blog post');
+      toast.error('Failed to delete blog post');
     }
   };
 
@@ -157,8 +208,34 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Tabs */}
+          <div className="flex gap-4 mb-8 border-b">
+            <button
+              className={`pb-2 px-4 font-medium transition-colors ${
+                activeTab === 'leads'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('leads')}
+            >
+              Leads Management
+            </button>
+            <button
+              className={`pb-2 px-4 font-medium transition-colors ${
+                activeTab === 'blog'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('blog')}
+            >
+              Blog Management
+            </button>
+          </div>
+
+          {activeTab === 'leads' ? (
+            <>
+              {/* Stats Cards */}
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Total Leads</CardTitle>
@@ -277,37 +354,129 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
-          <div className="mt-8 grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Blog Management</CardTitle>
-                <CardDescription>
-                  Create and edit blog posts
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full" disabled>
-                  Coming Soon
+            </>
+          ) : (
+            <>
+              {/* Blog Management */}
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold">Blog Posts</h2>
+                  <p className="text-muted-foreground">
+                    Manage your blog content and social media cross-posting
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setEditingBlogId(undefined);
+                    setShowBlogEditor(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Post
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Site Settings</CardTitle>
-                <CardDescription>
-                  Update site configuration and content
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full" disabled>
-                  Coming Soon
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+              <Card>
+                <CardContent className="pt-6">
+                  {blogPosts.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No blog posts yet. Create your first post to get started!
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {blogPosts.map((post) => (
+                          <TableRow key={post.id}>
+                            <TableCell className="font-medium">{post.title}</TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted">
+                                {post.category}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  post.published
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                }`}
+                              >
+                                {post.published ? 'Published' : 'Draft'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(post.published_at || post.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                {post.published && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    asChild
+                                    onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                                  >
+                                    <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
+                                      <Eye className="h-4 w-4" />
+                                    </a>
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEditingBlogId(post.id);
+                                    setShowBlogEditor(true);
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteBlog(post.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
         </motion.div>
+
+        {/* Blog Editor Dialog */}
+        <Dialog open={showBlogEditor} onOpenChange={setShowBlogEditor}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <BlogEditor
+              blogId={editingBlogId}
+              onClose={() => {
+                setShowBlogEditor(false);
+                setEditingBlogId(undefined);
+              }}
+              onSave={() => {
+                setShowBlogEditor(false);
+                setEditingBlogId(undefined);
+                fetchBlogPosts();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

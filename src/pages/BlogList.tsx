@@ -1,49 +1,61 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { track } from '@/analytics/events';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-// In production, this would load from /src/blog/*.md files
-const blogPosts = [
-  {
-    slug: '5-signs-you-need-career-coach',
-    title: '5 Signs You Need a Career Coach (And How to Know If It\'s Right for You)',
-    excerpt: 'Feeling stuck in your career? Here are 5 clear signs that professional coaching could be the breakthrough you need.',
-    category: 'Clarity',
-    date: '2025-01-15',
-    readTime: '5 min read',
-  },
-  {
-    slug: 'overcome-career-plateau',
-    title: 'How to Overcome a Career Plateau and Reignite Your Growth',
-    excerpt: 'Stuck in your current role? Learn proven strategies to break through plateaus and accelerate your career growth.',
-    category: 'Growth',
-    date: '2025-01-10',
-    readTime: '7 min read',
-  },
-  {
-    slug: 'find-your-purpose',
-    title: 'Finding Your Purpose: A Practical Framework for Career Clarity',
-    excerpt: 'Purpose isn\'t found, it\'s built. Here\'s a step-by-step framework to discover work that truly matters.',
-    category: 'Purpose',
-    date: '2025-01-05',
-    readTime: '8 min read',
-  },
-  {
-    slug: 'confidence-in-leadership',
-    title: 'Building Unshakeable Confidence in Leadership Transitions',
-    excerpt: 'Stepping into a leadership role? Here\'s how to build the confidence you need to succeed.',
-    category: 'Mindset',
-    date: '2025-01-01',
-    readTime: '6 min read',
-  },
-];
-
-const categories = ['All', 'Growth', 'Mindset', 'Clarity', 'Purpose'];
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  published_at: string | null;
+  created_at: string;
+  read_time: number;
+}
 
 const BlogList = () => {
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadBlogPosts();
+  }, []);
+
+  const loadBlogPosts = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, slug, title, excerpt, category, published_at, created_at, read_time')
+        .eq('published', true)
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+
+      setBlogPosts(data || []);
+      
+      // Extract unique categories
+      const uniqueCategories = ['All', ...new Set((data || []).map(post => post.category))];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Failed to load blog posts');
+      toast.error('Failed to load blog posts');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filteredPosts = selectedCategory === 'All'
+    ? blogPosts
+    : blogPosts.filter(post => post.category === selectedCategory);
   return (
     <div className="min-h-screen py-20">
       <div className="container max-w-6xl">
@@ -63,9 +75,12 @@ const BlogList = () => {
           {categories.map((category) => (
             <Button
               key={category}
-              variant={category === 'All' ? 'default' : 'outline'}
+              variant={category === selectedCategory ? 'default' : 'outline'}
               size="sm"
-              onClick={() => track('blog_category_click', { category })}
+              onClick={() => {
+                setSelectedCategory(category);
+                track('blog_category_click', { category });
+              }}
             >
               <Tag className="h-4 w-4 mr-2" />
               {category}
@@ -74,8 +89,17 @@ const BlogList = () => {
         </div>
 
         {/* Blog Posts Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          {blogPosts.map((post, index) => (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No blog posts found. Check back soon!
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {filteredPosts.map((post, index) => (
             <motion.div
               key={post.slug}
               initial={{ opacity: 0, y: 20 }}
@@ -91,7 +115,7 @@ const BlogList = () => {
                     <span>•</span>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {new Date(post.date).toLocaleDateString('en-US', {
+                      {new Date(post.published_at || post.created_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',
@@ -103,7 +127,7 @@ const BlogList = () => {
                 <CardContent>
                   <p className="text-muted-foreground mb-4">{post.excerpt}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{post.readTime}</span>
+                    <span className="text-sm text-muted-foreground">{post.read_time} min read</span>
                     <Button
                       asChild
                       variant="link"
@@ -119,8 +143,9 @@ const BlogList = () => {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* CTA */}
         <div className="bg-gradient-primary text-white rounded-2xl p-12 text-center">
