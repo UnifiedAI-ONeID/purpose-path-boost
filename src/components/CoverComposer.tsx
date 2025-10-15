@@ -8,18 +8,22 @@ import { PLATFORM_DISPLAY_NAMES, PlatKey } from '@/lib/og/sizes';
 import { Loader2, Download, ExternalLink } from 'lucide-react';
 
 const KEYS: PlatKey[] = ['linkedin', 'facebook', 'x', 'ig_square', 'ig_portrait', 'story'];
+const TAGS = ['mindset','confidence','clarity','consistency','habits','leadership','career',
+              'relationships','wellness','spirituality','money','productivity','自信','清晰','一致性','職涯','關係'];
 
 interface CoverComposerProps {
   post: {
     title: string;
     slug: string;
     excerpt?: string;
+    tags?: string[];
   };
 }
 
 export default function CoverComposer({ post }: CoverComposerProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [lang, setLang] = useState<'en' | 'zh-CN' | 'zh-TW'>('en');
+  const [tag, setTag] = useState<string>(post.tags?.[0] || 'mindset');
   const [imgs, setImgs] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
@@ -33,6 +37,7 @@ export default function CoverComposer({ post }: CoverComposerProps) {
           slug: post.slug,
           theme,
           lang,
+          tag,
         },
       });
 
@@ -63,6 +68,17 @@ export default function CoverComposer({ post }: CoverComposerProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="tag-select" className="text-sm">Tag:</Label>
+            <select
+              id="tag-select"
+              className="px-3 py-1 rounded-md border border-border bg-background"
+              value={tag}
+              onChange={(e) => setTag(e.target.value)}
+            >
+              {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
           <div className="flex items-center gap-2">
             <Label htmlFor="theme-select" className="text-sm">Theme:</Label>
             <select

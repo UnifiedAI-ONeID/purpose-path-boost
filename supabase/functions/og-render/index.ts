@@ -18,7 +18,40 @@ const PLAT_SIZES = {
 
 type PlatKey = keyof typeof PLAT_SIZES;
 
-function bgGradient(theme: 'light' | 'dark') {
+type Accent = { start: string; end: string };
+
+const TAG_PALETTE: Record<string, Accent> = {
+  mindset:     { start: '#0B3D3C', end: '#15706A' },
+  confidence:  { start: '#004E92', end: '#000428' },
+  clarity:     { start: '#2E3192', end: '#1BFFFF' },
+  consistency: { start: '#0F2027', end: '#203A43' },
+  habits:      { start: '#4CA1AF', end: '#2C3E50' },
+  leadership:  { start: '#8E2DE2', end: '#4A00E0' },
+  career:      { start: '#11998E', end: '#38EF7D' },
+  relationships:{ start: '#FF512F', end: '#DD2476' },
+  wellness:    { start: '#F7971E', end: '#FFD200' },
+  spirituality:{ start: '#5A3F37', end: '#2C7744' },
+  money:       { start: '#56ab2f', end: '#a8e063' },
+  productivity:{ start: '#1D2B64', end: '#F8CDDA' },
+  '自信':      { start: '#004E92', end: '#000428' },
+  '清晰':      { start: '#2E3192', end: '#1BFFFF' },
+  '一致性':    { start: '#0F2027', end: '#203A43' },
+  '職涯':      { start: '#11998E', end: '#38EF7D' },
+  '關係':      { start: '#FF512F', end: '#DD2476' },
+};
+
+const DEFAULT_ACCENT: Accent = { start: '#0B3D3C', end: '#15706A' };
+
+function pickAccent(tag?: string): Accent {
+  if (!tag) return DEFAULT_ACCENT;
+  const key = tag.toLowerCase().trim().replace(/[^\p{L}\p{N}]+/gu, '');
+  return TAG_PALETTE[tag.toLowerCase()] || TAG_PALETTE[key] || DEFAULT_ACCENT;
+}
+
+function bgGradient(theme: 'light' | 'dark', accent?: Accent) {
+  if (accent) {
+    return `linear-gradient(135deg, ${accent.start} 0%, ${accent.end} 100%)`;
+  }
   return theme === 'dark'
     ? 'linear-gradient(135deg, #0b0c0d 0%, #161a1d 100%)'
     : 'linear-gradient(135deg, #0b3d3c 0%, #15706a 100%)';
@@ -37,6 +70,7 @@ async function renderSVG({
   h,
   theme,
   lang,
+  accent,
 }: {
   title: string;
   subtitle?: string;
@@ -44,6 +78,7 @@ async function renderSVG({
   h: number;
   theme: 'light' | 'dark';
   lang: 'en' | 'zh-CN' | 'zh-TW';
+  accent?: Accent;
 }) {
   const brandText = 
     lang === 'zh-TW' ? 'ZhenGrowth 真成長' :
@@ -58,7 +93,7 @@ async function renderSVG({
           width: w,
           height: h,
           display: 'flex',
-          background: bgGradient(theme),
+          background: bgGradient(theme, accent),
           color: '#fff',
           padding: w * 0.08,
           fontFamily: 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC", Arial, sans-serif',
@@ -195,6 +230,7 @@ Deno.serve(async (req) => {
       theme = 'light',
       lang = 'en',
       size = 'linkedin',
+      tag = '',
     } = body;
 
     if (!title || !slug) {
@@ -206,10 +242,11 @@ Deno.serve(async (req) => {
 
     const key = (size as PlatKey) || 'linkedin';
     const { w, h } = PLAT_SIZES[key];
+    const accent = tag ? pickAccent(tag) : undefined;
 
-    console.log(`Rendering ${key} image for: ${title}`);
+    console.log(`Rendering ${key} image for: ${title}${tag ? ` (tag: ${tag})` : ''}`);
 
-    const svg = await renderSVG({ title, subtitle, w, h, theme, lang });
+    const svg = await renderSVG({ title, subtitle, w, h, theme, lang, accent });
     const png = await svgToPng(svg, w, h);
 
     const path = `${slug}/${key}.png`;

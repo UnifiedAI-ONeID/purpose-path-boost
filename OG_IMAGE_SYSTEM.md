@@ -61,7 +61,27 @@ social-images/
 
 ### Color Gradients
 
-**Light Theme:**
+The OG image system uses a **tag-based accent system** that automatically picks gradient colors based on the blog post's primary tag.
+
+**Tag Palette:**
+- **mindset**: Jade → Teal (#0B3D3C → #15706A) - default
+- **confidence**: Deep Blue (#004E92 → #000428)
+- **clarity**: Indigo → Aqua (#2E3192 → #1BFFFF)
+- **consistency**: Charcoal → Steel (#0F2027 → #203A43)
+- **leadership**: Purple gradient (#8E2DE2 → #4A00E0)
+- **career**: Emeralds (#11998E → #38EF7D)
+- **relationships**: Coral → Magenta (#FF512F → #DD2476)
+- **wellness**: Amber (#F7971E → #FFD200)
+- **money**: Growth Green (#56ab2f → #a8e063)
+- **productivity**: Corporate Dusk (#1D2B64 → #F8CDDA)
+
+Chinese tag aliases (自信, 清晰, 一致性, 職涯, 關係) map to their English equivalents.
+
+**Fallback Themes:**
+
+When no tag is specified or tag not found in palette:
+
+**Light Theme (Default):**
 ```css
 background: linear-gradient(135deg, #0b3d3c 0%, #15706a 100%);
 card: rgba(255,255,255,0.16);
@@ -91,22 +111,24 @@ text: #ffffff;
 
 ### 1. Generate Images (Admin)
 ```typescript
-// In BlogComposer dialog
+// In BlogComposer dialog or AdminDashboard
 <CoverComposer 
   post={{
     title: "Your Blog Title",
     slug: "your-blog-slug",
-    excerpt: "Optional subtitle"
+    excerpt: "Optional subtitle",
+    tags: ["mindset", "confidence"] // Tag determines gradient color
   }}
 />
 ```
 
 **Steps:**
-1. Select theme (light/dark)
-2. Select language (EN/简体/繁體)
-3. Click "Generate All"
-4. Wait for 6 images to render
-5. Preview and download
+1. Select **tag** (determines gradient color from palette)
+2. Select **theme** (light/dark)
+3. Select **language** (EN/简体/繁體)
+4. Click "Generate All"
+5. Wait for 6 images to render
+6. Preview and download
 
 ### 2. Auto-Use in Social Posts
 ```typescript
@@ -156,7 +178,8 @@ const tags = generateOGMetaTags({
   "slug": "blog-post-slug",
   "theme": "light",
   "lang": "en",
-  "size": "linkedin"
+  "size": "linkedin",
+  "tag": "confidence"
 }
 ```
 
@@ -182,7 +205,8 @@ const tags = generateOGMetaTags({
   "subtitle": "Optional subtitle",
   "slug": "blog-post-slug",
   "theme": "light",
-  "lang": "en"
+  "lang": "en",
+  "tag": "mindset"
 }
 ```
 
@@ -205,6 +229,23 @@ const tags = generateOGMetaTags({
 ```
 
 ## Customization
+
+### Adding New Tag Colors
+
+Edit `src/lib/og/palette.ts`:
+
+```typescript
+export const TAG_PALETTE: Record<string, Accent> = {
+  // ... existing tags
+  newtag: { start: '#HEX1', end: '#HEX2' },
+};
+```
+
+Then add to the UI selector in `src/components/CoverComposer.tsx`:
+
+```typescript
+const TAGS = [...existingTags, 'newtag'];
+```
 
 ### Modify Design
 Edit `supabase/functions/og-render/index.ts`:

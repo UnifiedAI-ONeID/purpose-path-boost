@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { title, subtitle = '', slug, theme = 'light', lang = 'en' } = body;
+    const { title, subtitle = '', slug, theme = 'light', lang = 'en', tag = '' } = body;
 
     if (!title || !slug) {
       return new Response(JSON.stringify({ error: 'missing fields' }), {
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     for (const size of PLAT_SIZES) {
       try {
         const { data, error } = await supabase.functions.invoke('og-render', {
-          body: { title, subtitle, slug, theme, lang, size },
+          body: { title, subtitle, slug, theme, lang, size, tag },
         });
 
         if (error) throw error;
