@@ -218,6 +218,101 @@ export type Database = {
           },
         ]
       }
+      event_price_assignments: {
+        Row: {
+          assigned_at: string
+          country: string | null
+          currency: string
+          id: string
+          price_cents: number
+          test_id: string | null
+          variant: string
+          visitor_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          country?: string | null
+          currency: string
+          id?: string
+          price_cents: number
+          test_id?: string | null
+          variant: string
+          visitor_id: string
+        }
+        Update: {
+          assigned_at?: string
+          country?: string | null
+          currency?: string
+          id?: string
+          price_cents?: number
+          test_id?: string | null
+          variant?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_price_assignments_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "event_price_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_price_tests: {
+        Row: {
+          currency: string
+          ended_at: string | null
+          event_id: string | null
+          id: string
+          is_active: boolean
+          price_cents: number
+          region: string
+          started_at: string
+          ticket_id: string | null
+          variant: string
+        }
+        Insert: {
+          currency: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          price_cents: number
+          region: string
+          started_at?: string
+          ticket_id?: string | null
+          variant: string
+        }
+        Update: {
+          currency?: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_active?: boolean
+          price_cents?: number
+          region?: string
+          started_at?: string
+          ticket_id?: string | null
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_price_tests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_price_tests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_regs: {
         Row: {
           airwallex_id: string | null
@@ -1054,6 +1149,35 @@ export type Database = {
           won: number | null
         }
         Relationships: []
+      }
+      v_price_test_stats: {
+        Row: {
+          conv_rate_pct: number | null
+          currency: string | null
+          event_id: string | null
+          purchases: number | null
+          region: string | null
+          revenue_cents: number | null
+          ticket_id: string | null
+          variant: string | null
+          visitors: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_price_tests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_price_tests_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_tag_performance: {
         Row: {

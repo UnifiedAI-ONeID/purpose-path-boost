@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, ExternalLink, Save, Plus, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import FxOverridesEditor from '@/components/admin/FxOverridesEditor';
+import FxAuditTicket from '@/components/admin/FxAuditTicket';
+import PriceTesting from '@/components/admin/PriceTesting';
 
 interface Event {
   id?: string;
@@ -34,6 +36,8 @@ interface Ticket {
   price_cents: number;
   currency: string;
   qty: number;
+  base_currency: string;
+  base_price_cents: number;
 }
 
 interface Registration {
@@ -190,6 +194,8 @@ export default function AdminEventEdit() {
       name: 'General Admission',
       price_cents: 0,
       currency: 'USD',
+      base_currency: 'USD',
+      base_price_cents: 0,
       qty: 100
     };
 
@@ -368,18 +374,28 @@ export default function AdminEventEdit() {
             ) : (
               <div className="space-y-4">
                 {tickets.map((ticket) => (
-                  <div key={ticket.id} className="space-y-3">
+                  <div key={ticket.id} className="space-y-3 pb-4 border-b last:border-0">
                     <div className="border border-border rounded-lg p-3">
                       <div className="font-medium">{ticket.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Base: {ticket.price_cents > 0 
-                          ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}`
+                        Base: {ticket.base_price_cents > 0 
+                          ? `${ticket.base_currency || ticket.currency} ${((ticket.base_price_cents || ticket.price_cents) / 100).toFixed(2)}`
                           : 'FREE'}
                         {' • '}
                         {ticket.qty} spots
                       </div>
                     </div>
-                    {ticket.id && <FxOverridesEditor ticketId={ticket.id} />}
+                    {ticket.id && (
+                      <>
+                        <FxOverridesEditor ticketId={ticket.id} />
+                        <FxAuditTicket ticketId={ticket.id} />
+                        <PriceTesting 
+                          ticketId={ticket.id} 
+                          basePrice={ticket.base_price_cents || ticket.price_cents}
+                          baseCurrency={ticket.base_currency || ticket.currency}
+                        />
+                      </>
+                    )}
                   </div>
                 ))}
               </div>

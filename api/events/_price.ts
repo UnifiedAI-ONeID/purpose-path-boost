@@ -138,3 +138,88 @@ function psychRound(currency: string, cents: number, settings: any): number {
   const candidate = (up * minor) - 1; // e.g., $19.99
   return Math.max(0, candidate);
 }
+
+export async function quoteWithBreakdown(supabase: any, {
+  ticket_id, target_currency
+}: { ticket_id: string; target_currency?: string }) {
+  target_currency = (target_currency || 'USD').toUpperCase();
+
+  const { data: settings } = await supabase.from('pricing_settings').select('*').single();
+  const supported: string[] = settings?.supported || ['USD'];
+  if (!supported.includes(target_currency)) target_currency = supported[0];
+
+  const { data: t } = await supabase.from('event_tickets').select('*').eq('id', ticket_id).single();
+  if (!t) throw new Error('Ticket not found');
+
+  const baseCur = (t.base_currency || 'USD').toUpperCase();
+  const baseCents = t.base_price_cents || 0;
+
+  const steps: any = {
+    base: { currency: baseCur, cents: baseCents },
+    target: target_currency,
+    buffer_bps: settings?.buffer_bps ?? 150,
+    cny_rounding: settings?.cny_rounding || 'yuan',
+    supported
+  };
+
+  // Check for override
+  const { data: ov } = await supabase
+    .from('event_ticket_fx_overrides')
+    .select('*').eq('ticket_id', ticket_id).eq('currency', target_currency)
+    .maybeSingle();
+
+  if (ov) {
+    steps.override = { currency: target_currency, cents: ov.price_cents };
+    return {
+      source: 'override',
+      currency: target_currency,
+      display_cents: ov.price_cents,
+      charge_cents: ov.price_cents,
+      steps
+    };
+  }
+
+  // Same currency
+  if (target_currency === baseCur) {
+    const rounded = psychRound(baseCur, baseCents, settings);
+    steps.fx = { rate: 1, raw_cents: baseCents };
+    steps.buffered_cents = applyBuffer(baseCents, steps.buffer_bps);
+    steps.rounded_cents = rounded;
+    return { source: 'fx', currency: baseCur, display_cents: rounded, charge_cents: rounded, steps };
+  }
+
+  // Find FX rate
+  let rate: number | undefined;
+  let via: string | undefined;
+
+  const { data: fx } = await supabase.from('fx_rates').select('*').eq('base', baseCur).maybeSingle();
+  if (fx?.rates?.[target_currency]) {
+    rate = fx.rates[target_currency];
+    via = baseCur;
+  } else {
+    const { data: usd } = await supabase.from('fx_rates').select('*').eq('base', 'USD').maybeSingle();
+    if (usd?.rates?.[baseCur] && usd?.rates?.[target_currency]) {
+      const usdToTarget = usd.rates[target_currency];
+      const usdToBase = usd.rates[baseCur];
+      rate = usdToTarget / usdToBase;
+      via = 'USD';
+      steps.pivot = { base: 'USD', usd_to_target: usdToTarget, usd_to_base: usdToBase };
+    }
+  }
+
+  if (!rate) {
+    const rounded = psychRound(baseCur, baseCents, settings);
+    steps.fx_unavailable = true;
+    return { source: 'fx', currency: baseCur, display_cents: rounded, charge_cents: rounded, steps };
+  }
+
+  const raw = Math.max(0, Math.round(baseCents * rate));
+  const buff = applyBuffer(raw, steps.buffer_bps);
+  const rnd = psychRound(target_currency, buff, settings);
+
+  steps.fx = { via, rate, raw_cents: raw };
+  steps.buffered_cents = buff;
+  steps.rounded_cents = rnd;
+
+  return { source: 'fx', currency: target_currency, display_cents: rnd, charge_cents: rnd, steps };
+}
