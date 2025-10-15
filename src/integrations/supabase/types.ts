@@ -334,8 +334,39 @@ export type Database = {
           },
         ]
       }
+      event_ticket_fx_overrides: {
+        Row: {
+          currency: string
+          id: string
+          price_cents: number
+          ticket_id: string | null
+        }
+        Insert: {
+          currency: string
+          id?: string
+          price_cents: number
+          ticket_id?: string | null
+        }
+        Update: {
+          currency?: string
+          id?: string
+          price_cents?: number
+          ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_ticket_fx_overrides_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_tickets: {
         Row: {
+          base_currency: string
+          base_price_cents: number
           currency: string
           event_id: string | null
           id: string
@@ -345,6 +376,8 @@ export type Database = {
           qty: number
         }
         Insert: {
+          base_currency?: string
+          base_price_cents?: number
           currency?: string
           event_id?: string | null
           id?: string
@@ -354,6 +387,8 @@ export type Database = {
           qty?: number
         }
         Update: {
+          base_currency?: string
+          base_price_cents?: number
           currency?: string
           event_id?: string | null
           id?: string
@@ -483,6 +518,24 @@ export type Database = {
         }
         Relationships: []
       }
+      fx_rates: {
+        Row: {
+          base: string
+          rates: Json
+          updated_at: string
+        }
+        Insert: {
+          base: string
+          rates: Json
+          updated_at?: string
+        }
+        Update: {
+          base?: string
+          rates?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           booking_challenge: string | null
@@ -593,6 +646,30 @@ export type Database = {
           status?: string
           tags?: string[] | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_settings: {
+        Row: {
+          buffer_bps: number
+          cny_rounding: string
+          id: boolean
+          supported: string[]
+          updated_at: string
+        }
+        Insert: {
+          buffer_bps?: number
+          cny_rounding?: string
+          id?: boolean
+          supported?: string[]
+          updated_at?: string
+        }
+        Update: {
+          buffer_bps?: number
+          cny_rounding?: string
+          id?: boolean
+          supported?: string[]
           updated_at?: string
         }
         Relationships: []

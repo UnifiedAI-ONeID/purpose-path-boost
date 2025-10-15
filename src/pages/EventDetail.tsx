@@ -41,6 +41,9 @@ export default function EventDetail() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedTicket, setSelectedTicket] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  const [displayPrice, setDisplayPrice] = useState<{ cents: number; currency: string } | null>(null);
+  const [couponCode, setCouponCode] = useState('');
 
   const paid = searchParams.get('paid') === '1';
   const cancelled = searchParams.get('cancel') === '1';
@@ -66,6 +69,28 @@ export default function EventDetail() {
     }
     load();
   }, [slug]);
+
+  // Update price when currency or ticket changes
+  useEffect(() => {
+    async function updatePrice() {
+      if (!selectedTicket) return;
+      
+      try {
+        const result = await fetch('/api/events/price-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticket_id: selectedTicket, currency: selectedCurrency })
+        }).then(r => r.json());
+        
+        if (result.ok) {
+          setDisplayPrice({ cents: result.display_cents, currency: result.currency });
+        }
+      } catch (e) {
+        console.error('Price preview failed:', e);
+      }
+    }
+    updatePrice();
+  }, [selectedTicket, selectedCurrency]);
 
   useEffect(() => {
     if (paid) {
@@ -94,7 +119,9 @@ export default function EventDetail() {
         ticket_id: selectedTicket,
         name,
         email,
-        language
+        language,
+        currency: selectedCurrency,
+        coupon_code: couponCode || undefined
       };
 
       const result = await fetch('/api/events/register', {
@@ -232,38 +259,62 @@ export default function EventDetail() {
 
           {tickets.length > 0 && (
             <>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Ticket Type</label>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  value={selectedTicket}
-                  onChange={(e) => setSelectedTicket(e.target.value)}
-                  disabled={registering}
-                >
-                  {tickets.map(ticket => (
-                    <option key={ticket.id} value={ticket.id}>
-                      {ticket.name} — {ticket.price_cents > 0 
-                        ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}` 
-                        : 'FREE'}
-                      {' '}({ticket.qty} spots left)
-                    </option>
-                  ))}
-                </select>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Ticket Type</label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    value={selectedTicket}
+                    onChange={(e) => setSelectedTicket(e.target.value)}
+                    disabled={registering}
+                  >
+                    {tickets.map(ticket => (
+                      <option key={ticket.id} value={ticket.id}>
+                        {ticket.name} ({ticket.qty} spots left)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Currency</label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2"
+                    value={selectedCurrency}
+                    onChange={(e) => setSelectedCurrency(e.target.value)}
+                    disabled={registering}
+                  >
+                    {['USD', 'CAD', 'EUR', 'GBP', 'HKD', 'SGD', 'CNY'].map(curr => (
+                      <option key={curr} value={curr}>{curr}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+
+              {displayPrice && (
+                <div className="p-4 rounded-lg bg-muted">
+                  <div className="text-sm text-muted-foreground mb-1">Price</div>
+                  <div className="text-2xl font-bold">
+                    {displayPrice.cents > 0 
+                      ? `${displayPrice.currency} ${(displayPrice.cents / 100).toFixed(2)}`
+                      : 'FREE'}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="text-sm font-medium mb-2 block">Coupon Code (optional)</label>
                 <div className="flex gap-2">
                   <Input
-                    id="coupon-input"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Enter coupon code"
                     disabled={registering}
                   />
                   <Button
                     variant="outline"
                     onClick={async () => {
-                      const code = (document.getElementById('coupon-input') as HTMLInputElement)?.value;
-                      if (!code || !email || !selectedTicket) {
+                      if (!couponCode || !email || !selectedTicket) {
                         toast.error('Please enter email and select a ticket first');
                         return;
                       }
@@ -276,14 +327,14 @@ export default function EventDetail() {
                             event_id: event!.id,
                             ticket_id: selectedTicket,
                             email,
-                            code
+                            code: couponCode
                           })
                         });
                         
                         const result = await resp.json();
                         
                         if (result.ok) {
-                          toast.success(`Coupon applied! New price: $${(result.total_cents / 100).toFixed(2)}`);
+                          toast.success(`Coupon applied! New price: ${result.currency} ${(result.total_cents / 100).toFixed(2)}`);
                         } else {
                           toast.error(result.reason || 'Invalid coupon code');
                         }

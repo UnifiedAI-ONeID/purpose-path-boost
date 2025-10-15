@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, ExternalLink, Save, Plus, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import FxOverridesEditor from '@/components/admin/FxOverridesEditor';
 
 interface Event {
   id?: string;
@@ -365,17 +366,20 @@ export default function AdminEventEdit() {
                 {isNew ? 'Save the event first to add tickets' : 'No tickets yet'}
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {tickets.map((ticket) => (
-                  <div key={ticket.id} className="border border-border rounded-lg p-3">
-                    <div className="font-medium">{ticket.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {ticket.price_cents > 0 
-                        ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}`
-                        : 'FREE'}
-                      {' • '}
-                      {ticket.qty} spots
+                  <div key={ticket.id} className="space-y-3">
+                    <div className="border border-border rounded-lg p-3">
+                      <div className="font-medium">{ticket.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Base: {ticket.price_cents > 0 
+                          ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}`
+                          : 'FREE'}
+                        {' • '}
+                        {ticket.qty} spots
+                      </div>
                     </div>
+                    {ticket.id && <FxOverridesEditor ticketId={ticket.id} />}
                   </div>
                 ))}
               </div>

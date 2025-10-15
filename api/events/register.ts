@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { resolveTicketPrice } from './_price';
 
 // Input validation helper
 function validateEmail(email: string): boolean {
@@ -18,7 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { event_id, ticket_id, name, email, language, coupon_code } = req.body || {};
+    const { event_id, ticket_id, name, email, language, coupon_code, currency } = req.body || {};
 
     // Input validation
     if (!event_id || !ticket_id || !name || !email) {
@@ -89,10 +90,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid event' });
     }
 
-    // Validate and apply coupon if provided
+    // Resolve price in target currency
+    const priceResult = await resolveTicketPrice(supabase, {
+      ticket_id,
+      target_currency: currency || 'USD'
+    });
+
+    let final_amount = priceResult.charge_cents;
+    let final_currency = priceResult.currency;
     let discount_cents = 0;
-    let final_amount = ticket.price_cents;
     
+    // Apply coupon if provided (applied AFTER currency conversion)
     if (coupon_code) {
       const { validateCoupon, applyDiscount, recordCouponUse } = await import('./_coupon');
       const validation = await validateCoupon(supabase, {
@@ -104,8 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       
       if (validation.ok && validation.coupon) {
         const priced = applyDiscount({
-          price_cents: ticket.price_cents,
-          ticket_currency: ticket.currency,
+          price_cents: final_amount,
+          ticket_currency: final_currency,
           coupon: validation.coupon
         });
         discount_cents = priced.discount_cents;
@@ -135,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email: sanitizedEmail,
       language: language || 'en',
       amount_cents: final_amount,
-      currency: ticket.currency,
+      currency: final_currency,
       checkin_code,
       coupon_code: coupon_code || null,
       discount_cents
@@ -146,19 +154,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let status = 'pending';
 
     // Handle paid tickets
-    if (ticket.price_cents > 0) {
-      // For now, we'll just create a pending registration
-      // In production, integrate with Airwallex API
+    if (final_amount > 0) {
       const protocol = req.headers['x-forwarded-proto'] || 'https';
       const host = req.headers.host;
       
-      // Note: This is a placeholder. In production, you would:
-      // 1. Call Airwallex API to create payment intent
-      // 2. Get the hosted payment page URL
-      // 3. Store the payment intent ID
-      
-      url = `${protocol}://${host}/events/${event.slug}?payment=pending`;
-      airwallex_id = `mock-${crypto.randomUUID()}`;
+      // Create Airwallex payment intent with resolved currency
+      const airwallexBody = {
+        request_id: crypto.randomUUID(),
+        amount: final_amount,
+        currency: final_currency,
+        merchant_order_id: `EVT-${event.slug}-${Date.now()}`,
+        return_url: `${protocol}://${host}/events/${event.slug}?paid=1`,
+        cancel_url: `${protocol}://${host}/events/${event.slug}?cancel=1`,
+        descriptor: `ZhenGrowth ${event.title}`
+      };
+
+      if (process.env.AIRWALLEX_TOKEN) {
+        const airwallexResp = await fetch('https://api.airwallex.com/api/v1/pa/payment_intents/create', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.AIRWALLEX_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(airwallexBody)
+        });
+
+        const airwallexData = await airwallexResp.json();
+        
+        if (airwallexResp.ok) {
+          airwallex_id = airwallexData.id;
+          url = airwallexData.next_action?.redirect_url || airwallexData.checkout_url || null;
+        } else {
+          console.error('Airwallex error:', airwallexData);
+          url = `${protocol}://${host}/events/${event.slug}?payment=pending`;
+          airwallex_id = `mock-${crypto.randomUUID()}`;
+        }
+      } else {
+        // Development mode without Airwallex
+        url = `${protocol}://${host}/events/${event.slug}?payment=pending`;
+        airwallex_id = `mock-${crypto.randomUUID()}`;
+      }
     } else {
       // Free ticket - mark as paid immediately
       status = 'paid';
