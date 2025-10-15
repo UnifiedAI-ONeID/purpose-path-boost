@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_logs: {
+        Row: {
+          at: string | null
+          duration_ms: number | null
+          error: string | null
+          id: number
+          mode: string
+          request: Json | null
+          route: string
+        }
+        Insert: {
+          at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: number
+          mode: string
+          request?: Json | null
+          route: string
+        }
+        Update: {
+          at?: string | null
+          duration_ms?: number | null
+          error?: string | null
+          id?: number
+          mode?: string
+          request?: Json | null
+          route?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string | null

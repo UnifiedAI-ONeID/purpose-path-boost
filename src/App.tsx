@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nextProvider } from 'react-i18next';
+import { HelmetProvider } from 'react-helmet-async';
 import i18n from './i18n';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
@@ -45,6 +46,7 @@ import AdminEventEdit from "./pages/AdminEventEdit";
 import AdminCalendar from "./pages/AdminCalendar";
 import AdminPricing from "./pages/AdminPricing";
 import AdminExpress from "./pages/AdminExpress";
+import AdminAI from "./pages/AdminAI";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +91,7 @@ function AppRoutes() {
         <Route path="/admin/calendar" element={<AdminCalendar />} />
           <Route path="/admin/pricing" element={<AdminPricing />} />
           <Route path="/admin/express" element={<AdminExpress />} />
+          <Route path="/admin/ai" element={<AdminAI />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
@@ -123,15 +126,17 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <I18nextProvider i18n={i18n}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </I18nextProvider>
+    <HelmetProvider>
+      <I18nextProvider i18n={i18n}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </I18nextProvider>
+    </HelmetProvider>
   </QueryClientProvider>
 );
 
