@@ -67,17 +67,21 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-white"
+              className="glass rounded-3xl p-8 md:p-10 border border-white/20 shadow-2xl"
             >
-              <h1 className="text-5xl md:text-6xl font-serif font-bold mb-6 leading-tight">
-                {t('home:hero.title')}
+              <h1 className="text-5xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-lg">
+                Grow with Clarity, Confidence, and Purpose
               </h1>
-              <p className="text-xl mb-8 text-white/90">
-                {t('home:hero.subtitle')}
+              <p className="text-xl mb-8 text-white/95 drop-shadow-md">
+                Transform your career and life with personalized coaching designed for ambitious professionals
               </p>
 
               <div className="space-y-3 mb-8">
-                {[t('home:hero.bullet1'), t('home:hero.bullet2'), t('home:hero.bullet3')].map(
+                {[
+                  "Gain clarity on your career path and life goals",
+                  "Build unshakeable confidence in your decisions",
+                  "Create sustainable growth strategies that work"
+                ].map(
                   (bullet, index) => (
                     <motion.div
                       key={index}
@@ -86,8 +90,8 @@ const Home = () => {
                       transition={{ delay: 0.3 + index * 0.1 }}
                       className="flex items-start gap-3"
                     >
-                      <CheckCircle className="h-6 w-6 text-brand-accent flex-shrink-0 mt-0.5" />
-                      <span className="text-white/90">{bullet}</span>
+                      <CheckCircle className="h-6 w-6 text-accent flex-shrink-0 mt-0.5 drop-shadow-md" />
+                      <span className="text-white/95 drop-shadow-sm">{bullet}</span>
                     </motion.div>
                   )
                 )}
@@ -98,18 +102,18 @@ const Home = () => {
                   asChild 
                   variant="hero" 
                   size="lg"
-                  onClick={() => track('cta_click', { button: 'Hero Book Session', location: 'hero' })}
+                  onClick={() => track("cta_click", { button: "Hero Book Session", location: "hero" })}
                 >
-                  <Link to="/book">{t('common:cta.book')}</Link>
+                  <Link to="/book">{t("common:cta.book")}</Link>
                 </Button>
                 <Button 
                   asChild 
                   variant="outline" 
                   size="lg" 
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                  onClick={() => track('cta_click', { button: 'Hero Take Quiz', location: 'hero' })}
+                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                  onClick={() => track("cta_click", { button: "Hero Take Quiz", location: "hero" })}
                 >
-                  <Link to="/quiz">{t('common:cta.quiz')}</Link>
+                  <Link to="/quiz">{t("common:cta.quiz")}</Link>
                 </Button>
               </div>
             </motion.div>
