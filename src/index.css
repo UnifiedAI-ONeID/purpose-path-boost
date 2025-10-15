@@ -233,6 +233,126 @@
   @apply border-border my-12;
 }
 
+/* PWA Styles */
+:root, :root.dark {
+  --grad-1: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%);
+  --glass: color-mix(in oklab, hsl(var(--surface)), transparent 20%);
+}
+
+.gradient-hero {
+  background: var(--grad-1);
+  color: white;
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+}
+
+/* Startup Screen */
+.startup {
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.startup__logo {
+  font-size: 64px;
+  animation: pop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.startup__tag {
+  margin-top: 12px;
+  color: hsl(var(--muted));
+  font-size: 16px;
+  opacity: 0;
+  animation: pop 0.9s 0.2s forwards;
+}
+
+/* Install Prompt Banner */
+.install-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0.75rem;
+}
+
+.install-banner__card {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  background: hsl(var(--surface));
+  color: hsl(var(--fg));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.install-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.install-banner__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-ghost {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: hsl(var(--muted));
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-ghost:hover {
+  background: hsl(var(--border));
+}
+
+.btn-cta {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--cta));
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-cta:hover {
+  background: hsl(var(--brand));
+}
+
 /* China-friendly font stack */
 :root, :root.dark {
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",

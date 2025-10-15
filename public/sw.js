@@ -1,84 +1,59 @@
-const CACHE_NAME = 'zhengrowth-v1';
-const OFFLINE_URL = '/';
-
-// Assets to cache for offline use
-const STATIC_ASSETS = [
+const VERSION = 'zg-v1';
+const ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/assets/images/hero.jpg'
 ];
 
-// Install event - cache static assets
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    })
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(VERSION).then(c => c.addAll(ASSETS).catch(err => {
+      console.log('[SW] Cache failed for some assets:', err);
+    }))
   );
   self.skipWaiting();
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => (k !== VERSION ? caches.delete(k) : null)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  // Skip API calls - don't cache them
-  if (event.request.url.includes('/api/') || 
-      event.request.url.includes('supabase')) {
+self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+  
+  // Skip API calls and Supabase
+  if (url.pathname.includes('/api/') || 
+      url.hostname.includes('supabase') ||
+      url.hostname.includes('umami') ||
+      url.hostname.includes('baidu')) {
     return;
   }
-
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
-
-      // Clone the request
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest).then((response) => {
-        // Check if valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Clone the response
-        const responseToCache = response.clone();
-
-        // Cache only GET requests for HTML, CSS, JS, and images
-        if (event.request.method === 'GET' && 
-            (event.request.url.match(/\.(html|css|js|png|jpg|jpeg|svg|gif|webp)$/))) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-
-        return response;
-      }).catch(() => {
-        // Network failed, return offline page for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match(OFFLINE_URL);
-        }
-      });
-    })
+  
+  // Cache-first for same-origin static assets
+  if (url.origin === location.origin) {
+    if (url.pathname.match(/\.(?:js|css|jpg|jpeg|png|webp|avif|webm|svg|woff2?)$/)) {
+      e.respondWith(
+        caches.match(e.request).then(res => res || fetch(e.request).then(r => {
+          const copy = r.clone();
+          caches.open(VERSION).then(c => c.put(e.request, copy));
+          return r;
+        }).catch(() => caches.match('/offline.html')))
+      );
+      return;
+    }
+  }
+  
+  // Network-first for everything else
+  e.respondWith(
+    fetch(e.request).catch(() => 
+      caches.match(e.request).then(r => r || caches.match('/'))
+    )
   );
 });

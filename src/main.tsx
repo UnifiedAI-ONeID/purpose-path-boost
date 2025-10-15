@@ -5,6 +5,7 @@ import { isChinaBuild } from './lib/region';
 import { initAnalytics } from './lib/initAnalytics';
 import { initSessionTracking } from './analytics/events';
 import { metricsTracker } from './lib/metricsTracker';
+import { injectAnalytics } from './lib/loaders';
 
 // Initialize analytics based on region
 if (!isChinaBuild()) {
@@ -16,7 +17,9 @@ if (!isChinaBuild()) {
   // Track CTA clicks throughout the app
   console.log('[Metrics] Tracker initialized');
 } else {
-  // China build: Baidu Tongji is loaded via script in index.html
+  // China build: Inject Baidu Tongji
+  injectAnalytics();
+  
   // Session tracking for China analytics
   if (typeof window !== 'undefined') {
     let sessionStartTime = Date.now();

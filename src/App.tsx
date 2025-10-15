@@ -8,6 +8,8 @@ import i18n from './i18n';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
 import { useEffect, useState } from 'react';
+import Startup from './components/Startup';
+import InstallPrompt from './components/InstallPrompt';
 import Home from "./pages/Home";
 import MobileHome from "./pages/MobileHome";
 import About from "./pages/About";
@@ -67,14 +69,18 @@ function AppRoutes() {
   const MePage = isMobile ? MobileMe : About;
 
   return (
-    <Routes>
-      {/* Auth routes (no layout) */}
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-      
-      {/* Public routes with responsive layout */}
-      <Route element={<Layout />}>
-        <Route path="/" element={<HomePage />} />
+    <>
+      <Routes>
+        {/* Startup splash screen */}
+        <Route path="/" element={<Startup />} />
+        
+        {/* Auth routes (no layout) */}
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        
+        {/* Public routes with responsive layout */}
+        <Route element={<Layout />}>
+          <Route path="/home" element={<HomePage />} />
         <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
         <Route path="/quiz" element={<Quiz />} />
@@ -94,6 +100,10 @@ function AppRoutes() {
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
+    
+    {/* PWA Install Prompt */}
+    <InstallPrompt />
+  </>
   );
 }
 
