@@ -236,7 +236,7 @@
 /* PWA Styles */
 :root, :root.dark {
   --grad-1: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%);
-  --glass: color-mix(in oklab, hsl(var(--surface)), transparent 20%);
+  --glass: rgba(255, 255, 255, 0.15);
 }
 
 .gradient-hero {

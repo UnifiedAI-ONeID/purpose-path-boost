@@ -126,11 +126,11 @@ export default function MobileHome() {
     <>
       <div className="min-h-screen bg-bg pb-24">
         {/* Compact Hero */}
-        <header className="p-6 pt-8 glass rounded-b-3xl mx-4 border-x border-b border-border/30 shadow-xl">
-          <h1 className="text-2xl font-serif font-bold text-fg mb-3 leading-tight drop-shadow-sm">
+        <header className="p-6 pt-8 glass rounded-b-3xl mx-4 border-x border-b border-fg/20 shadow-xl">
+          <h1 className="text-2xl font-serif font-bold text-fg mb-3 leading-tight">
             Grow with Clarity, Confidence, and Purpose
           </h1>
-          <p className="text-sm text-muted mb-5 drop-shadow-sm">
+          <p className="text-sm text-fg/75 mb-5">
             Transform your career and life with personalized coaching designed for ambitious professionals
           </p>
           <Link 

@@ -67,12 +67,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="glass rounded-3xl p-8 md:p-10 border border-white/20 shadow-2xl"
+              className="glass rounded-3xl p-8 md:p-10 border border-white/30 shadow-2xl"
             >
-              <h1 className="text-5xl md:text-6xl font-serif font-bold mb-6 leading-tight text-white drop-shadow-lg">
+              <h1 className="text-5xl md:text-6xl font-serif font-bold mb-6 leading-tight text-fg">
                 Grow with Clarity, Confidence, and Purpose
               </h1>
-              <p className="text-xl mb-8 text-white/95 drop-shadow-md">
+              <p className="text-xl mb-8 text-fg/90">
                 Transform your career and life with personalized coaching designed for ambitious professionals
               </p>
 
@@ -90,8 +90,8 @@ const Home = () => {
                       transition={{ delay: 0.3 + index * 0.1 }}
                       className="flex items-start gap-3"
                     >
-                      <CheckCircle className="h-6 w-6 text-accent flex-shrink-0 mt-0.5 drop-shadow-md" />
-                      <span className="text-white/95 drop-shadow-sm">{bullet}</span>
+                      <CheckCircle className="h-6 w-6 text-brand flex-shrink-0 mt-0.5" />
+                      <span className="text-fg/85">{bullet}</span>
                     </motion.div>
                   )
                 )}
@@ -100,8 +100,9 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   asChild 
-                  variant="hero" 
+                  variant="default" 
                   size="lg"
+                  className="bg-brand text-white hover:bg-brand/90"
                   onClick={() => track("cta_click", { button: "Hero Book Session", location: "hero" })}
                 >
                   <Link to="/book">{t("common:cta.book")}</Link>
@@ -110,7 +111,7 @@ const Home = () => {
                   asChild 
                   variant="outline" 
                   size="lg" 
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                  className="bg-white/50 border-fg/20 text-fg hover:bg-white/70 backdrop-blur-sm"
                   onClick={() => track("cta_click", { button: "Hero Take Quiz", location: "hero" })}
                 >
                   <Link to="/quiz">{t("common:cta.quiz")}</Link>
