@@ -615,6 +615,41 @@ export type Database = {
         }
         Relationships: []
       }
+      registration_attempts: {
+        Row: {
+          attempted_at: string | null
+          email: string
+          event_id: string | null
+          id: number
+          ip_address: string
+          success: boolean | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          email: string
+          event_id?: string | null
+          id?: number
+          ip_address: string
+          success?: boolean | null
+        }
+        Update: {
+          attempted_at?: string | null
+          email?: string
+          event_id?: string | null
+          id?: number
+          ip_address?: string
+          success?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_attempts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rollup_daily: {
         Row: {
           count: number
@@ -962,6 +997,14 @@ export type Database = {
       admin_metrics_summary: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      decrement_ticket_qty: {
+        Args: { p_amount?: number; p_ticket_id: string }
+        Returns: Json
+      }
+      increment_coupon_uses: {
+        Args: { coupon_uuid: string }
+        Returns: undefined
       }
       is_admin: {
         Args: Record<PropertyKey, never> | { _user_id: string }

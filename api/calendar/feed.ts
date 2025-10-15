@@ -1,7 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { checkAdmin } from '../events/admin-check';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Require admin authentication
+  if (!(await checkAdmin(req, res))) {
+    return;
+  }
+
   try {
     const start = (req.query.start as string) || new Date(Date.now() - 14 * 86400000).toISOString();
     const end = (req.query.end as string) || new Date(Date.now() + 45 * 86400000).toISOString();

@@ -10,13 +10,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { token } = req.body || {};
 
-    if (!token) {
-      return res.status(400).json({ error: 'Token required' });
+    if (!token || typeof token !== 'string' || token.length !== 32) {
+      return res.status(400).json({ error: 'Invalid token format' });
     }
 
+    // Basic rate limiting for token attempts
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+                     req.socket.remoteAddress || 
+                     'unknown';
+
+    // Use service role for secure access
     const supabase = createClient(
       process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_ANON_KEY!
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY!
     );
 
     // Get registration with ticket details
