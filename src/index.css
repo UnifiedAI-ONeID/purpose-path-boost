@@ -109,6 +109,72 @@
   animation: slide-in-bottom 0.3s ease-out;
 }
 
+/* Blog article styling */
+.article-content h1 {
+  @apply text-4xl font-serif font-bold text-fg mb-6 mt-12 pb-4 border-b-2 border-accent/20;
+}
+
+.article-content h2 {
+  @apply text-3xl font-serif font-bold text-fg mb-4 mt-10 pb-2 border-b border-border;
+}
+
+.article-content h3 {
+  @apply text-2xl font-semibold text-fg mb-3 mt-8;
+}
+
+.article-content h4 {
+  @apply text-xl font-semibold text-fg mb-2 mt-6;
+}
+
+.article-content p {
+  @apply text-muted leading-relaxed mb-6 text-lg;
+}
+
+.article-content strong {
+  @apply text-fg font-semibold;
+}
+
+.article-content em {
+  @apply text-muted italic;
+}
+
+.article-content ul {
+  @apply my-6 space-y-3 pl-6;
+}
+
+.article-content ol {
+  @apply my-6 space-y-3 pl-6;
+}
+
+.article-content li {
+  @apply text-muted leading-relaxed relative;
+}
+
+.article-content ul li::before {
+  content: "→";
+  @apply absolute -left-6 text-accent font-bold;
+}
+
+.article-content blockquote {
+  @apply border-l-4 border-accent bg-accent/5 pl-6 py-4 my-6 italic text-muted rounded-r-lg;
+}
+
+.article-content code {
+  @apply text-accent bg-surface px-2 py-1 rounded-md text-sm font-mono;
+}
+
+.article-content pre {
+  @apply bg-surface border border-border rounded-xl p-4 my-6 overflow-x-auto;
+}
+
+.article-content a {
+  @apply text-brand font-medium hover:underline transition-all;
+}
+
+.article-content hr {
+  @apply border-border my-12;
+}
+
 /* China-friendly font stack */
 :root, :root.dark {
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
