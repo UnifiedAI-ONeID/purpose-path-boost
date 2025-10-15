@@ -36,7 +36,7 @@ export interface EventProperties {
 
 export const track = async (eventName: EventName, properties?: EventProperties) => {
   // Track with Umami
-  if (typeof window !== 'undefined' && window.umami && typeof window.umami === 'function') {
+  if (typeof window !== 'undefined' && window.umami) {
     try {
       window.umami(eventName, properties);
     } catch (e) {

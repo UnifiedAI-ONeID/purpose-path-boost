@@ -1,13 +1,14 @@
 /// <reference types="vite/client" />
 
 interface Window {
-  Cal?: any;
-  umami?: {
-    track: (eventName: string, eventData?: Record<string, any>) => void;
-  };
+  umami?: (eventName: string, eventData?: Record<string, any>) => void;
   posthog?: {
     capture: (eventName: string, properties?: Record<string, any>) => void;
+    identify: (userId: string, properties?: Record<string, any>) => void;
   };
+  _hmt?: any[]; // Baidu Tongji
+  AMap?: any; // AMap (高德地图)
+  Cal?: any; // Cal.com
 }
 
 interface ImportMetaEnv {
@@ -23,13 +24,4 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
-}
-
-// Umami Analytics
-interface Window {
-  umami?: (eventName: string, eventData?: Record<string, any>) => void;
-  posthog?: any;
-  _hmt?: any[]; // Baidu Tongji
-  AMap?: any; // AMap (高德地图)
-  Cal?: any; // Cal.com
 }

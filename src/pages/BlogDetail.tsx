@@ -4,10 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { track } from '@/analytics/events';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface BlogPost {
   id: string;
@@ -150,11 +149,10 @@ const BlogDetail = () => {
           )}
 
           {/* Content */}
-          <div className="article-content prose prose-lg dark:prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {post.content}
-            </ReactMarkdown>
-          </div>
+          <div 
+            className="article-content prose prose-lg dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+          />
 
           {/* CTA */}
           <div className="mt-16 bg-gradient-primary text-white rounded-2xl p-12 text-center">

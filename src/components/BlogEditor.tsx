@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import { sanitizeHtml, calculateReadTime } from '@/lib/sanitize';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -57,6 +59,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
 
   const published = watch('published');
   const title = watch('title');
+  const content = watch('content');
 
   // Generate slug from title
   useEffect(() => {
@@ -69,6 +72,14 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
       setValue('slug', slug);
     }
   }, [title, blogId, setValue]);
+
+  // Auto-calculate read time
+  useEffect(() => {
+    if (content) {
+      const readTime = calculateReadTime(content);
+      setValue('read_time', readTime);
+    }
+  }, [content, setValue]);
 
   // Load existing blog if editing
   useEffect(() => {
@@ -116,6 +127,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
     try {
       const blogData = {
         ...data,
+        content: sanitizeHtml(data.content), // Sanitize HTML content
         image_url: data.image_url || null,
         meta_title: data.meta_title || null,
         meta_description: data.meta_description || null,
@@ -225,8 +237,12 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
           </div>
 
           <div>
-            <Label htmlFor="content">Content (Markdown) *</Label>
-            <Textarea id="content" {...register('content')} rows={15} />
+            <Label htmlFor="content">Content *</Label>
+            <RichTextEditor
+              content={content || ''}
+              onChange={(value) => setValue('content', value)}
+              placeholder="Write your blog post content here..."
+            />
             {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
           </div>
 

@@ -109,6 +109,64 @@
   animation: slide-in-bottom 0.3s ease-out;
 }
 
+/* TipTap Editor Styles */
+.ProseMirror {
+  @apply focus:outline-none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror pre {
+  @apply bg-surface border border-border rounded-lg p-4 my-4 overflow-x-auto;
+}
+
+.ProseMirror pre code {
+  @apply bg-transparent p-0 text-sm font-mono;
+}
+
+.ProseMirror code {
+  @apply text-accent bg-surface px-2 py-1 rounded-md text-sm font-mono;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-accent bg-accent/5 pl-6 py-4 my-6 italic;
+}
+
+.ProseMirror a {
+  @apply text-brand underline cursor-pointer;
+}
+
+.ProseMirror img {
+  @apply rounded-lg max-w-full my-4;
+}
+
+.ProseMirror h2 {
+  @apply text-3xl font-serif font-bold text-fg mb-4 mt-10 pb-2 border-b border-border;
+}
+
+.ProseMirror h3 {
+  @apply text-2xl font-semibold text-fg mb-3 mt-8;
+}
+
+.ProseMirror h4 {
+  @apply text-xl font-semibold text-fg mb-2 mt-6;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  @apply my-6 space-y-3 pl-6;
+}
+
+.ProseMirror li {
+  @apply text-muted leading-relaxed;
+}
+
 /* Blog article styling */
 .article-content h1 {
   @apply text-4xl font-serif font-bold text-fg mb-6 mt-12 pb-4 border-b-2 border-accent/20;
