@@ -341,6 +341,30 @@ export type Database = {
         }
         Relationships: []
       }
+      social_accounts: {
+        Row: {
+          channel_name: string | null
+          created_at: string | null
+          external_id: string | null
+          id: string
+          platform: string
+        }
+        Insert: {
+          channel_name?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          platform: string
+        }
+        Update: {
+          channel_name?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          platform?: string
+        }
+        Relationships: []
+      }
       social_config_logs: {
         Row: {
           action: string
@@ -471,6 +495,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_metrics: {
+        Row: {
+          captured_at: string
+          clicks: number | null
+          comments: number | null
+          followers: number | null
+          id: number
+          impressions: number | null
+          likes: number | null
+          platform: string
+          platform_post_id: string
+          saves: number | null
+          shares: number | null
+          video_views: number | null
+        }
+        Insert: {
+          captured_at?: string
+          clicks?: number | null
+          comments?: number | null
+          followers?: number | null
+          id?: number
+          impressions?: number | null
+          likes?: number | null
+          platform: string
+          platform_post_id: string
+          saves?: number | null
+          shares?: number | null
+          video_views?: number | null
+        }
+        Update: {
+          captured_at?: string
+          clicks?: number | null
+          comments?: number | null
+          followers?: number | null
+          id?: number
+          impressions?: number | null
+          likes?: number | null
+          platform?: string
+          platform_post_id?: string
+          saves?: number | null
+          shares?: number | null
+          video_views?: number | null
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          blog_slug: string
+          created_at: string | null
+          error: string | null
+          id: string
+          media: Json | null
+          message: string | null
+          platform: string
+          platform_post_id: string | null
+          posted_at: string | null
+          scheduled_at: string | null
+          status: string
+        }
+        Insert: {
+          blog_slug: string
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          media?: Json | null
+          message?: string | null
+          platform: string
+          platform_post_id?: string | null
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Update: {
+          blog_slug?: string
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          media?: Json | null
+          message?: string | null
+          platform?: string
+          platform_post_id?: string | null
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
