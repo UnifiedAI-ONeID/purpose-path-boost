@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from './ui/card';
+import SocialMetricsInsights from './SocialMetricsInsights';
 
 function MiniLineChart({ data }: { data: number[] }) {
   if (!data.length) return <div className="h-10" />;
@@ -81,6 +82,9 @@ export default function SocialAnalytics() {
   return (
     <section className="space-y-6">
       <h2 className="text-xl font-semibold">Social Analytics</h2>
+      
+      {/* Performance Insights */}
+      <SocialMetricsInsights metrics={rows} />
       
       <div className="grid md:grid-cols-4 gap-4">
         {platforms.map(platform => (

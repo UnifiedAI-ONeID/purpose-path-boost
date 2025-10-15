@@ -9,6 +9,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3, Share2 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
 import BlogComposer from '@/components/BlogComposer';
+import CaptionBuilder from '@/components/CaptionBuilder';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
 import SocialAnalytics from '@/components/SocialAnalytics';
 import ContentSuggestions from '@/components/ContentSuggestions';
@@ -604,16 +605,35 @@ const AdminDashboard = () => {
 
         {/* Social Media Share Dialog */}
         <Dialog open={!!sharingPost} onOpenChange={(open) => !open && setSharingPost(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             {sharingPost && (
-              <BlogComposer
-                post={{
-                  title: sharingPost.title,
-                  slug: sharingPost.slug,
-                  excerpt: sharingPost.excerpt,
-                  image_url: sharingPost.image_url,
-                }}
-              />
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold">{sharingPost.title}</h2>
+                  <p className="text-sm text-muted-foreground">Cross-post to social media platforms</p>
+                </div>
+                
+                {/* Advanced Caption Builder */}
+                <CaptionBuilder
+                  post={{
+                    title: sharingPost.title,
+                    slug: sharingPost.slug,
+                    excerpt: sharingPost.excerpt,
+                    tags: [],
+                    cover: sharingPost.image_url,
+                  }}
+                />
+                
+                {/* Simple Quick Share Option */}
+                <BlogComposer
+                  post={{
+                    title: sharingPost.title,
+                    slug: sharingPost.slug,
+                    excerpt: sharingPost.excerpt,
+                    image_url: sharingPost.image_url,
+                  }}
+                />
+              </div>
             )}
           </DialogContent>
         </Dialog>

@@ -30,37 +30,62 @@ Deno.serve(async (req) => {
 
     if (metricsError) throw metricsError;
 
-    // Summarize metrics
+    // Get top performers by platform (top 5 by engagement)
+    const engagementScore = (m: any) => (m.likes || 0) + (m.comments || 0) + (m.shares || 0) + (m.saves || 0);
+    
+    const topByPlatform = (metrics || []).reduce((acc: any, m: any) => {
+      (acc[m.platform] ||= []).push(m);
+      return acc;
+    }, {});
+
+    for (const p in topByPlatform) {
+      topByPlatform[p].sort((a: any, b: any) => engagementScore(b) - engagementScore(a));
+      topByPlatform[p] = topByPlatform[p].slice(0, 5);
+    }
+
+    // Calculate summary stats
     const summary = (metrics || []).reduce((acc: any, r: any) => {
       acc.impressions = (acc.impressions || 0) + (r.impressions || 0);
-      acc.engagements = (acc.engagements || 0) + ((r.likes || 0) + (r.comments || 0) + (r.shares || 0) + (r.saves || 0));
+      acc.engagements = (acc.engagements || 0) + engagementScore(r);
       acc.posts = (acc.posts || 0) + 1;
       return acc;
     }, { impressions: 0, engagements: 0, posts: 0 });
 
+    const topPerformersContext = JSON.stringify(topByPlatform).slice(0, 4000);
+
     const prompt = `You are a social strategist for a bilingual life coaching brand (ZhenGrowth).
 
-Given past 90-day metrics:
+Past 90-day performance:
 - Total Posts: ${summary.posts}
 - Total Impressions: ${summary.impressions}
 - Total Engagements: ${summary.engagements}
 
-Please suggest content ideas optimized for both English and Chinese audiences across LinkedIn, Instagram, and Chinese platforms (Zhihu, RED, WeChat):
+Top performers by platform (top 5 by engagement):
+${topPerformersContext}
+
+Based on what's working, generate:
 
 1. **Blog/Article Titles** (8 titles in English + Chinese)
-   - Topics that resonate with career development and life clarity
+   - Focus on topics similar to top performers
+   - Optimized for LinkedIn and Zhihu
    
-2. **Short-form Video Hooks** (6 hooks for Instagram Reels & YouTube Shorts)
+2. **Short-form Video Hooks** (6 hooks ≤90 chars each)
+   - Instagram Reels and YouTube Shorts
    - Attention-grabbing opening lines
    
-3. **Hashtags** (10 for LinkedIn, 10 for Instagram)
-   - Mix of English and Chinese hashtags
+3. **Tweet/X Thread Starters** (6 starters ≤220 chars)
+   - Concise, engaging conversation starters
    
-4. **Best Posting Times**
-   - Optimal times for Asia/Shanghai timezone
-   - Optimal times for America/Vancouver timezone
+4. **Hashtag Sets**
+   - LinkedIn (8 hashtags)
+   - Instagram (15 hashtags)
+   - Mix of English and Chinese
+   
+5. **Best Posting Windows**
+   - Asia/Shanghai timezone (specific times)
+   - America/Vancouver timezone (specific times)
 
-Keep answers concise and actionable in bullet format.`;
+Keep bullets concise. Avoid generic clichés. Focus on what has proven engagement.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
