@@ -8,3 +8,9 @@ verify_jwt = true
 
 [functions.manage-social-config]
 verify_jwt = true
+
+[functions.metrics-collect]
+verify_jwt = false
+
+[functions.metrics-rollup]
+verify_jwt = false

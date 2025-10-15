@@ -9,6 +9,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
+import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RealtimeMetrics } from '@/components/RealtimeMetrics';
@@ -57,7 +58,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics'>('leads');
 
   useEffect(() => {
     // Set up auth state listener
@@ -286,6 +287,16 @@ const AdminDashboard = () => {
             >
               Social Media
             </button>
+            <button
+              className={`pb-2 px-4 font-medium transition-colors ${
+                activeTab === 'metrics'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('metrics')}
+            >
+              Metrics
+            </button>
           </div>
 
           {activeTab === 'leads' ? (
@@ -464,6 +475,16 @@ const AdminDashboard = () => {
             </>
           ) : activeTab === 'social' ? (
             <SocialConfigManager />
+          ) : activeTab === 'metrics' ? (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-serif font-bold">Event Metrics</h2>
+                <p className="text-muted-foreground">
+                  Detailed event tracking and conversion analytics
+                </p>
+              </div>
+              <MetricsSummary />
+            </div>
           ) : (
             <>
               {/* Blog Management */}

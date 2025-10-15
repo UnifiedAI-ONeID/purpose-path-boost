@@ -107,6 +107,63 @@ export type Database = {
         }
         Relationships: []
       }
+      events_raw: {
+        Row: {
+          country: string | null
+          device: string | null
+          event: string
+          id: number
+          lang: string | null
+          meta: Json | null
+          referrer: string | null
+          route: string | null
+          session_id: string
+          ts: string
+          user_hash: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          country?: string | null
+          device?: string | null
+          event: string
+          id?: number
+          lang?: string | null
+          meta?: Json | null
+          referrer?: string | null
+          route?: string | null
+          session_id: string
+          ts?: string
+          user_hash?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          country?: string | null
+          device?: string | null
+          event?: string
+          id?: number
+          lang?: string | null
+          meta?: Json | null
+          referrer?: string | null
+          route?: string | null
+          session_id?: string
+          ts?: string
+          user_hash?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           booking_challenge: string | null
@@ -149,6 +206,102 @@ export type Database = {
           quiz_answers?: Json | null
           source?: string | null
           wechat?: string | null
+        }
+        Relationships: []
+      }
+      posts: {
+        Row: {
+          body_html: string
+          body_json: Json
+          canonical_url: string | null
+          channels: string[]
+          cover_image: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          publish_at: string
+          slug: string
+          social_overrides: Json | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          body_json: Json
+          canonical_url?: string | null
+          channels?: string[]
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          publish_at?: string
+          slug: string
+          social_overrides?: Json | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          body_json?: Json
+          canonical_url?: string | null
+          channels?: string[]
+          cover_image?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          publish_at?: string
+          slug?: string
+          social_overrides?: Json | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          is_admin: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          is_admin?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          is_admin?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rollup_daily: {
+        Row: {
+          count: number
+          day: string
+          event: string
+          id: number
+          route: string
+        }
+        Insert: {
+          count?: number
+          day: string
+          event: string
+          id?: number
+          route: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          event?: string
+          id?: number
+          route?: string
         }
         Relationships: []
       }
@@ -309,9 +462,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_metrics_summary: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
       is_admin: {
-        Args: { _user_id: string }
+        Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
+      }
+      rollup_delete_day: {
+        Args: { p_day: string }
+        Returns: undefined
+      }
+      rollup_insert_day: {
+        Args: { p_day: string }
+        Returns: undefined
       }
     }
     Enums: {

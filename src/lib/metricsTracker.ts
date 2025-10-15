@@ -1,0 +1,179 @@
+import { supabase } from '@/integrations/supabase/client';
+
+interface MetricsEvent {
+  name: string;
+  route?: string;
+  referrer?: string;
+  utm?: {
+    utm_source?: string;
+    utm_medium?: string;
+    utm_campaign?: string;
+    utm_content?: string;
+    utm_term?: string;
+  };
+  device?: string;
+  lang?: string;
+  payload?: Record<string, any>;
+  ts?: number;
+  sessionId?: string;
+}
+
+class MetricsTracker {
+  private sessionId: string;
+  private queue: MetricsEvent[] = [];
+  private flushTimeout: number | null = null;
+  private readonly FLUSH_INTERVAL = 5000; // 5 seconds
+  private readonly MAX_QUEUE_SIZE = 50;
+
+  constructor() {
+    // Get or create session ID
+    this.sessionId = sessionStorage.getItem('metrics_session_id') || crypto.randomUUID();
+    sessionStorage.setItem('metrics_session_id', this.sessionId);
+
+    // Flush on page unload
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => this.flush(true));
+    }
+  }
+
+  track(eventName: string, properties?: Record<string, any>) {
+    // Check for Do Not Track
+    if (navigator.doNotTrack === '1') {
+      return;
+    }
+
+    const event: MetricsEvent = {
+      name: eventName,
+      route: window.location.pathname,
+      referrer: document.referrer || undefined,
+      device: this.getDeviceType(),
+      lang: navigator.language,
+      payload: properties,
+      ts: Date.now(),
+      sessionId: this.sessionId,
+    };
+
+    // Extract UTM parameters
+    const params = new URLSearchParams(window.location.search);
+    const utm: any = {};
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(key => {
+      const value = params.get(key);
+      if (value) utm[key] = value;
+    });
+    if (Object.keys(utm).length > 0) {
+      event.utm = utm;
+    }
+
+    this.queue.push(event);
+
+    // Auto-flush if queue is full
+    if (this.queue.length >= this.MAX_QUEUE_SIZE) {
+      this.flush();
+    } else {
+      this.scheduleFlush();
+    }
+  }
+
+  private scheduleFlush() {
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+    }
+    this.flushTimeout = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL);
+  }
+
+  private async flush(sync = false) {
+    if (this.queue.length === 0) return;
+
+    const events = [...this.queue];
+    this.queue = [];
+
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+      this.flushTimeout = null;
+    }
+
+    try {
+      if (sync && navigator.sendBeacon) {
+        // Use sendBeacon for synchronous requests (on page unload)
+        const { data } = await supabase.functions.invoke('metrics-collect', {
+          body: { events },
+        });
+        
+        if (data?.ok) {
+          console.log(`[Metrics] Tracked ${events.length} events`);
+        }
+      } else {
+        // Regular async request
+        await supabase.functions.invoke('metrics-collect', {
+          body: { events },
+        });
+        console.log(`[Metrics] Tracked ${events.length} events`);
+      }
+    } catch (error) {
+      console.error('[Metrics] Failed to track events:', error);
+    }
+  }
+
+  private getDeviceType(): string {
+    const ua = navigator.userAgent;
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+      return 'tablet';
+    }
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+      return 'mobile';
+    }
+    return 'desktop';
+  }
+
+  // Track page view
+  pageView() {
+    this.track('page_view');
+  }
+
+  // Track CTA clicks
+  ctaClick(button: string, location: string) {
+    this.track('cta_click', { button, location });
+  }
+
+  // Track booking funnel
+  bookStart() {
+    this.track('book_start');
+  }
+
+  bookComplete() {
+    this.track('book_complete');
+  }
+
+  // Track quiz
+  quizComplete(score: number) {
+    this.track('quiz_complete', { score });
+  }
+
+  // Track blog engagement
+  blogRead(slug: string, category: string) {
+    this.track('blog_read', { slug, category });
+  }
+}
+
+// Export singleton instance
+export const metricsTracker = new MetricsTracker();
+
+// Auto-track page views on route changes
+if (typeof window !== 'undefined') {
+  // Track initial page view
+  metricsTracker.pageView();
+
+  // Track subsequent page views (for SPA navigation)
+  let lastPath = window.location.pathname;
+  const observer = new MutationObserver(() => {
+    if (window.location.pathname !== lastPath) {
+      lastPath = window.location.pathname;
+      metricsTracker.pageView();
+    }
+  });
+  
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
