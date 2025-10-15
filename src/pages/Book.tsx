@@ -121,7 +121,7 @@ const Book = () => {
         
         // Use the inline Cal.com modal
         window.Cal('ui', {
-          styles: { branding: { brandColor: '#000000' } },
+          styles: { branding: { brandColor: '#1a4d3e' } },
           hideEventTypeDetails: false,
           layout: 'month_view'
         });
@@ -131,12 +131,12 @@ const Book = () => {
           config: {
             name: customerName || '',
             email: customerEmail || '',
-            notes: 'Free discovery session',
+            notes: 'Free discovery session booked via web',
             theme: 'light',
           }
         });
         
-        console.log('[Cal.com] Modal command sent');
+        console.log('[Cal.com] Modal opened successfully');
         
         // Add a small delay to check if modal appeared
         setTimeout(() => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
 
 export default function MobileBook() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedSession, setSelectedSession] = useState<typeof sessionTypes[0] | null>(null);
   const [customerName, setCustomerName] = useState('');
@@ -24,11 +26,11 @@ export default function MobileBook() {
       if (typeof window !== 'undefined' && window.Cal) {
         try {
           window.Cal('init', { origin: 'https://cal.com' });
-          console.log('[Cal.com] Initialized');
+          console.log('[Cal.com Mobile] Initialized successfully');
           setCalReady(true);
           return true;
         } catch (error) {
-          console.error('[Cal.com] Init error:', error);
+          console.error('[Cal.com Mobile] Init error:', error);
           return false;
         }
       }
@@ -42,7 +44,10 @@ export default function MobileBook() {
 
       setTimeout(() => {
         clearInterval(interval);
-        if (!calReady) toast.error('Booking system failed to load. Please refresh.');
+        if (!calReady) {
+          console.error('[Cal.com Mobile] Failed to initialize after 10s');
+          toast.error('Booking system failed to load. Please refresh the page.');
+        }
       }, 10000);
 
       return () => clearInterval(interval);
@@ -51,6 +56,7 @@ export default function MobileBook() {
 
   const sessionTypes = [
     {
+      id: 'career',
       icon: Calendar,
       title: 'Discovery Session',
       duration: '30 min',
@@ -62,6 +68,7 @@ export default function MobileBook() {
       packageId: 'discovery' as CoachingPackageId,
     },
     {
+      id: 'single',
       icon: Video,
       title: 'Single Session',
       duration: '60 min',
@@ -73,6 +80,7 @@ export default function MobileBook() {
       packageId: 'single' as CoachingPackageId,
     },
     {
+      id: 'monthly',
       icon: MessageCircle,
       title: 'Monthly Package',
       duration: '4 sessions',
@@ -85,43 +93,72 @@ export default function MobileBook() {
     },
   ];
 
+  // Handle preselected program from URL
+  useEffect(() => {
+    const programId = searchParams.get('program');
+    if (programId && calReady) {
+      const program = sessionTypes.find(s => s.id === programId);
+      if (program) {
+        console.log('[Mobile Book] Auto-selecting program:', program.title);
+        handleSelectSession(program);
+        // Clean up URL
+        setSearchParams({});
+      }
+    }
+  }, [searchParams, calReady]);
+
   const handleSelectSession = (session: typeof sessionTypes[0]) => {
+    console.log('[Mobile Book] Session selected:', session.title);
+    
     track('booking_initiated', {
       session_type: session.eventType,
       price: session.price,
+      duration: session.duration,
     });
 
     if (session.priceAmount === 0) {
       // Free session - open Cal.com immediately
       if (!calReady) {
-        toast.error('Booking system is loading. Please wait...');
+        console.error('[Mobile Book] Cal.com not ready');
+        toast.error('Booking system is still loading. Please wait a moment...');
         return;
       }
 
       try {
+        console.log('[Cal.com Mobile] Opening modal for:', session.calLink);
+        
+        // Configure Cal.com UI
         window.Cal('ui', {
-          styles: { branding: { brandColor: '#000000' } },
+          styles: { 
+            branding: { brandColor: '#1a4d3e' } 
+          },
           hideEventTypeDetails: false,
           layout: 'month_view'
         });
 
+        // Open the modal
         window.Cal('modal', {
           calLink: session.calLink,
           config: {
             name: customerName || '',
             email: customerEmail || '',
-            notes: 'Free discovery session',
+            notes: 'Free discovery session booked via mobile app',
             theme: 'light',
           }
         });
+
+        console.log('[Cal.com Mobile] Modal opened successfully');
+        
       } catch (error) {
-        console.error('[Cal.com] Error:', error);
-        toast.error('Failed to open calendar. Please try again.');
+        console.error('[Cal.com Mobile] Error opening modal:', error);
+        toast.error('Failed to open booking calendar. Please try again or refresh the page.');
       }
     } else {
-      // Paid session - go to payment details
+      // Paid session - show payment form
+      console.log('[Mobile Book] Showing payment form for:', session.title);
       setSelectedSession(session);
       setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -188,28 +225,47 @@ export default function MobileBook() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
     
-    if (paymentStatus === 'success') {
+    if (paymentStatus === 'success' && calReady) {
       const name = sessionStorage.getItem('booking_customer_name') || '';
       const email = sessionStorage.getItem('booking_customer_email') || '';
       const calLink = sessionStorage.getItem('booking_cal_link') || '';
 
-      toast.success('Payment successful! Please select your session time.');
+      console.log('[Mobile Book] Payment success detected, opening Cal.com for:', calLink);
+      toast.success('Payment successful! Select your session time.');
 
       if (window.Cal && calLink) {
         setTimeout(() => {
-          window.Cal('modal', {
-            calLink,
-            config: { name, email, notes: 'Paid session', theme: 'light' }
-          });
-        }, 500);
+          try {
+            window.Cal('ui', {
+              styles: { branding: { brandColor: '#1a4d3e' } },
+              hideEventTypeDetails: false,
+            });
+
+            window.Cal('modal', {
+              calLink,
+              config: { 
+                name, 
+                email, 
+                notes: 'Paid session - payment completed', 
+                theme: 'light' 
+              }
+            });
+            
+            console.log('[Mobile Book] Cal.com modal opened after payment');
+          } catch (error) {
+            console.error('[Mobile Book] Error opening Cal.com after payment:', error);
+            toast.error('Please refresh and try booking again.');
+          }
+        }, 800);
       }
 
+      // Clean up
       sessionStorage.removeItem('booking_customer_name');
       sessionStorage.removeItem('booking_customer_email');
       sessionStorage.removeItem('booking_cal_link');
       window.history.replaceState({}, '', '/book');
     }
-  }, []);
+  }, [calReady]);
 
   return (
     <div className="min-h-screen bg-bg pb-20">
@@ -243,14 +299,21 @@ export default function MobileBook() {
             })}
           </div>
 
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/10 to-brand/10 border border-accent/30 text-center">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/10 to-brand/10 border border-accent/30 text-center animate-fade-in">
             <p className="text-sm text-muted mb-3">Not sure? Start with a free discovery call.</p>
             <Button 
               onClick={() => handleSelectSession(sessionTypes[0])}
-              className="w-full bg-accent text-brand hover:bg-accent/90"
+              className="w-full bg-accent text-brand hover:bg-accent/90 font-semibold"
               disabled={!calReady}
             >
-              {!calReady ? 'Loading...' : 'Book Free Discovery'}
+              {!calReady ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Book Free Discovery'
+              )}
             </Button>
           </div>
         </div>
