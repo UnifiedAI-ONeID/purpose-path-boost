@@ -18,6 +18,7 @@ import { LeadSourceChart } from '@/components/LeadSourceChart';
 import { SessionDurationChart } from '@/components/SessionDurationChart';
 import LeadsOverview from '@/components/admin/LeadsOverview';
 import LeadsTable from '@/components/admin/LeadsTable';
+import FunnelTab from '@/components/admin/FunnelTab';
 
 interface Lead {
   id: string;
@@ -61,6 +62,7 @@ const AdminDashboard = () => {
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
   const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics'>('leads');
+  const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
   useEffect(() => {
     // Set up auth state listener
@@ -310,8 +312,30 @@ const AdminDashboard = () => {
                 </p>
               </div>
               
-              <LeadsOverview />
-              <LeadsTable />
+              {/* Leads Sub-tabs */}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant={leadsSubTab === 'overview' ? 'default' : 'outline'}
+                  onClick={() => setLeadsSubTab('overview')}
+                >
+                  Overview
+                </Button>
+                <Button
+                  variant={leadsSubTab === 'funnel' ? 'default' : 'outline'}
+                  onClick={() => setLeadsSubTab('funnel')}
+                >
+                  Funnel
+                </Button>
+              </div>
+
+              {leadsSubTab === 'overview' ? (
+                <>
+                  <LeadsOverview />
+                  <LeadsTable />
+                </>
+              ) : (
+                <FunnelTab />
+              )}
             </div>
           ) : activeTab === 'analytics' ? (
             <>

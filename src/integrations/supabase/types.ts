@@ -474,7 +474,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_funnel_weekly: {
+        Row: {
+          booked: number | null
+          cvr_booked_pct: number | null
+          cvr_lead_to_client_pct: number | null
+          cvr_won_pct: number | null
+          leads: number | null
+          week_start: string | null
+          won: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_metrics_summary: {
