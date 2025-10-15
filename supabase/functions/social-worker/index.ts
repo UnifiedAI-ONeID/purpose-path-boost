@@ -155,13 +155,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    // Get queued posts
+    // Get queued posts that are due (scheduled_at is null or <= now)
+    const now = new Date().toISOString();
     const { data: jobs, error: fetchError } = await supabase
       .from('social_posts')
       .select('*')
       .eq('status', 'queued')
-      .order('created_at')
-      .limit(10);
+      .or(`scheduled_at.is.null,scheduled_at.lte.${now}`)
+      .order('scheduled_at', { ascending: true, nullsFirst: false })
+      .limit(20);
 
     if (fetchError) throw fetchError;
 

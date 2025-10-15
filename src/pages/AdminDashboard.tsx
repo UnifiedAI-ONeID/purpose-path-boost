@@ -16,6 +16,7 @@ import SocialAnalytics from '@/components/SocialAnalytics';
 import ContentSuggestions from '@/components/ContentSuggestions';
 import TagPerformance from '@/components/TagPerformance';
 import PostAISuggestions from '@/components/PostAISuggestions';
+import OneClickPlan from '@/components/OneClickPlan';
 import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -549,15 +550,19 @@ const AdminDashboard = () => {
                   variant="outline"
                   onClick={async () => {
                     try {
-                      const { error } = await supabase.functions.invoke('social-worker');
-                      if (error) throw error;
-                      toast.success('Social posts dispatched successfully');
+                      const resp = await fetch('/api/social/dispatch', { method: 'POST' });
+                      const result = await resp.json();
+                      if (result.ok) {
+                        toast.success(`Dispatched ${result.dispatched} due posts`);
+                      } else {
+                        throw new Error(result.error);
+                      }
                     } catch (error: any) {
                       toast.error(`Failed to dispatch: ${error.message}`);
                     }
                   }}
                 >
-                  🚀 Dispatch Queued Posts
+                  🚀 Dispatch Due Posts
                 </Button>
                 <Button 
                   variant="outline"
@@ -620,6 +625,16 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold">{sharingPost.title}</h2>
                   <p className="text-sm text-muted-foreground">Cross-post to social media platforms</p>
                 </div>
+                
+                {/* One-Click Plan & Queue */}
+                <OneClickPlan
+                  post={{
+                    title: sharingPost.title,
+                    slug: sharingPost.slug,
+                    excerpt: sharingPost.excerpt,
+                    tags: [],
+                  }}
+                />
                 
                 {/* AI Content Suggestions */}
                 <PostAISuggestions

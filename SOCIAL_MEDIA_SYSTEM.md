@@ -13,17 +13,26 @@ Complete automated social media management system with AI-powered content sugges
 **Flow:**
 1. Write/publish a blog post
 2. Click "Share" button on published post
-3. Select target platforms
-4. System queues posts for each platform
-5. Worker processes queue and publishes automatically
+3. **NEW: One-Click Plan & Queue** - AI optimizes headline, generates covers, builds captions, and schedules posts automatically
+4. Or manually: Select target platforms, customize content
+5. System queues posts with smart scheduling (timezone-aware)
+6. Worker processes queue at scheduled times and publishes automatically
 
-### 2. Analytics Collection
+### 2. Smart Scheduling System
+- **Timezone-Aware:** Schedules posts for optimal times in Asia/Shanghai and America/Vancouver
+- **Platform Optimization:** LinkedIn/X schedule for Vancouver primetime; Instagram/Facebook for Shanghai
+- **Time Windows:** Parse natural formats like "Tue 12:00-14:00", "Thu 19:00-21:00"
+- **Next Available:** Finds next occurrence within 7 days, starts at window open
+- **Index-Optimized:** Fast dispatch queries using `social_posts_sched_idx`
+- **Dispatch:** Only posts with `scheduled_at <= now()` are processed
+
+### 3. Analytics Collection
 - Automatically collects metrics from all posted content
 - Tracks: impressions, likes, comments, shares, saves, video views
 - Visualizations with trend charts
 - Platform-by-platform breakdown
 
-### 3. AI Content Suggestions (Lovable AI)
+### 4. AI Content Suggestions (Lovable AI)
 - Analyzes past 90 days of performance
 - Generates bilingual content ideas (English + Chinese)
 - Suggests:
@@ -32,7 +41,7 @@ Complete automated social media management system with AI-powered content sugges
   - Hashtags (mix of English and Chinese)
   - Optimal posting times for Asia/Vancouver timezones
 
-### 4. Tag-Based Hashtag System
+### 5. Tag-Based Hashtag System
 - **Intelligent Hashtag Selection:** Automatically includes relevant hashtags based on blog post tags
 - **Tag Categories:** Each tag (mindset, confidence, clarity, etc.) has curated hashtag sets
 - **Platform Optimization:** Respects platform-specific hashtag limits
@@ -45,6 +54,30 @@ Complete automated social media management system with AI-powered content sugges
 
 ## Architecture
 
+### API Endpoints
+
+#### `/api/social/plan` (NEW)
+- **Purpose:** One-click publish plan with AI optimization
+- **Auth:** Requires JWT (admin only)
+- **Flow:**
+  1. Calls `post-suggestions` for AI recommendations
+  2. Renders all cover images via `og/render-all`
+  3. Builds platform-optimized captions with hashtags
+  4. Calculates timezone-aware schedules using `pickSchedules`
+  5. Inserts rows into `social_posts` with `scheduled_at` timestamps
+  6. Returns optimized headline and schedule plan
+- **Input:** `{ slug, title, excerpt, tags[], platforms[], lang, theme }`
+- **Output:** `{ ok, headline, schedules: {platform: ISO8601}, source }`
+
+#### `/api/social/dispatch` (NEW)
+- **Purpose:** Trigger scheduled post dispatch
+- **Auth:** Admin only
+- **Flow:**
+  1. Calls `social-worker` edge function
+  2. Worker processes only posts where `scheduled_at <= now()`
+  3. Returns count of dispatched posts
+- **Output:** `{ ok, dispatched: count, results[] }`
+
 ### Edge Functions
 
 #### `social-queue`
@@ -53,15 +86,17 @@ Complete automated social media management system with AI-powered content sugges
 - **Input:** `{ slug, title, summary, cover, platforms[] }`
 - **Output:** Creates rows in `social_posts` table with status 'queued'
 
-#### `social-worker`
+#### `social-worker` (UPDATED)
 - **Purpose:** Process queued posts and publish to platforms
-- **Auth:** Public (can be triggered by cron or manually)
+- **Auth:** Public (can be triggered by cron or API)
 - **Flow:**
-  1. Fetches queued posts
-  2. For each platform, calls appropriate API
-  3. Updates status to 'posted' or 'failed'
-  4. Stores platform post IDs
+  1. Fetches queued posts WHERE `status='queued' AND (scheduled_at IS NULL OR scheduled_at <= now())`
+  2. Orders by `scheduled_at ASC` (due posts first)
+  3. For each platform, calls appropriate API
+  4. Updates status to 'posted' or 'failed'
+  5. Stores platform post IDs
 - **Note:** Chinese platforms generate export ZIP for manual upload
+- **Index:** Uses `social_posts_sched_idx` for fast queries
 
 #### `social-metrics-collect`
 - **Purpose:** Fetch performance metrics from platforms
@@ -99,12 +134,29 @@ Complete automated social media management system with AI-powered content sugges
   3. Generates AI suggestions
   4. Smart fallback to heuristics if AI unavailable
 
+### Utility Libraries
+
+#### `src/lib/schedule.ts` (NEW)
+- **Purpose:** Timezone-aware scheduling calculations
+- **Functions:**
+  - `nextSendFromWindow(windowStr, region, now)` - Parse "Tue 12:00-14:00" and compute next UTC datetime
+  - `platformRegion(platform)` - Map platforms to preferred timezones (LinkedIn/X → Vancouver, Instagram/Facebook → Shanghai)
+  - `pickSchedules(windows, platforms, now)` - Generate schedule plan for all platforms
+- **Regions:** 'Asia/Shanghai', 'America/Vancouver'
+- **Logic:** 
+  - Converts current time to target timezone
+  - Finds next occurrence of day-of-week + time within 7 days
+  - Converts back to UTC for database storage
+  - If same day but time passed, schedules for next week
+
 ### Database Tables
 
 #### `social_posts`
 - Tracks all queued/posted content
-- Columns: blog_slug, platform, status, message, media, platform_post_id, error
+- Columns: blog_slug, platform, status, message, media, platform_post_id, error, **scheduled_at**, tags, primary_tag
 - Status: 'queued' → 'posted' or 'failed'
+- **NEW:** `scheduled_at` (timestamptz, nullable) - UTC datetime for dispatch
+- **Index:** `social_posts_sched_idx` on `(status, scheduled_at)` for fast due-post queries
 
 #### `social_metrics`
 - Time-series metrics data
@@ -116,6 +168,26 @@ Complete automated social media management system with AI-powered content sugges
 - Stores channel names and external IDs
 
 ### UI Components
+
+#### `OneClickPlan` (NEW)
+- **Purpose:** All-in-one publish planning
+- **Features:**
+  - Single button triggers full workflow
+  - Calls `/api/social/plan` with post data
+  - Displays optimized headline
+  - Shows schedule plan (platform → datetime in UTC)
+  - Updates editor title with chosen headline
+  - Visual feedback with source indicator
+- **Location:** Social share dialog (top section)
+- **Flow:**
+  1. Click "Plan & Queue"
+  2. AI analyzes performance trends
+  3. Generates optimized headline (bilingual)
+  4. Renders all platform covers
+  5. Builds captions with smart hashtags
+  6. Schedules posts for optimal windows
+  7. Queues all posts with `scheduled_at`
+  8. Shows result summary
 
 #### `BlogComposer`
 - Platform selection UI with emoji icons
@@ -196,6 +268,20 @@ Complete automated social media management system with AI-powered content sugges
 
 ## Usage Workflow
 
+### Quick Start: One-Click Planning (NEW)
+1. Navigate to Admin Dashboard → Blog tab
+2. Click Share (📱) icon on a published post
+3. Click **"Plan & Queue"** button in OneClickPlan section
+4. System automatically:
+   - Analyzes your tag performance trends
+   - Generates optimized headline (EN + 中文 options)
+   - Renders platform-specific cover images
+   - Builds captions with smart hashtags
+   - Schedules posts for optimal times (timezone-aware)
+   - Queues all posts with `scheduled_at` timestamps
+5. Review the generated schedule plan
+6. Posts will auto-dispatch at scheduled times
+
 ### Initial Setup
 1. Go to Admin Dashboard → Secrets tab
 2. Add API tokens for each platform you want to use
@@ -208,11 +294,21 @@ Complete automated social media management system with AI-powered content sugges
 4. Click "Share to X platforms"
 5. Posts are queued
 
-### Processing Queue
-- **Automatic:** Worker can be triggered by cron
-- **Manual:** Click "🚀 Dispatch Queued Posts" in Blog tab
-- Worker publishes to all platforms
+### Processing Queue (Scheduled Dispatch)
+- **Automatic (Recommended):** Set up cron job to call `/api/social/dispatch` every 15-30 minutes
+- **Manual:** Click "🚀 Dispatch Due Posts" button in Blog tab
+- Worker only processes posts where `scheduled_at <= now()` or `scheduled_at IS NULL`
 - View results in `social_posts` table
+- Check dispatch logs in edge function logs
+
+### Scheduling Logic
+- **Time Windows:** AI suggests optimal posting times like "Tue 12:00-14:00"
+- **Timezone Mapping:**
+  - LinkedIn/X → America/Vancouver (West Coast business hours)
+  - Instagram/Facebook → Asia/Shanghai (CN primetime)
+- **Next Occurrence:** Finds next matching day-of-week + time within 7 days
+- **UTC Storage:** All `scheduled_at` values stored in UTC
+- **Same-Day Handling:** If current time is past window start, schedules for next week
 
 ### Collecting Metrics
 - **Manual:** Click "📊 Collect Metrics" button
@@ -334,10 +430,40 @@ Complete automated social media management system with AI-powered content sugges
 
 ## Automation Ideas
 
-### Cron Jobs (Future)
+### Cron Jobs (Recommended)
+```bash
+# Call dispatch API every 15 minutes to process due posts
+*/15 * * * * curl -X POST https://your-domain.com/api/social/dispatch
+
+# Collect metrics every 6 hours
+0 */6 * * * curl -X POST https://your-domain.com/api/social/metrics-collect
+```
+
+**Alternative: Supabase pg_cron**
 ```sql
--- Run social-worker every 10 minutes
--- Run social-metrics-collect every 6 hours
+-- Dispatch due posts every 15 minutes
+select cron.schedule(
+  'dispatch-social-posts',
+  '*/15 * * * *',
+  $$
+  select net.http_post(
+    url:='https://your-project.supabase.co/functions/v1/social-worker',
+    headers:='{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"}'::jsonb
+  ) as request_id;
+  $$
+);
+
+-- Collect metrics every 6 hours
+select cron.schedule(
+  'collect-social-metrics',
+  '0 */6 * * *',
+  $$
+  select net.http_post(
+    url:='https://your-project.supabase.co/functions/v1/social-metrics-collect',
+    headers:='{"Authorization": "Bearer YOUR_SERVICE_ROLE_KEY"}'::jsonb
+  ) as request_id;
+  $$
+);
 ```
 
 ### Webhooks
