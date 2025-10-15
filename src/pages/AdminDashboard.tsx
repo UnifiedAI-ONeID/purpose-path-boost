@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { User, Session } from '@supabase/supabase-js';
 import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
+import { SocialConfigManager } from '@/components/SocialConfigManager';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { RealtimeMetrics } from '@/components/RealtimeMetrics';
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social'>('leads');
 
   useEffect(() => {
     // Set up auth state listener
@@ -275,6 +276,16 @@ const AdminDashboard = () => {
               <BarChart3 className="h-4 w-4" />
               Analytics
             </button>
+            <button
+              className={`pb-2 px-4 font-medium transition-colors ${
+                activeTab === 'social'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('social')}
+            >
+              Social Media
+            </button>
           </div>
 
           {activeTab === 'leads' ? (
@@ -451,6 +462,8 @@ const AdminDashboard = () => {
                 </Card>
               </div>
             </>
+          ) : activeTab === 'social' ? (
+            <SocialConfigManager />
           ) : (
             <>
               {/* Blog Management */}

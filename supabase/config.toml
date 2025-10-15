@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.post-to-social]
 verify_jwt = true
+
+[functions.manage-social-config]
+verify_jwt = true
