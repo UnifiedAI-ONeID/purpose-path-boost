@@ -19,6 +19,7 @@ import { SessionDurationChart } from '@/components/SessionDurationChart';
 import LeadsOverview from '@/components/admin/LeadsOverview';
 import LeadsTable from '@/components/admin/LeadsTable';
 import FunnelTab from '@/components/admin/FunnelTab';
+import AdminSecrets from '@/components/admin/AdminSecrets';
 
 interface Lead {
   id: string;
@@ -61,7 +62,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics' | 'secrets'>('leads');
   const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
   useEffect(() => {
@@ -301,6 +302,16 @@ const AdminDashboard = () => {
             >
               Metrics
             </button>
+            <button
+              className={`pb-2 px-4 font-medium transition-colors ${
+                activeTab === 'secrets'
+                  ? 'border-b-2 border-brand-accent text-brand-accent'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              onClick={() => setActiveTab('secrets')}
+            >
+              Secrets
+            </button>
           </div>
 
           {activeTab === 'leads' ? (
@@ -399,6 +410,16 @@ const AdminDashboard = () => {
                 </p>
               </div>
               <MetricsSummary />
+            </div>
+          ) : activeTab === 'secrets' ? (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-serif font-bold">Secrets Management</h2>
+                <p className="text-muted-foreground">
+                  Securely manage encrypted API keys and tokens
+                </p>
+              </div>
+              <AdminSecrets />
             </div>
           ) : (
             <>

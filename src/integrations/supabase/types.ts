@@ -320,6 +320,27 @@ export type Database = {
         }
         Relationships: []
       }
+      secrets: {
+        Row: {
+          iv: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          iv: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          iv?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       social_config_logs: {
         Row: {
           action: string
