@@ -4,12 +4,17 @@ import "./index.css";
 import { isChinaBuild } from './lib/region';
 import { initAnalytics } from './lib/initAnalytics';
 import { initSessionTracking } from './analytics/events';
+import { metricsTracker } from './lib/metricsTracker';
 
 // Initialize analytics based on region
 if (!isChinaBuild()) {
-  // Global build: Use Umami + PostHog
+  // Global build: Use Umami + PostHog + Metrics Tracker
   initAnalytics();
   initSessionTracking();
+  
+  // Metrics tracker is automatically initialized on import
+  // Track CTA clicks throughout the app
+  console.log('[Metrics] Tracker initialized');
 } else {
   // China build: Baidu Tongji is loaded via script in index.html
   // Session tracking for China analytics
