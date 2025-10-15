@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { track } from '@/analytics/events';
 import { Link } from 'react-router-dom';
 import { ProgramSheet } from '@/components/ProgramSheet';
+import { A2HSPrompt } from '@/components/A2HSPrompt';
 
 export default function MobileHome() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
@@ -175,6 +176,8 @@ export default function MobileHome() {
         onClose={() => setSelectedProgram(null)} 
         program={selectedProgram} 
       />
+
+      <A2HSPrompt />
     </>
   );
 }

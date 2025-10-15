@@ -14,10 +14,12 @@ import About from "./pages/About";
 import CoachingPrograms from "./pages/CoachingPrograms";
 import Quiz from "./pages/Quiz";
 import BlogList from "./pages/BlogList";
+import MobileBlog from "./pages/MobileBlog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import Book from "./pages/Book";
 import MobileBook from "./pages/MobileBook";
+import MobileMe from "./pages/MobileMe";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
 import { lazy, Suspense } from 'react';
@@ -61,6 +63,8 @@ function AppRoutes() {
   const Layout = isMobile ? AppShell : MainLayout;
   const HomePage = isMobile ? MobileHome : Home;
   const BookPage = isMobile ? MobileBook : Book;
+  const BlogPage = isMobile ? MobileBlog : BlogList;
+  const MePage = isMobile ? MobileMe : About;
 
   return (
     <Routes>
@@ -71,10 +75,10 @@ function AppRoutes() {
       {/* Public routes with responsive layout */}
       <Route element={<Layout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<About />} />
+        <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
         <Route path="/quiz" element={<Quiz />} />
-        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book" element={<BookPage />} />
