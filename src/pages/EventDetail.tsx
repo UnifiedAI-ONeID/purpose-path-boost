@@ -44,6 +44,7 @@ export default function EventDetail() {
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [displayPrice, setDisplayPrice] = useState<{ cents: number; currency: string } | null>(null);
   const [couponCode, setCouponCode] = useState('');
+  const [userCountry, setUserCountry] = useState('US');
 
   const paid = searchParams.get('paid') === '1';
   const cancelled = searchParams.get('cancel') === '1';
@@ -61,6 +62,17 @@ export default function EventDetail() {
             setSelectedTicket(ticketsData[0].id);
           }
         }
+
+        // Detect user country from browser
+        try {
+          const geoResponse = await fetch('https://ipapi.co/json/');
+          const geoData = await geoResponse.json();
+          if (geoData.country_code) {
+            setUserCountry(geoData.country_code);
+          }
+        } catch (e) {
+          console.log('Geo detection failed, using default');
+        }
       } catch (e) {
         toast.error('Failed to load event details');
       } finally {
@@ -76,6 +88,24 @@ export default function EventDetail() {
       if (!selectedTicket) return;
       
       try {
+        // First, try to get A/B test assignment
+        const assignResult = await fetch('/api/pricing/assign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticket_id: selectedTicket, country: userCountry })
+        }).then(r => r.json());
+
+        if (assignResult.ok) {
+          // Use A/B test assigned price
+          setDisplayPrice({ 
+            cents: assignResult.price_cents, 
+            currency: assignResult.currency 
+          });
+          setSelectedCurrency(assignResult.currency);
+          return;
+        }
+
+        // Fallback to standard price preview
         const result = await fetch('/api/events/price-preview', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -90,7 +120,7 @@ export default function EventDetail() {
       }
     }
     updatePrice();
-  }, [selectedTicket, selectedCurrency]);
+  }, [selectedTicket, selectedCurrency, userCountry]);
 
   useEffect(() => {
     if (paid) {

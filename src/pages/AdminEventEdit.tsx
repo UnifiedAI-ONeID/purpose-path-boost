@@ -390,6 +390,7 @@ export default function AdminEventEdit() {
                         <FxOverridesEditor ticketId={ticket.id} />
                         <FxAuditTicket ticketId={ticket.id} />
                         <PriceTesting 
+                          eventId={event.id!}
                           ticketId={ticket.id} 
                           basePrice={ticket.base_price_cents || ticket.price_cents}
                           baseCurrency={ticket.base_currency || ticket.currency}
