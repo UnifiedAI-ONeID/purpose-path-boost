@@ -38,6 +38,10 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
+import EventsList from "./pages/EventsList";
+import EventDetail from "./pages/EventDetail";
+import AdminEvents from "./pages/AdminEvents";
+import AdminEventEdit from "./pages/AdminEventEdit";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +81,8 @@ function AppRoutes() {
         {/* Auth routes (no layout) */}
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/events" element={<AdminEvents />} />
+        <Route path="/admin/events/:slug" element={<AdminEventEdit />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
@@ -86,6 +92,8 @@ function AppRoutes() {
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogDetail />} />
+        <Route path="/events" element={<EventsList />} />
+        <Route path="/events/:slug" element={<EventDetail />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book" element={<BookPage />} />
         <Route path="/book-session" element={
