@@ -12,6 +12,7 @@ import { Loader2, CheckCircle, CreditCard } from 'lucide-react';
 import { COACHING_PACKAGES, type CoachingPackageId, createPaymentLink } from '@/lib/airwallex';
 import { track } from '@/analytics/events';
 import { toast } from 'sonner';
+import { isCN } from '@/lib/cn-env';
 
 const paymentSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -46,22 +47,29 @@ const Payment = () => {
     if (!selectedPackage) return;
 
     setIsProcessing(true);
+    
+    // Detect currency based on region
+    const currency = isCN ? 'CNY' : selectedPackage.currency;
+    const amount = isCN ? selectedPackage.price * 7 : selectedPackage.price; // Rough CNY conversion
+    
     track('pay_click', {
       package: packageId,
-      amount: selectedPackage.price,
+      amount,
+      currency,
     });
 
     try {
       // Create payment link via API
       const response = await createPaymentLink({
-        amount: selectedPackage.price,
-        currency: selectedPackage.currency,
+        amount,
+        currency,
         description: `${selectedPackage.name} - ZhenGrowth Coaching`,
         customerEmail: data.email,
         customerName: data.name,
         metadata: {
           package: packageId,
           packageName: selectedPackage.name,
+          region: isCN ? 'CN' : 'global',
         },
       });
 
@@ -126,7 +134,7 @@ const Payment = () => {
                     <div className="flex justify-between items-center">
                       <span className="font-semibold">Total</span>
                       <span className="text-2xl font-bold text-brand-accent">
-                        ${selectedPackage.price} {selectedPackage.currency}
+                        {isCN ? `¥${(selectedPackage.price * 7).toFixed(0)}` : `$${selectedPackage.price}`} {isCN ? 'CNY' : selectedPackage.currency}
                       </span>
                     </div>
                   </div>
@@ -135,7 +143,7 @@ const Payment = () => {
                     <p className="font-medium mb-2">Payment Methods</p>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <CreditCard className="h-4 w-4" />
-                      <span>Credit Card, WeChat Pay, Alipay</span>
+                      <span>{isCN ? 'WeChat Pay, Alipay, UnionPay' : 'Credit Card, WeChat Pay, Alipay'}</span>
                     </div>
                   </div>
                 </CardContent>
