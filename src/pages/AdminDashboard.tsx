@@ -14,6 +14,7 @@ import CoverComposer from '@/components/CoverComposer';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
 import SocialAnalytics from '@/components/SocialAnalytics';
 import ContentSuggestions from '@/components/ContentSuggestions';
+import TagPerformance from '@/components/TagPerformance';
 import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -576,6 +577,11 @@ const AdminDashboard = () => {
               {/* Social Analytics */}
               <div className="pt-6">
                 <SocialAnalytics />
+              </div>
+
+              {/* Tag Performance */}
+              <div className="pt-6">
+                <TagPerformance />
               </div>
 
               {/* AI Content Suggestions */}

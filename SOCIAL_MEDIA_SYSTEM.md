@@ -164,7 +164,7 @@ Complete automated social media management system with AI-powered content sugges
 4. **Platform-Optimized:** Hashtags are limited per platform (Instagram: 15, LinkedIn: 8, X: 6)
 5. **Tag Emoji Indicators:** CoverComposer shows tag emoji (🧠 for mindset, 💪 for confidence, etc.)
 
-**Tag Hashtag Reference:**
+- **Tag Hashtag Reference:**
 - **mindset** → #MindsetShift #SelfGrowth #PositiveThinking
 - **confidence** → #Confidence #SelfWorth #OwnYourVoice
 - **clarity** → #Clarity #LifeDesign #Vision
@@ -177,6 +177,28 @@ Complete automated social media management system with AI-powered content sugges
 - **spirituality** → #Faith #Grace #Purpose
 - **money** → #MoneyMindset #Wealth #FinancialWellness
 - **productivity** → #DeepWork #Focus #TimeManagement
+
+### Tag Performance Analytics
+1. **View Tag Performance:** Navigate to Blog tab → scroll to "Tag Performance" section
+2. **Metrics Tracked:**
+   - Posts per tag
+   - Total impressions
+   - Total engagements
+   - Engagement Rate (ER%)
+   - Click-through Rate (CTR%)
+   - Weekly trend sparklines
+3. **Filter & Sort:**
+   - Set minimum post threshold (default: 3 posts)
+   - Sort by ER%, CTR%, or Impressions
+4. **Actionable Suggestions:**
+   - System identifies top-performing tags
+   - Suggests doubling down on high-ER tags
+   - Recommends testing promising low-volume tags
+   - Highlights best tags for link posts (high CTR)
+5. **Data Requirements:**
+   - Posts must have tags assigned
+   - Metrics must be collected via "Collect Metrics" button
+   - View updates automatically after each collection
 
 ## Platform-Specific Notes
 

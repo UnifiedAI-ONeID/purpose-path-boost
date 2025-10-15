@@ -552,8 +552,10 @@ export type Database = {
           platform: string
           platform_post_id: string | null
           posted_at: string | null
+          primary_tag: string | null
           scheduled_at: string | null
           status: string
+          tags: string[] | null
         }
         Insert: {
           blog_slug: string
@@ -565,8 +567,10 @@ export type Database = {
           platform: string
           platform_post_id?: string | null
           posted_at?: string | null
+          primary_tag?: string | null
           scheduled_at?: string | null
           status?: string
+          tags?: string[] | null
         }
         Update: {
           blog_slug?: string
@@ -578,8 +582,10 @@ export type Database = {
           platform?: string
           platform_post_id?: string | null
           posted_at?: string | null
+          primary_tag?: string | null
           scheduled_at?: string | null
           status?: string
+          tags?: string[] | null
         }
         Relationships: []
       }
@@ -615,6 +621,20 @@ export type Database = {
           leads: number | null
           week_start: string | null
           won: number | null
+        }
+        Relationships: []
+      }
+      v_tag_performance: {
+        Row: {
+          clicks: number | null
+          ctr_pct: number | null
+          engagements: number | null
+          er_pct: number | null
+          impressions: number | null
+          post_count: number | null
+          tag: string | null
+          video_views: number | null
+          week_start: string | null
         }
         Relationships: []
       }

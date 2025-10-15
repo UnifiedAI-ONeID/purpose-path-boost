@@ -55,7 +55,9 @@ export default function CaptionBuilder({ post }: CaptionBuilderProps) {
         platform: p,
         status: 'queued',
         message: custom[p] ?? previews[p],
-        media: post.cover ? [{ type: 'image', url: post.cover }] : null
+        media: post.cover ? [{ type: 'image', url: post.cover }] : null,
+        tags: post.tags || [],
+        primary_tag: (post.tags && post.tags[0]) || null,
       }));
 
       const { error } = await supabase.from('social_posts').insert(rows);

@@ -64,6 +64,8 @@ export default function BlogComposer({ post }: BlogComposerProps) {
           platform: p,
           message: `${post.title}\n\n${post.excerpt || ''}`,
           media: imagePath ? [{ type: 'image', url: imagePath }] : (post.image_url ? [{ type: 'image', url: post.image_url }] : []),
+          tags: post.tags || [],
+          primary_tag: (post.tags && post.tags[0]) || null,
         };
       });
 
