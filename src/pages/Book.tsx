@@ -20,21 +20,30 @@ const Book = () => {
   useEffect(() => {
     track('page_view', { page: 'book' });
     
-    // Check if Cal.com is ready
-    const checkCalReady = () => {
+    // Initialize and check if Cal.com is ready
+    const initializeCal = () => {
       if (typeof window !== 'undefined' && window.Cal) {
-        console.log('[Cal.com] Ready');
-        setCalReady(true);
-        return true;
+        console.log('[Cal.com] Initializing...');
+        
+        // Initialize Cal.com
+        try {
+          window.Cal('init', { origin: 'https://cal.com' });
+          console.log('[Cal.com] Initialized and ready');
+          setCalReady(true);
+          return true;
+        } catch (error) {
+          console.error('[Cal.com] Initialization error:', error);
+          return false;
+        }
       }
       return false;
     };
 
     // Check immediately
-    if (!checkCalReady()) {
+    if (!initializeCal()) {
       // If not ready, check periodically
       const interval = setInterval(() => {
-        if (checkCalReady()) {
+        if (initializeCal()) {
           clearInterval(interval);
         }
       }, 500);
@@ -44,6 +53,7 @@ const Book = () => {
         clearInterval(interval);
         if (!calReady) {
           console.error('[Cal.com] Failed to load after 10 seconds');
+          toast.error('Booking system failed to load. Please refresh the page.');
         }
       }, 10000);
 
@@ -100,27 +110,42 @@ const Book = () => {
     if (session.priceAmount === 0) {
       console.log('[Booking] Free session - opening Cal.com modal');
       
-      if (typeof window !== 'undefined' && window.Cal) {
-        try {
-          console.log('[Cal.com] Opening modal for:', session.calLink);
-          window.Cal('modal', {
-            calLink: session.calLink,
-            config: {
-              name: customerName || '',
-              email: customerEmail || '',
-              notes: '',
-              guests: [],
-              theme: 'light',
-            },
-          });
-          console.log('[Cal.com] Modal opened successfully');
-        } catch (error) {
-          console.error('[Cal.com] Error opening modal:', error);
-          toast.error('Failed to open booking calendar. Please try again.');
-        }
-      } else {
-        console.error('[Cal.com] Not available. window.Cal:', typeof window !== 'undefined' ? window.Cal : 'undefined');
-        toast.error('Booking system is loading. Please wait a moment and try again.');
+      if (!calReady || typeof window === 'undefined' || !window.Cal) {
+        console.error('[Cal.com] Not ready. calReady:', calReady);
+        toast.error('Booking system is still loading. Please wait a moment and try again.');
+        return;
+      }
+      
+      try {
+        console.log('[Cal.com] Opening modal for:', session.calLink);
+        
+        // Use the inline Cal.com modal
+        window.Cal('ui', {
+          styles: { branding: { brandColor: '#000000' } },
+          hideEventTypeDetails: false,
+          layout: 'month_view'
+        });
+        
+        window.Cal('modal', {
+          calLink: session.calLink,
+          config: {
+            name: customerName || '',
+            email: customerEmail || '',
+            notes: 'Free discovery session',
+            theme: 'light',
+          }
+        });
+        
+        console.log('[Cal.com] Modal command sent');
+        
+        // Add a small delay to check if modal appeared
+        setTimeout(() => {
+          console.log('[Cal.com] Modal should be visible now');
+        }, 500);
+        
+      } catch (error) {
+        console.error('[Cal.com] Error opening modal:', error);
+        toast.error('Failed to open booking calendar. Please refresh the page and try again.');
       }
       return;
     }
