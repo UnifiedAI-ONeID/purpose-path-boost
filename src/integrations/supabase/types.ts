@@ -170,13 +170,18 @@ export type Database = {
           booking_goal: string | null
           booking_timeline: string | null
           clarity_score: number | null
+          country: string | null
           created_at: string | null
           email: string
           id: string
           language: string | null
           name: string
+          notes: string | null
           quiz_answers: Json | null
+          quiz_score: number | null
           source: string | null
+          stage: string | null
+          tags: string[] | null
           wechat: string | null
         }
         Insert: {
@@ -184,13 +189,18 @@ export type Database = {
           booking_goal?: string | null
           booking_timeline?: string | null
           clarity_score?: number | null
+          country?: string | null
           created_at?: string | null
           email: string
           id?: string
           language?: string | null
           name: string
+          notes?: string | null
           quiz_answers?: Json | null
+          quiz_score?: number | null
           source?: string | null
+          stage?: string | null
+          tags?: string[] | null
           wechat?: string | null
         }
         Update: {
@@ -198,13 +208,18 @@ export type Database = {
           booking_goal?: string | null
           booking_timeline?: string | null
           clarity_score?: number | null
+          country?: string | null
           created_at?: string | null
           email?: string
           id?: string
           language?: string | null
           name?: string
+          notes?: string | null
           quiz_answers?: Json | null
+          quiz_score?: number | null
           source?: string | null
+          stage?: string | null
+          tags?: string[] | null
           wechat?: string | null
         }
         Relationships: []

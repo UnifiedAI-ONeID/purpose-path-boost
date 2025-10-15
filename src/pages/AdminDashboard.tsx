@@ -16,6 +16,8 @@ import { RealtimeMetrics } from '@/components/RealtimeMetrics';
 import { AnalyticsCharts } from '@/components/AnalyticsCharts';
 import { LeadSourceChart } from '@/components/LeadSourceChart';
 import { SessionDurationChart } from '@/components/SessionDurationChart';
+import LeadsOverview from '@/components/admin/LeadsOverview';
+import LeadsTable from '@/components/admin/LeadsTable';
 
 interface Lead {
   id: string;
@@ -300,128 +302,17 @@ const AdminDashboard = () => {
           </div>
 
           {activeTab === 'leads' ? (
-            <>
-              {/* Stats Cards */}
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Total Leads</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-brand-accent">
-                  {leads.length}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Quiz Completions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-brand-accent">
-                  {leads.filter(l => l.source === 'quiz').length}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Avg Clarity Score</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-brand-accent">
-                  {leads.filter(l => l.clarity_score).length > 0
-                    ? Math.round(
-                        leads
-                          .filter(l => l.clarity_score)
-                          .reduce((acc, l) => acc + (l.clarity_score || 0), 0) /
-                          leads.filter(l => l.clarity_score).length
-                      )
-                    : 0}%
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Leads Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Leads</CardTitle>
-              <CardDescription>
-                All leads captured from the quiz and contact forms
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {leads.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No leads yet. Share your quiz to start collecting leads!
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-medium">Name</th>
-                        <th className="text-left p-3 font-medium">Email</th>
-                        <th className="text-left p-3 font-medium">Score</th>
-                        <th className="text-left p-3 font-medium">Source</th>
-                        <th className="text-left p-3 font-medium">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leads.map((lead) => (
-                        <tr key={lead.id} className="border-b hover:bg-muted/50">
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{lead.name}</span>
-                              {lead.wechat && (
-                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <a
-                                href={`mailto:${lead.email}`}
-                                className="text-brand-accent hover:underline"
-                              >
-                                {lead.email}
-                              </a>
-                            </div>
-                          </td>
-                          <td className="p-3">
-                            {lead.clarity_score ? (
-                              <div className="flex items-center gap-2">
-                                <Award className="h-4 w-4 text-brand-accent" />
-                                <span className="font-medium">{lead.clarity_score}%</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted">
-                              {lead.source}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(lead.created_at).toLocaleDateString()}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-            </>
+            <div className="space-y-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-serif font-bold">Leads Management</h2>
+                <p className="text-muted-foreground">
+                  Track and manage your leads with real-time updates
+                </p>
+              </div>
+              
+              <LeadsOverview />
+              <LeadsTable />
+            </div>
           ) : activeTab === 'analytics' ? (
             <>
               {/* Analytics Dashboard */}
