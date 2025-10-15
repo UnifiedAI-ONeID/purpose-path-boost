@@ -1,5 +1,15 @@
 /// <reference types="vite/client" />
 
+interface Window {
+  Cal?: any;
+  umami?: {
+    track: (eventName: string, eventData?: Record<string, any>) => void;
+  };
+  posthog?: {
+    capture: (eventName: string, properties?: Record<string, any>) => void;
+  };
+}
+
 interface ImportMetaEnv {
   readonly VITE_SITE_URL: string;
   readonly VITE_POSTHOG_KEY?: string;
