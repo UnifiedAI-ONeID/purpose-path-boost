@@ -231,24 +231,73 @@ export default function EventDetail() {
           </div>
 
           {tickets.length > 0 && (
-            <div>
-              <label className="text-sm font-medium mb-2 block">Ticket Type</label>
-              <select
-                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                value={selectedTicket}
-                onChange={(e) => setSelectedTicket(e.target.value)}
-                disabled={registering}
-              >
-                {tickets.map(ticket => (
-                  <option key={ticket.id} value={ticket.id}>
-                    {ticket.name} — {ticket.price_cents > 0 
-                      ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}` 
-                      : 'FREE'}
-                    {' '}({ticket.qty} spots left)
-                  </option>
-                ))}
-              </select>
-            </div>
+            <>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Ticket Type</label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  value={selectedTicket}
+                  onChange={(e) => setSelectedTicket(e.target.value)}
+                  disabled={registering}
+                >
+                  {tickets.map(ticket => (
+                    <option key={ticket.id} value={ticket.id}>
+                      {ticket.name} — {ticket.price_cents > 0 
+                        ? `$${(ticket.price_cents / 100).toFixed(2)} ${ticket.currency}` 
+                        : 'FREE'}
+                      {' '}({ticket.qty} spots left)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Coupon Code (optional)</label>
+                <div className="flex gap-2">
+                  <Input
+                    id="coupon-input"
+                    placeholder="Enter coupon code"
+                    disabled={registering}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const code = (document.getElementById('coupon-input') as HTMLInputElement)?.value;
+                      if (!code || !email || !selectedTicket) {
+                        toast.error('Please enter email and select a ticket first');
+                        return;
+                      }
+
+                      try {
+                        const resp = await fetch('/api/events/coupon-preview', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            event_id: event!.id,
+                            ticket_id: selectedTicket,
+                            email,
+                            code
+                          })
+                        });
+                        
+                        const result = await resp.json();
+                        
+                        if (result.ok) {
+                          toast.success(`Coupon applied! New price: $${(result.total_cents / 100).toFixed(2)}`);
+                        } else {
+                          toast.error(result.reason || 'Invalid coupon code');
+                        }
+                      } catch (e) {
+                        toast.error('Failed to validate coupon');
+                      }
+                    }}
+                    disabled={registering}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="flex gap-3">

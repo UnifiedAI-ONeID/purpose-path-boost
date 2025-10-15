@@ -107,6 +107,117 @@ export type Database = {
         }
         Relationships: []
       }
+      event_coupon_uses: {
+        Row: {
+          coupon_id: string | null
+          email: string
+          event_id: string | null
+          id: number
+          reg_id: string | null
+          used_at: string | null
+        }
+        Insert: {
+          coupon_id?: string | null
+          email: string
+          event_id?: string | null
+          id?: number
+          reg_id?: string | null
+          used_at?: string | null
+        }
+        Update: {
+          coupon_id?: string | null
+          email?: string
+          event_id?: string | null
+          id?: number
+          reg_id?: string | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_coupon_uses_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "event_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_coupon_uses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_coupon_uses_reg_id_fkey"
+            columns: ["reg_id"]
+            isOneToOne: false
+            referencedRelation: "event_regs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_coupons: {
+        Row: {
+          active: boolean | null
+          applies_to_all: boolean | null
+          code: string
+          created_at: string | null
+          currency: string | null
+          discount_type: string
+          discount_value: number
+          event_id: string | null
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          per_user_limit: number | null
+          starts_at: string | null
+          tickets: string[] | null
+          used_count: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          applies_to_all?: boolean | null
+          code: string
+          created_at?: string | null
+          currency?: string | null
+          discount_type: string
+          discount_value: number
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          per_user_limit?: number | null
+          starts_at?: string | null
+          tickets?: string[] | null
+          used_count?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          applies_to_all?: boolean | null
+          code?: string
+          created_at?: string | null
+          currency?: string | null
+          discount_type?: string
+          discount_value?: number
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          per_user_limit?: number | null
+          starts_at?: string | null
+          tickets?: string[] | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_coupons_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_regs: {
         Row: {
           airwallex_id: string | null
@@ -115,13 +226,18 @@ export type Database = {
           checked_in_at: string | null
           checkin_code: string | null
           country: string | null
+          coupon_code: string | null
           created_at: string | null
           currency: string
+          discount_cents: number | null
           email: string
           event_id: string | null
           id: string
           language: string | null
           name: string
+          offer_expires_at: string | null
+          offer_sent_at: string | null
+          offer_token: string | null
           status: string
           ticket_id: string | null
         }
@@ -132,13 +248,18 @@ export type Database = {
           checked_in_at?: string | null
           checkin_code?: string | null
           country?: string | null
+          coupon_code?: string | null
           created_at?: string | null
           currency?: string
+          discount_cents?: number | null
           email: string
           event_id?: string | null
           id?: string
           language?: string | null
           name: string
+          offer_expires_at?: string | null
+          offer_sent_at?: string | null
+          offer_token?: string | null
           status?: string
           ticket_id?: string | null
         }
@@ -149,13 +270,18 @@ export type Database = {
           checked_in_at?: string | null
           checkin_code?: string | null
           country?: string | null
+          coupon_code?: string | null
           created_at?: string | null
           currency?: string
+          discount_cents?: number | null
           email?: string
           event_id?: string | null
           id?: string
           language?: string | null
           name?: string
+          offer_expires_at?: string | null
+          offer_sent_at?: string | null
+          offer_token?: string | null
           status?: string
           ticket_id?: string | null
         }

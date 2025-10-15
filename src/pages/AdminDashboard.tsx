@@ -258,6 +258,9 @@ const AdminDashboard = () => {
               <Button variant="outline" onClick={() => navigate('/admin/events')}>
                 Events
               </Button>
+              <Button variant="outline" onClick={() => navigate('/admin/calendar')}>
+                Calendar
+              </Button>
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
