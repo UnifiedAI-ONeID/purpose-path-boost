@@ -79,6 +79,26 @@ Complete automated social media management system with AI-powered content sugges
 - **Input:** Analyzes past 90 days of metrics
 - **Output:** Structured content suggestions
 
+#### `post-suggestions`
+- **Purpose:** Generate post-specific AI recommendations based on tag performance
+- **Auth:** Requires JWT (admin only)
+- **Model:** google/gemini-2.5-flash (Lovable AI)
+- **Input:** `{ slug, title, excerpt, tags[] }`
+- **Output:** Structured suggestions including:
+  - Alternative headlines (bilingual EN/中文)
+  - Engaging hooks
+  - Platform-specific hashtags
+  - Optimal posting times (Asia/Vancouver)
+  - Recommended channels
+  - Cover image ideas
+  - Call-to-action options
+  - Why (strategy explanation based on trends)
+- **Flow:**
+  1. Fetches last 90 days from `v_tag_performance`
+  2. Computes tag trends (ER%, momentum)
+  3. Generates AI suggestions
+  4. Smart fallback to heuristics if AI unavailable
+
 ### Database Tables
 
 #### `social_posts`
@@ -114,7 +134,57 @@ Complete automated social media management system with AI-powered content sugges
 - Bilingual suggestions (EN/CN)
 - One-click generation
 
-#### `AdminSecrets`
+#### `PostAISuggestions`
+- **NEW** Post-specific AI recommendations
+- Analyzes tag performance trends (90-day history)
+- Generates alternative headlines (bilingual EN/中文)
+- Suggests engaging hooks and CTAs
+- Provides platform-specific hashtags
+- Recommends optimal posting times
+- Identifies best-performing channels
+- Uses Lovable AI (Gemini Flash)
+- Smart fallback to heuristics
+
+#### `TagPerformance`
+- **NEW** Tag analytics dashboard
+- Shows engagement rate (ER%) by tag
+- Click-through rate (CTR%) tracking
+- Weekly trend sparklines
+- Identifies momentum (rising tags)
+- Actionable suggestions:
+  - Tags to double-down on
+  - Tags for link posts
+  - Promising under-posted tags
+- Sortable by ER%, CTR%, or Impressions
+- Filterable by minimum post count
+
+#### `CoverComposer`
+- Auto-generate platform-optimized cover images
+- Tag-based gradient colors
+- Multi-language support (EN/简体/繁體)
+- Six platform sizes (LinkedIn, Facebook, X, Instagram, Stories)
+- Emoji watermarks per tag
+- Download and preview
+
+#### `CaptionBuilder`
+- Advanced caption editor
+- Per-platform customization
+- Tag-based hashtag insertion
+- UTM tracking integration
+- Language selector
+
+#### `BlogComposer`
+- Platform selection UI with emoji icons
+- Queue posts for multiple platforms at once
+- Shows info about Chinese platform export packs
+- Triggers worker after queueing
+- Auto-attaches generated cover images
+- Passes tags to social_posts for tracking
+
+#### `SocialAnalytics`
+- Platform-by-platform metrics cards
+- Mini line charts for trends
+- Total impressions, engagements visualization
 - Encrypted token management
 - Required secrets:
   - `LINKEDIN_ACCESS_TOKEN`
@@ -163,6 +233,26 @@ Complete automated social media management system with AI-powered content sugges
 3. **Automatic Caption Generation:** When using CaptionBuilder, hashtags are auto-included
 4. **Platform-Optimized:** Hashtags are limited per platform (Instagram: 15, LinkedIn: 8, X: 6)
 5. **Tag Emoji Indicators:** CoverComposer shows tag emoji (🧠 for mindset, 💪 for confidence, etc.)
+
+### Using AI Post Suggestions
+1. **Open Social Share Dialog:** Click the Share (📱) icon on a published post
+2. **Review AI Suggestions:** System analyzes tag performance and generates:
+   - Alternative bilingual headlines (EN/中文)
+   - Engaging opening hooks
+   - Platform-specific hashtags
+   - Optimal posting times for Asia/Vancouver
+   - Recommended channels based on trends
+   - Cover image ideas
+   - Call-to-action options
+3. **Apply Suggestions:** Click "Use EN" or "用中文" buttons to apply suggestions
+4. **Customize:** Edit applied suggestions in CaptionBuilder before posting
+5. **Refresh:** Click "Refresh" to generate new suggestions based on latest performance data
+
+**AI Suggestions Source:**
+- Uses Lovable AI (Gemini Flash) when available
+- Analyzes last 90 days of tag performance
+- Identifies tags with high engagement rate and momentum
+- Falls back to smart heuristics if AI unavailable
 
 - **Tag Hashtag Reference:**
 - **mindset** → #MindsetShift #SelfGrowth #PositiveThinking

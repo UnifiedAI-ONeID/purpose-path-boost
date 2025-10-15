@@ -15,6 +15,7 @@ import { SocialConfigManager } from '@/components/SocialConfigManager';
 import SocialAnalytics from '@/components/SocialAnalytics';
 import ContentSuggestions from '@/components/ContentSuggestions';
 import TagPerformance from '@/components/TagPerformance';
+import PostAISuggestions from '@/components/PostAISuggestions';
 import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -619,6 +620,16 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold">{sharingPost.title}</h2>
                   <p className="text-sm text-muted-foreground">Cross-post to social media platforms</p>
                 </div>
+                
+                {/* AI Content Suggestions */}
+                <PostAISuggestions
+                  post={{
+                    title: sharingPost.title,
+                    slug: sharingPost.slug,
+                    excerpt: sharingPost.excerpt,
+                    tags: [],
+                  }}
+                />
                 
                 {/* Cover Image Generator */}
                 <CoverComposer
