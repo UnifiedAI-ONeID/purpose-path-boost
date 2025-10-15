@@ -1,6 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import satori from 'https://esm.sh/satori@0.10.14';
-import { Resvg } from 'https://esm.sh/@resvg/resvg-js@2.6.2';
+import { initWasm, Resvg } from 'https://esm.sh/@resvg/resvg-wasm@2.6.2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -150,7 +150,13 @@ async function renderSVG({
   return svg as string;
 }
 
+let wasmInitialized = false;
+
 async function svgToPng(svg: string, w: number, h: number) {
+  if (!wasmInitialized) {
+    await initWasm(fetch('https://esm.sh/@resvg/resvg-wasm@2.6.2/index_bg.wasm'));
+    wasmInitialized = true;
+  }
   const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: w } });
   const png = resvg.render();
   return png.asPng();
