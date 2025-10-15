@@ -1,4 +1,5 @@
 import { pickHashtags, platformHashLimit, EMO } from './helpers';
+import { TAG_HASH } from './hashtags';
 import { utmize, SocialPlatform } from '../utm';
 
 type CaptionBuilderArgs = {
@@ -27,18 +28,21 @@ export const buildCaption = ({
   baseUrl = 'https://zhengrowth.com' 
 }: CaptionBuilderArgs): CaptionBuilderReturn => {
   const link = utmize(`${baseUrl}/blog/${slug}`, platform, slug);
-  const max = platformHashLimit(platform);
   
   const commonTags = ['LifeCoaching', 'Clarity', 'Confidence', 'Consistency', 'Mindset', 'WomenInLeadership', 'CareerGrowth', 'ZhenGrowth'];
   const zhTagsCN = ['人生教练', '自我成长', '清晰', '自信', '目标', '女性成长', '职场', '心态', '真成长'];
   const zhTagsTW = ['人生教練', '自我成長', '清晰', '自信', '目標', '女性成長', '職場', '心態', '真成長'];
   
-  const chosen = pickHashtags(
-    lang === 'en' ? [...tags, ...commonTags] :
-    lang === 'zh-CN' ? [...tags, ...zhTagsCN] :
-    [...tags, ...zhTagsTW], 
-    max
-  );
+  // Get tag-specific hashtags from primary tag
+  const primary = (tags[0] || '').toLowerCase();
+  const tagSet = TAG_HASH[primary] || TAG_HASH[primary.replace(/[^\p{L}\p{N}]+/gu, '')] || [];
+
+  const pool = lang === 'en' ? [...tags, ...tagSet, ...commonTags]
+             : lang === 'zh-CN' ? [...tags, ...tagSet, ...zhTagsCN]
+             : [...tags, ...tagSet, ...zhTagsTW];
+
+  const max = platformHashLimit(platform);
+  const chosen = pickHashtags(pool, max);
 
   // Templates for English
   const en = {

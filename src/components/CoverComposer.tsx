@@ -11,6 +11,26 @@ const KEYS: PlatKey[] = ['linkedin', 'facebook', 'x', 'ig_square', 'ig_portrait'
 const TAGS = ['mindset','confidence','clarity','consistency','habits','leadership','career',
               'relationships','wellness','spirituality','money','productivity','自信','清晰','一致性','職涯','關係'];
 
+const EMO_BY_TAG: Record<string, string> = {
+  mindset: '🧠',
+  confidence: '💪',
+  clarity: '🔎',
+  consistency: '📆',
+  habits: '🔁',
+  leadership: '👑',
+  career: '💼',
+  relationships: '💬',
+  wellness: '🌿',
+  spirituality: '✨',
+  money: '💰',
+  productivity: '⏱️',
+  '自信': '💪',
+  '清晰': '🔎',
+  '一致性': '📆',
+  '職涯': '💼',
+  '關係': '💬'
+};
+
 interface CoverComposerProps {
   post: {
     title: string;
@@ -70,14 +90,17 @@ export default function CoverComposer({ post }: CoverComposerProps) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Label htmlFor="tag-select" className="text-sm">Tag:</Label>
-            <select
-              id="tag-select"
-              className="px-3 py-1 rounded-md border border-border bg-background"
-              value={tag}
-              onChange={(e) => setTag(e.target.value)}
-            >
-              {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <div className="flex items-center gap-1">
+              <span aria-hidden className="text-lg">{EMO_BY_TAG[tag] || '🍃'}</span>
+              <select
+                id="tag-select"
+                className="px-3 py-1 rounded-md border border-border bg-background"
+                value={tag}
+                onChange={(e) => setTag(e.target.value)}
+              >
+                {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Label htmlFor="theme-select" className="text-sm">Theme:</Label>

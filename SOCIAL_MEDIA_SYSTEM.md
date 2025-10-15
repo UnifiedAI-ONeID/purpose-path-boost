@@ -32,6 +32,17 @@ Complete automated social media management system with AI-powered content sugges
   - Hashtags (mix of English and Chinese)
   - Optimal posting times for Asia/Vancouver timezones
 
+### 4. Tag-Based Hashtag System
+- **Intelligent Hashtag Selection:** Automatically includes relevant hashtags based on blog post tags
+- **Tag Categories:** Each tag (mindset, confidence, clarity, etc.) has curated hashtag sets
+- **Platform Optimization:** Respects platform-specific hashtag limits
+  - Instagram: 15 hashtags
+  - LinkedIn: 8 hashtags
+  - X (Twitter): 6 hashtags
+- **Bilingual Support:** Separate hashtag sets for English and Chinese content
+- **Deduplication:** Automatically removes duplicate hashtags
+- **Brand Consistency:** Includes core brand hashtags (LifeCoaching, ZhenGrowth, etc.)
+
 ## Architecture
 
 ### Edge Functions
@@ -145,6 +156,27 @@ Complete automated social media management system with AI-powered content sugges
 3. Click "Generate Ideas"
 4. AI analyzes your past 90 days
 5. Provides tailored bilingual suggestions
+
+### Using Tag-Based Hashtags
+1. **Assign Tags to Blog Posts:** When creating a blog, add relevant tags (e.g., "confidence", "mindset")
+2. **First Tag is Primary:** The system uses the first tag to select hashtag set
+3. **Automatic Caption Generation:** When using CaptionBuilder, hashtags are auto-included
+4. **Platform-Optimized:** Hashtags are limited per platform (Instagram: 15, LinkedIn: 8, X: 6)
+5. **Tag Emoji Indicators:** CoverComposer shows tag emoji (🧠 for mindset, 💪 for confidence, etc.)
+
+**Tag Hashtag Reference:**
+- **mindset** → #MindsetShift #SelfGrowth #PositiveThinking
+- **confidence** → #Confidence #SelfWorth #OwnYourVoice
+- **clarity** → #Clarity #LifeDesign #Vision
+- **consistency** → #Consistency #DailyHabits #SmallWins
+- **habits** → #AtomicHabits #Routine #Discipline
+- **leadership** → #WomenInLeadership #Leadership #ExecutiveCoaching
+- **career** → #CareerGrowth #CareerPivot #WorkSmarter
+- **relationships** → #HealthyBoundaries #Communication #Empathy
+- **wellness** → #Wellness #BurnoutRecovery #MindBody
+- **spirituality** → #Faith #Grace #Purpose
+- **money** → #MoneyMindset #Wealth #FinancialWellness
+- **productivity** → #DeepWork #Focus #TimeManagement
 
 ## Platform-Specific Notes
 

@@ -9,6 +9,7 @@ interface BlogComposerProps {
     slug: string;
     excerpt: string;
     image_url?: string;
+    tags?: string[];
   };
 }
 
