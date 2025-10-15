@@ -43,26 +43,37 @@ export default function BlogComposer({ post }: BlogComposerProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('social-queue', {
-        body: {
-          slug: post.slug,
-          title: post.title,
-          summary: post.excerpt,
-          cover: post.image_url,
-          platforms: targets,
-        },
+      // Get generated cover images for this post
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const baseImageUrl = `${supabaseUrl}/storage/v1/object/public/social-images/${post.slug}`;
+      
+      const rows = targets.map(p => {
+        // Map platform to image filename
+        let imagePath = '';
+        if (p === 'linkedin') imagePath = `${baseImageUrl}/linkedin.png`;
+        else if (p === 'facebook') imagePath = `${baseImageUrl}/facebook.png`;
+        else if (p === 'x') imagePath = `${baseImageUrl}/x.png`;
+        else if (p === 'instagram') imagePath = `${baseImageUrl}/ig_portrait.png`;
+        else if (p === 'wechat' || p === 'red' || p === 'zhihu' || p === 'douyin') {
+          imagePath = `${baseImageUrl}/ig_square.png`; // Use square for Chinese platforms
+        }
+
+        return {
+          blog_slug: post.slug,
+          platform: p,
+          message: `${post.title}\n\n${post.excerpt || ''}`,
+          media: imagePath ? [{ type: 'image', url: imagePath }] : (post.image_url ? [{ type: 'image', url: post.image_url }] : []),
+        };
       });
+
+      const { error } = await supabase.from('social_posts').insert(rows);
 
       if (error) throw error;
 
-      if (data?.ok) {
-        toast.success(`Queued ${data.count} post(s) for publishing`);
-        
-        // Trigger worker to process queue
-        supabase.functions.invoke('social-worker').catch(console.error);
-      } else {
-        throw new Error(data?.error || 'Failed to queue posts');
-      }
+      toast.success(`Queued ${rows.length} post(s) for publishing`);
+      
+      // Trigger worker to process queue
+      supabase.functions.invoke('social-worker').catch(console.error);
     } catch (error: any) {
       console.error('Error queueing posts:', error);
       toast.error(error.message || 'Failed to queue posts');

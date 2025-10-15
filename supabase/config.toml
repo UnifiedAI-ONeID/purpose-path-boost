@@ -24,6 +24,12 @@ verify_jwt = false
 [functions.ai-suggest-topics]
 verify_jwt = false
 
+[functions.og-render]
+verify_jwt = false
+
+[functions.og-render-all]
+verify_jwt = true
+
 [functions.metrics-collect]
 verify_jwt = false
 

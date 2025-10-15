@@ -10,6 +10,7 @@ import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye,
 import { BlogEditor } from '@/components/BlogEditor';
 import BlogComposer from '@/components/BlogComposer';
 import CaptionBuilder from '@/components/CaptionBuilder';
+import CoverComposer from '@/components/CoverComposer';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
 import SocialAnalytics from '@/components/SocialAnalytics';
 import ContentSuggestions from '@/components/ContentSuggestions';
@@ -612,6 +613,15 @@ const AdminDashboard = () => {
                   <h2 className="text-2xl font-bold">{sharingPost.title}</h2>
                   <p className="text-sm text-muted-foreground">Cross-post to social media platforms</p>
                 </div>
+                
+                {/* Cover Image Generator */}
+                <CoverComposer
+                  post={{
+                    title: sharingPost.title,
+                    slug: sharingPost.slug,
+                    excerpt: sharingPost.excerpt,
+                  }}
+                />
                 
                 {/* Advanced Caption Builder */}
                 <CaptionBuilder
