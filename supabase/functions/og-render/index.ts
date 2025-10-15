@@ -18,29 +18,29 @@ const PLAT_SIZES = {
 
 type PlatKey = keyof typeof PLAT_SIZES;
 
-type Accent = { start: string; end: string };
+type Accent = { start: string; end: string; emoji?: string; wmOpacity?: number };
 
 const TAG_PALETTE: Record<string, Accent> = {
-  mindset:     { start: '#0B3D3C', end: '#15706A' },
-  confidence:  { start: '#004E92', end: '#000428' },
-  clarity:     { start: '#2E3192', end: '#1BFFFF' },
-  consistency: { start: '#0F2027', end: '#203A43' },
-  habits:      { start: '#4CA1AF', end: '#2C3E50' },
-  leadership:  { start: '#8E2DE2', end: '#4A00E0' },
-  career:      { start: '#11998E', end: '#38EF7D' },
-  relationships:{ start: '#FF512F', end: '#DD2476' },
-  wellness:    { start: '#F7971E', end: '#FFD200' },
-  spirituality:{ start: '#5A3F37', end: '#2C7744' },
-  money:       { start: '#56ab2f', end: '#a8e063' },
-  productivity:{ start: '#1D2B64', end: '#F8CDDA' },
-  '自信':      { start: '#004E92', end: '#000428' },
-  '清晰':      { start: '#2E3192', end: '#1BFFFF' },
-  '一致性':    { start: '#0F2027', end: '#203A43' },
-  '職涯':      { start: '#11998E', end: '#38EF7D' },
-  '關係':      { start: '#FF512F', end: '#DD2476' },
+  mindset:      { start: '#0B3D3C', end: '#15706A', emoji: '🧠', wmOpacity: .12 },
+  confidence:   { start: '#004E92', end: '#000428', emoji: '💪', wmOpacity: .10 },
+  clarity:      { start: '#2E3192', end: '#1BFFFF', emoji: '🔎', wmOpacity: .10 },
+  consistency:  { start: '#0F2027', end: '#203A43', emoji: '📆', wmOpacity: .10 },
+  habits:       { start: '#4CA1AF', end: '#2C3E50', emoji: '🔁', wmOpacity: .12 },
+  leadership:   { start: '#8E2DE2', end: '#4A00E0', emoji: '👑', wmOpacity: .10 },
+  career:       { start: '#11998E', end: '#38EF7D', emoji: '💼', wmOpacity: .10 },
+  relationships:{ start: '#FF512F', end: '#DD2476', emoji: '💬', wmOpacity: .12 },
+  wellness:     { start: '#F7971E', end: '#FFD200', emoji: '🌿', wmOpacity: .12 },
+  spirituality: { start: '#5A3F37', end: '#2C7744', emoji: '✨', wmOpacity: .10 },
+  money:        { start: '#56ab2f', end: '#a8e063', emoji: '💰', wmOpacity: .10 },
+  productivity: { start: '#1D2B64', end: '#F8CDDA', emoji: '⏱️', wmOpacity: .10 },
+  '自信':       { start: '#004E92', end: '#000428', emoji: '💪', wmOpacity: .10 },
+  '清晰':       { start: '#2E3192', end: '#1BFFFF', emoji: '🔎', wmOpacity: .10 },
+  '一致性':     { start: '#0F2027', end: '#203A43', emoji: '📆', wmOpacity: .10 },
+  '職涯':       { start: '#11998E', end: '#38EF7D', emoji: '💼', wmOpacity: .10 },
+  '關係':       { start: '#FF512F', end: '#DD2476', emoji: '💬', wmOpacity: .12 },
 };
 
-const DEFAULT_ACCENT: Accent = { start: '#0B3D3C', end: '#15706A' };
+const DEFAULT_ACCENT: Accent = { start: '#0B3D3C', end: '#15706A', emoji: '🍃', wmOpacity: .10 };
 
 function pickAccent(tag?: string): Accent {
   if (!tag) return DEFAULT_ACCENT;
@@ -85,6 +85,11 @@ async function renderSVG({
     lang === 'zh-CN' ? 'ZhenGrowth 真成长' :
     'ZhenGrowth — Grow with Clarity';
 
+  const wmFontSize = Math.round(Math.min(w, h) * 0.3);
+  const footerPad = w * 0.02;
+  const emojiIcon = accent?.emoji || '🍃';
+  const wmOpacity = accent?.wmOpacity ?? 0.10;
+
   const svg = await satori(
     {
       type: 'div',
@@ -93,12 +98,30 @@ async function renderSVG({
           width: w,
           height: h,
           display: 'flex',
+          position: 'relative',
           background: bgGradient(theme, accent),
           color: '#fff',
           padding: w * 0.08,
           fontFamily: 'system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC", Arial, sans-serif',
         },
         children: [
+          // Watermark emoji (very faint, bottom-right)
+          {
+            type: 'div',
+            props: {
+              style: {
+                position: 'absolute',
+                right: w * 0.05,
+                bottom: h * 0.02,
+                fontSize: wmFontSize,
+                opacity: wmOpacity,
+                filter: 'blur(0.3px)',
+              },
+              children: emojiIcon,
+            },
+          },
+
+          // Main content
           {
             type: 'div',
             props: {
@@ -139,24 +162,20 @@ async function renderSVG({
                   props: {
                     style: {
                       marginTop: 'auto',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: w * 0.02,
-                      background: card(theme),
+                      gap: footerPad,
+                      background: 'rgba(0,0,0,.15)',
                       borderRadius: w * 0.02,
-                      padding: w * 0.02,
-                      border: `1px solid ${
-                        theme === 'dark'
-                          ? 'rgba(255,255,255,.18)'
-                          : 'rgba(255,255,255,.25)'
-                      }`,
+                      padding: `${footerPad}px ${footerPad * 1.2}px`,
+                      border: '1px solid rgba(255,255,255,.25)',
                     },
                     children: [
                       {
                         type: 'div',
                         props: {
                           style: { fontSize: w * 0.06 },
-                          children: '🍃',
+                          children: emojiIcon,
                         },
                       },
                       {
