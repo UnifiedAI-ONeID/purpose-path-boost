@@ -44,6 +44,7 @@ import AdminEvents from "./pages/AdminEvents";
 import AdminEventEdit from "./pages/AdminEventEdit";
 import AdminCalendar from "./pages/AdminCalendar";
 import AdminPricing from "./pages/AdminPricing";
+import AdminExpress from "./pages/AdminExpress";
 
 const queryClient = new QueryClient();
 
@@ -86,7 +87,8 @@ function AppRoutes() {
         <Route path="/admin/events" element={<AdminEvents />} />
         <Route path="/admin/events/:slug" element={<AdminEventEdit />} />
         <Route path="/admin/calendar" element={<AdminCalendar />} />
-        <Route path="/admin/pricing" element={<AdminPricing />} />
+          <Route path="/admin/pricing" element={<AdminPricing />} />
+          <Route path="/admin/express" element={<AdminExpress />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>

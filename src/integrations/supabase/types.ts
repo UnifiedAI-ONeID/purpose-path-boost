@@ -613,6 +613,110 @@ export type Database = {
         }
         Relationships: []
       }
+      express_offers: {
+        Row: {
+          active: boolean | null
+          base_currency: string
+          base_price_cents: number
+          description: string | null
+          id: string
+          slug: string
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          base_currency?: string
+          base_price_cents?: number
+          description?: string | null
+          id?: string
+          slug: string
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          base_currency?: string
+          base_price_cents?: number
+          description?: string | null
+          id?: string
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      express_orders: {
+        Row: {
+          airwallex_id: string | null
+          airwallex_link: string | null
+          amount_cents: number
+          created_at: string | null
+          currency: string
+          email: string
+          id: string
+          language: string | null
+          name: string
+          notes: string | null
+          offer_slug: string
+          status: string
+        }
+        Insert: {
+          airwallex_id?: string | null
+          airwallex_link?: string | null
+          amount_cents: number
+          created_at?: string | null
+          currency: string
+          email: string
+          id?: string
+          language?: string | null
+          name: string
+          notes?: string | null
+          offer_slug: string
+          status?: string
+        }
+        Update: {
+          airwallex_id?: string | null
+          airwallex_link?: string | null
+          amount_cents?: number
+          created_at?: string | null
+          currency?: string
+          email?: string
+          id?: string
+          language?: string | null
+          name?: string
+          notes?: string | null
+          offer_slug?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      express_price_overrides: {
+        Row: {
+          currency: string
+          id: string
+          offer_slug: string | null
+          price_cents: number
+        }
+        Insert: {
+          currency: string
+          id?: string
+          offer_slug?: string | null
+          price_cents: number
+        }
+        Update: {
+          currency?: string
+          id?: string
+          offer_slug?: string | null
+          price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "express_price_overrides_offer_slug_fkey"
+            columns: ["offer_slug"]
+            isOneToOne: false
+            referencedRelation: "express_offers"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       fx_rates: {
         Row: {
           base: string
