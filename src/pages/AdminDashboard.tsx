@@ -10,6 +10,8 @@ import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye,
 import { BlogEditor } from '@/components/BlogEditor';
 import BlogComposer from '@/components/BlogComposer';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
+import SocialAnalytics from '@/components/SocialAnalytics';
+import ContentSuggestions from '@/components/ContentSuggestions';
 import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,7 +68,7 @@ const AdminDashboard = () => {
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
   const [sharingPost, setSharingPost] = useState<BlogPost | null>(null);
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics' | 'secrets'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics' | 'secrets'>('blog');
   const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
   useEffect(() => {
@@ -536,6 +538,48 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Social Media Actions */}
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const { error } = await supabase.functions.invoke('social-worker');
+                      if (error) throw error;
+                      toast.success('Social posts dispatched successfully');
+                    } catch (error: any) {
+                      toast.error(`Failed to dispatch: ${error.message}`);
+                    }
+                  }}
+                >
+                  🚀 Dispatch Queued Posts
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const { data, error } = await supabase.functions.invoke('social-metrics-collect');
+                      if (error) throw error;
+                      toast.success(`Collected metrics for ${data.count} posts`);
+                    } catch (error: any) {
+                      toast.error(`Failed to collect: ${error.message}`);
+                    }
+                  }}
+                >
+                  📊 Collect Metrics
+                </Button>
+              </div>
+
+              {/* Social Analytics */}
+              <div className="pt-6">
+                <SocialAnalytics />
+              </div>
+
+              {/* AI Content Suggestions */}
+              <div className="pt-6">
+                <ContentSuggestions />
+              </div>
             </>
           )}
         </motion.div>
