@@ -6,8 +6,8 @@ interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
-  date: string;
-  readTime: string;
+  published_at: string;
+  read_time: number;
 }
 
 interface BlogSheetProps {
@@ -30,7 +30,9 @@ export function BlogSheet({ open, onClose, post }: BlogSheetProps) {
         <div className="flex items-start justify-between px-6 py-3 border-b border-border">
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-fg leading-tight">{post.title}</h3>
-            <p className="text-xs text-muted mt-1">{post.date} · {post.readTime}</p>
+            <p className="text-xs text-muted mt-1">
+              {new Date(post.published_at).toLocaleDateString()} · {post.read_time} min read
+            </p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-fg ml-2">
             <X size={20} />
