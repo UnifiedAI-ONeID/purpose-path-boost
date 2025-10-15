@@ -13,7 +13,10 @@ const FIELDS = [
   { key: 'POSTHOG_KEY', label: 'PostHog Key' },
   { key: 'LINKEDIN_ACCESS_TOKEN', label: 'LinkedIn Access Token' },
   { key: 'FACEBOOK_PAGE_ID', label: 'Facebook Page ID' },
-  { key: 'FACEBOOK_PAGE_ACCESS_TOKEN', label: 'Facebook Page Access Token' }
+  { key: 'FACEBOOK_PAGE_ACCESS_TOKEN', label: 'Facebook Page Access Token' },
+  { key: 'INSTAGRAM_BUSINESS_ID', label: 'Instagram Business Account ID' },
+  { key: 'INSTAGRAM_GRAPH_TOKEN', label: 'Instagram Graph API Token' },
+  { key: 'X_BEARER_TOKEN', label: 'X (Twitter) Bearer Token' }
 ];
 
 export default function AdminSecrets() {
