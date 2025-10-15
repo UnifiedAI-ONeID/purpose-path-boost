@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { User, Session } from '@supabase/supabase-js';
-import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3 } from 'lucide-react';
+import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3, Share2 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
+import BlogComposer from '@/components/BlogComposer';
 import { SocialConfigManager } from '@/components/SocialConfigManager';
 import { MetricsSummary } from '@/components/MetricsSummary';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -36,6 +37,8 @@ interface BlogPost {
   id: string;
   title: string;
   slug: string;
+  excerpt: string;
+  image_url?: string;
   category: string;
   published: boolean;
   created_at: string;
@@ -62,6 +65,7 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
+  const [sharingPost, setSharingPost] = useState<BlogPost | null>(null);
   const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics' | 'secrets'>('leads');
   const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
@@ -148,7 +152,7 @@ const AdminDashboard = () => {
     try {
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('id, title, slug, category, published, created_at, published_at')
+        .select('id, title, slug, excerpt, image_url, category, published, created_at, published_at')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -485,16 +489,26 @@ const AdminDashboard = () => {
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
                                 {post.published && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    asChild
-                                    onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
-                                  >
-                                    <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
-                                      <Eye className="h-4 w-4" />
-                                    </a>
-                                  </Button>
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setSharingPost(post)}
+                                      title="Share to social media"
+                                    >
+                                      <Share2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      asChild
+                                      onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                                    >
+                                      <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer">
+                                        <Eye className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+                                  </>
                                 )}
                                 <Button
                                   variant="ghost"
@@ -541,6 +555,22 @@ const AdminDashboard = () => {
                 fetchBlogPosts();
               }}
             />
+          </DialogContent>
+        </Dialog>
+
+        {/* Social Media Share Dialog */}
+        <Dialog open={!!sharingPost} onOpenChange={(open) => !open && setSharingPost(null)}>
+          <DialogContent className="max-w-2xl">
+            {sharingPost && (
+              <BlogComposer
+                post={{
+                  title: sharingPost.title,
+                  slug: sharingPost.slug,
+                  excerpt: sharingPost.excerpt,
+                  image_url: sharingPost.image_url,
+                }}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>

@@ -9,6 +9,15 @@ verify_jwt = true
 [functions.manage-social-config]
 verify_jwt = true
 
+[functions.manage-secrets]
+verify_jwt = true
+
+[functions.social-queue]
+verify_jwt = true
+
+[functions.social-worker]
+verify_jwt = false
+
 [functions.metrics-collect]
 verify_jwt = false
 
