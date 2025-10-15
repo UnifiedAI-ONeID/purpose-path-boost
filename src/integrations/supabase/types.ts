@@ -152,6 +152,93 @@ export type Database = {
         }
         Relationships: []
       }
+      social_config_logs: {
+        Row: {
+          action: string
+          changed_by: string | null
+          changes: Json | null
+          created_at: string
+          id: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          version: number
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          version: number
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: string
+          platform?: Database["public"]["Enums"]["social_platform"]
+          version?: number
+        }
+        Relationships: []
+      }
+      social_configs: {
+        Row: {
+          access_token_enc: string | null
+          account_id_enc: string | null
+          app_key_enc: string | null
+          app_secret_enc: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          last_test_at: string | null
+          last_test_status: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posting_template: string | null
+          refresh_token_enc: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+          webhook_url_enc: string | null
+        }
+        Insert: {
+          access_token_enc?: string | null
+          account_id_enc?: string | null
+          app_key_enc?: string | null
+          app_secret_enc?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_test_at?: string | null
+          last_test_status?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posting_template?: string | null
+          refresh_token_enc?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+          webhook_url_enc?: string | null
+        }
+        Update: {
+          access_token_enc?: string | null
+          account_id_enc?: string | null
+          app_key_enc?: string | null
+          app_secret_enc?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_test_at?: string | null
+          last_test_status?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          posting_template?: string | null
+          refresh_token_enc?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+          webhook_url_enc?: string | null
+        }
+        Relationships: []
+      }
       social_media_posts: {
         Row: {
           blog_post_id: string
@@ -229,6 +316,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      social_platform:
+        | "twitter"
+        | "linkedin"
+        | "facebook"
+        | "instagram"
+        | "youtube_community"
+        | "medium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -357,6 +451,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      social_platform: [
+        "twitter",
+        "linkedin",
+        "facebook",
+        "instagram",
+        "youtube_community",
+        "medium",
+      ],
     },
   },
 } as const
