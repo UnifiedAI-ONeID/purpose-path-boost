@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import ThemeToggle from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import SmartLink from './SmartLink';
+import { ROUTES } from '@/nav/routes';
 
 type Props = {
   children: React.ReactNode;
@@ -17,41 +18,39 @@ export default function SiteShell({ children }: Props) {
   return (
     <div className="min-h-[100svh] bg-bg text-text">
       <header className="h-14 px-4 border-b border-border bg-surface flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-surface/90">
-        <Link to="/" className="font-semibold flex items-center gap-2 text-text hover:opacity-80 transition-opacity">
+        <SmartLink to={ROUTES.home} className="font-semibold flex items-center gap-2 text-text hover:opacity-80 transition-opacity">
           <span className="text-2xl">🍃</span>
           <span>ZhenGrowth</span>
-        </Link>
+        </SmartLink>
         
-        <nav className="hidden md:flex items-center gap-2">
-          <Link className="btn btn-ghost px-3 py-2 h-auto" to="/coaching">
+        <nav className="flex items-center gap-2">
+          <SmartLink className="btn btn-ghost text-sm" to={ROUTES.coaching}>
             {lang === 'zh-CN' ? '辅导' : lang === 'zh-TW' ? '輔導' : 'Coaching'}
-          </Link>
-          <Link className="btn btn-ghost px-3 py-2 h-auto" to="/events">
+          </SmartLink>
+          <SmartLink className="btn btn-ghost text-sm hidden sm:inline-flex" to={ROUTES.events}>
             {lang === 'zh-CN' ? '活动' : lang === 'zh-TW' ? '活動' : 'Events'}
-          </Link>
-          <Link className="btn btn-ghost px-3 py-2 h-auto" to="/contact">
+          </SmartLink>
+          <SmartLink className="btn btn-ghost text-sm hidden sm:inline-flex" to={ROUTES.contact}>
             {lang === 'zh-CN' ? '联系' : lang === 'zh-TW' ? '聯絡' : 'Contact'}
-          </Link>
+          </SmartLink>
           <LanguageSwitcher />
           <ThemeToggle />
         </nav>
       </header>
       
-      <main className="mx-auto max-w-container px-mobile py-6">
+      <main className="mx-auto max-w-container px-mobile py-4">
         {children}
       </main>
       
-      <footer className="mt-12 py-8 border-t border-border text-sm text-muted bg-subtle">
-        <div className="mx-auto max-w-container px-mobile flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>© {new Date().getFullYear()} ZhenGrowth. All rights reserved.</div>
-          <div className="flex gap-4">
-            <Link to="/privacy" className="hover:text-text transition-colors">
-              {lang === 'zh-CN' ? '隐私' : lang === 'zh-TW' ? '隱私' : 'Privacy'}
-            </Link>
-            <Link to="/terms" className="hover:text-text transition-colors">
-              {lang === 'zh-CN' ? '条款' : lang === 'zh-TW' ? '條款' : 'Terms'}
-            </Link>
-          </div>
+      <footer className="mt-6 py-6 border-t border-border text-sm text-muted bg-subtle">
+        <div className="mx-auto max-w-container px-mobile text-center sm:text-left">
+          © {new Date().getFullYear()} ZhenGrowth. 
+          <SmartLink to={ROUTES.privacy} className="ml-4 hover:text-text transition-colors">
+            {lang === 'zh-CN' ? '隐私' : lang === 'zh-TW' ? '隱私' : 'Privacy'}
+          </SmartLink>
+          <SmartLink to={ROUTES.terms} className="ml-4 hover:text-text transition-colors">
+            {lang === 'zh-CN' ? '条款' : lang === 'zh-TW' ? '條款' : 'Terms'}
+          </SmartLink>
         </div>
       </footer>
     </div>

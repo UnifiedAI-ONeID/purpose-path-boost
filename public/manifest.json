@@ -1,20 +1,13 @@
 {
   "name": "ZhenGrowth",
   "short_name": "ZhenGrowth",
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "start_url": "/?source=webapp",
   "display": "standalone",
   "background_color": "#0b1f1f",
   "theme_color": "#0b1f1f",
-  "description": "Grow with clarity, confidence, and purpose.",
   "icons": [
     { "src": "/app-icon.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
-  ],
-  "shortcuts": [
-    { "name": "Coaching", "url": "/coaching", "icons": [{ "src": "/app-icon.png", "sizes": "96x96" }] },
-    { "name": "Events", "url": "/events", "icons": [{ "src": "/app-icon.png", "sizes": "96x96" }] }
-  ],
-  "categories": ["lifestyle", "productivity", "education"]
+  ]
 }
