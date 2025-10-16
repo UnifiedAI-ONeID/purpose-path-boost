@@ -39,6 +39,9 @@ verify_jwt = false
 [functions.api-cal-book-url]
 verify_jwt = false
 
+[functions.cal-availability]
+verify_jwt = false
+
 [functions.api-admin-check-role]
 verify_jwt = true
 

@@ -22,6 +22,7 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/coaching/get': 'api-coaching-get',
   '/api/coaching/book-url': 'api-coaching-book-url',
   '/api/cal/book-url': 'api-cal-book-url',
+  '/api/cal/availability': 'cal-availability',
   '/api/contact/submit': 'api-contact-submit',
   '/api/admin/check-role': 'api-admin-check-role',
   '/api/admin/coaching/list': 'api-admin-coaching-list',
