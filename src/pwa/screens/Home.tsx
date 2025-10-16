@@ -59,15 +59,6 @@ export default function Home() {
           <Button size="lg" variant="secondary">Begin Assessment</Button>
         </SmartLink>
       </Card>
-
-      <div className="mt-6 space-y-3">
-        <SmartLink href="/pwa/coaching">
-          <Button variant="outline" className="w-full">Explore Coaching Programs</Button>
-        </SmartLink>
-        <SmartLink href="/pwa/dashboard">
-          <Button variant="outline" className="w-full">My Dashboard</Button>
-        </SmartLink>
-      </div>
     </div>
   );
 }

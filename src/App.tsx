@@ -53,7 +53,8 @@ import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
 
-// Lazy load PWA screens
+// Lazy load PWA screens and layout
+const PWALayout = lazy(() => import("./pwa/PWALayout"));
 const PWAHome = lazy(() => import("./pwa/screens/Home"));
 const PWAQuiz = lazy(() => import("./pwa/screens/Quiz"));
 const PWADashboard = lazy(() => import("./pwa/screens/Dashboard"));
@@ -108,27 +109,33 @@ function AppRoutes() {
         <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/admin/coaching" element={<AdminCoaching />} />
         
-        {/* PWA routes (standalone) */}
-        <Route path="/pwa/home" element={
+        {/* PWA routes with shared layout */}
+        <Route path="/pwa" element={
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <PWAHome />
+            <PWALayout />
           </Suspense>
-        } />
-        <Route path="/pwa/quiz" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <PWAQuiz />
-          </Suspense>
-        } />
-        <Route path="/pwa/dashboard" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <PWADashboard />
-          </Suspense>
-        } />
-        <Route path="/pwa/coaching" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <PWACoaching />
-          </Suspense>
-        } />
+        }>
+          <Route path="home" element={
+            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+              <PWAHome />
+            </Suspense>
+          } />
+          <Route path="quiz" element={
+            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+              <PWAQuiz />
+            </Suspense>
+          } />
+          <Route path="dashboard" element={
+            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+              <PWADashboard />
+            </Suspense>
+          } />
+          <Route path="coaching" element={
+            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+              <PWACoaching />
+            </Suspense>
+          } />
+        </Route>
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
