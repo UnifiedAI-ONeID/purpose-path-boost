@@ -18,17 +18,17 @@ export default function Testimonials() {
         const { data, error } = await supabase.functions.invoke('api-testimonials-list');
         
         if (error) {
-          console.error('Testimonials error:', error);
+          console.warn('Testimonials: API error (non-critical)', error.message);
           return;
         }
         
         if (data?.ok && Array.isArray(data.rows)) {
           setRows(data.rows);
-        } else {
-          console.error('Invalid testimonials response:', data);
+        } else if (data?.error) {
+          console.warn('Testimonials: Database issue', data.error);
         }
       } catch (error) {
-        console.error('Failed to fetch testimonials:', error);
+        console.warn('Testimonials: Failed to load (non-critical)', error);
       }
     })();
   }, []);

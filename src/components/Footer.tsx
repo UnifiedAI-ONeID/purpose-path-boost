@@ -4,7 +4,29 @@ import { Mail, MessageCircle } from 'lucide-react';
 import logo from '@/assets/images/logo.png';
 
 export const Footer = () => {
-  const { t } = useTranslation('common');
+  // Safe translation access with fallbacks
+  let t: any;
+  try {
+    const { t: translate } = useTranslation('common');
+    t = translate;
+  } catch (error) {
+    console.warn('Footer: Translation not ready', error);
+    // Fallback translation function
+    t = (key: string) => {
+      const fallbacks: Record<string, string> = {
+        'nav.home': 'Home',
+        'nav.about': 'About',
+        'nav.coaching': 'Coaching',
+        'nav.blog': 'Blog',
+        'footer.connect': 'Connect',
+        'footer.wechat': 'WeChat',
+        'footer.rights': '© 2025 ZhenGrowth. All rights reserved.',
+        'footer.privacy': 'Privacy Policy',
+        'footer.terms': 'Terms of Service'
+      };
+      return fallbacks[key] || key;
+    };
+  }
 
   return (
     <footer className="border-t bg-muted/50">

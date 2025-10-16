@@ -62,12 +62,18 @@ async function fetchVersion(): Promise<number> {
 }
 
 async function checkAndRefresh(force: boolean) {
+  // Skip if window/localStorage not available (SSR)
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return;
+  }
+
   const remote = await fetchVersion();
   const local = Number(localStorage.getItem(LS_KEY) || 0);
 
   console.log('[VersionGuard] Version check:', { local, remote, force });
 
-  if (force || remote > local) {
+  // Only reload if there's an actual version change (not on initial load)
+  if ((force || remote > local) && local > 0) {
     console.log('[VersionGuard] Version mismatch - purging caches and reloading');
     localStorage.setItem(LS_KEY, String(remote));
 
@@ -81,6 +87,9 @@ async function checkAndRefresh(force: boolean) {
       // Reload the page to ensure all modules are from the same build
       window.location.reload();
     }, 300);
+  } else if (local === 0) {
+    // First load - just set version without reloading
+    localStorage.setItem(LS_KEY, String(remote));
   }
 }
 
