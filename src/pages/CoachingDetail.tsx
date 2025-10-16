@@ -9,10 +9,9 @@ import { useI18nFetch } from '@/hooks/useI18nFetch';
 export default function CoachingDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = usePrefs();
-  const [loading, setLoading] = useState(true);
   
-  // Use i18n-aware fetch
-  const { data } = useI18nFetch<any>(slug ? `/api/coaching/get?slug=${slug}` : '', [slug]);
+  const { data, loading } = useI18nFetch<any>(slug ? `/api/coaching/get?slug=${slug}` : '', [slug]);
+  const localized = data?.localized;
 
   useEffect(() => {
     if (!slug || !data) return;
@@ -57,35 +56,34 @@ export default function CoachingDetail() {
   }
 
   const { offer, page } = data;
-  const { title, summary, body: bodyHtml } = pickLang({ ...offer, ...page }, lang);
 
   return (
     <main className="container mx-auto px-4 py-12">
       <SEOHelmet
-        title={`${title} | ZhenGrowth Coaching`}
-        description={summary || 'Professional coaching with Amelda Chen'}
+        title={`${localized?.title || 'Coaching'} | ZhenGrowth Coaching`}
+        description={localized?.summary || 'Professional coaching with Amelda Chen'}
         path={`/coaching/${offer.slug}`}
       />
 
       <header className="rounded-2xl p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-        <h1 className="text-3xl font-bold mb-2">{title}</h1>
-        {summary && <p className="text-lg text-muted-foreground mb-4">{summary}</p>}
+        <h1 className="text-3xl font-bold mb-2">{localized?.title}</h1>
+        {localized?.summary && <p className="text-lg text-muted-foreground mb-4">{localized.summary}</p>}
         <CoachingCTA slug={offer.slug} />
       </header>
 
       {page?.hero_image && (
         <img
           src={page.hero_image}
-          alt={title}
+          alt={localized?.title || 'Coaching'}
           className="w-full h-auto rounded-2xl mb-8"
           loading="lazy"
         />
       )}
 
-      {bodyHtml && (
+      {localized?.body && (
         <article
           className="prose prose-lg max-w-none mb-8"
-          dangerouslySetInnerHTML={{ __html: bodyHtml }}
+          dangerouslySetInnerHTML={{ __html: localized.body }}
         />
       )}
 

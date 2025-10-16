@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { getLang } from '../_util/i18n';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,6 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const lang = getLang(req);
 
     // Get offer
     const { data: offer, error: offerError } = await supabase
@@ -76,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         amount: priceData.amount_cents / 100,
         currency: priceData.currency,
         merchant_order_id: merchantOrderId,
-        return_url: `${baseUrl}/coaching/${slug}?paid=1&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&coupon=${encodeURIComponent(coupon || '')}&promo=${encodeURIComponent(promo || '')}`,
+        return_url: `${baseUrl}/coaching/${slug}?paid=1&lang=${encodeURIComponent(lang)}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&coupon=${encodeURIComponent(coupon || '')}&promo=${encodeURIComponent(promo || '')}`,
         cancel_url: `${baseUrl}/coaching/${slug}?cancel=1`,
         descriptor: `ZhenGrowth ${offer.title_en || slug}`
       })
@@ -89,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       offer_slug: slug,
       name,
       email,
-      language: 'en',
+      language: lang,
       notes,
       currency: priceData.currency,
       amount_cents: priceData.amount_cents,

@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
 import JadeGoldOverlay from '../motion/JadeGoldOverlay';
+import { usePrefs } from '@/prefs/PrefsProvider';
+import { at } from '@/i18n/admin';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
+  const { lang } = usePrefs();
   const [open, setOpen] = useState(false);
   const [pathname, setPathname] = useState('');
   const [animating, setAnimating] = useState(false);
@@ -55,26 +58,26 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
         <div className="p-4 font-semibold text-primary">ZG Admin</div>
         <nav className="p-2 grid gap-1 text-sm">
-          <Nav href="/admin">Dashboard</Nav>
+          <Nav href="/admin">{at(lang, 'Dashboard')}</Nav>
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Bookings
+            {at(lang, 'Bookings')}
           </div>
-          <Nav href="/admin/bookings">All Bookings</Nav>
-          <Nav href="/admin/cal-bookings">Cal.com Bookings</Nav>
-          <Nav href="/admin/calendar">Calendar View</Nav>
+          <Nav href="/admin/bookings">{at(lang, 'Bookings')}</Nav>
+          <Nav href="/admin/cal-bookings">Cal.com</Nav>
+          <Nav href="/admin/calendar">{at(lang, 'Calendar')}</Nav>
           
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Products
+            {at(lang, 'Products')}
           </div>
-          <Nav href="/admin/coaching">Coaching</Nav>
-          <Nav href="/admin/events">Events</Nav>
-          <Nav href="/admin/express">Express Pay</Nav>
+          <Nav href="/admin/coaching">{at(lang, 'Coaching')}</Nav>
+          <Nav href="/admin/events">{at(lang, 'Events')}</Nav>
+          <Nav href="/admin/express">{at(lang, 'Express')}</Nav>
           
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Settings
+            {at(lang, 'Settings')}
           </div>
-          <Nav href="/admin/pricing">Pricing & FX</Nav>
-          <Nav href="/admin/ai">AI System</Nav>
+          <Nav href="/admin/pricing">{at(lang, 'Pricing')}</Nav>
+          <Nav href="/admin/ai">{at(lang, 'AI')}</Nav>
         </nav>
       </aside>
       <main>
@@ -87,7 +90,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="font-semibold">Admin</div>
           <div className="flex items-center gap-2">
             <AdminInstallButton />
-            <a className="text-sm hover:text-primary transition-colors" href="/">View site</a>
+            <a className="text-sm hover:text-primary transition-colors" href="/">{at(lang, 'ViewSite')}</a>
           </div>
         </header>
         <div className="p-4 md:p-6">{children}</div>

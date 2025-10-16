@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { getLang, pickFields } from '../_util/i18n';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -17,6 +18,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const lang = getLang(req);
+    res.setHeader('Vary', 'Accept-Language');
 
     // Get offer
     const { data: offer, error: offerError } = await supabase
@@ -36,7 +39,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('offer_slug', slug)
       .maybeSingle();
 
-    return res.status(200).json({ ok: true, offer, page });
+    // Provide both raw data and localized fields
+    const localized = pickFields({ ...offer, ...(page || {}) }, lang);
+
+    return res.status(200).json({ ok: true, offer, page, localized, lang });
   } catch (error: any) {
     return res.status(500).json({ ok: false, error: error.message });
   }

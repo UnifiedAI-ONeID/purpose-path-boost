@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { getLang } from '../_util/i18n';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -21,6 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const lang = getLang(req);
 
     const { data: offer, error } = await supabase
       .from('coaching_offers')
@@ -38,7 +40,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email,
       utm_source: 'zg',
       utm_medium: 'cta',
-      utm_campaign: slug
+      utm_campaign: slug,
+      'metadata[lang]': lang
     });
 
     // Pass coupon/promo as metadata to Cal.com
