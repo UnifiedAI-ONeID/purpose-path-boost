@@ -73,7 +73,15 @@ export default {
   			xl: 'var(--radius)'
   		},
   		boxShadow: {
-  			soft: 'var(--shadow)'
+  			soft: 'var(--shadow)',
+  			medium: '0 8px 24px rgba(0,0,0,.12)',
+  			strong: '0 12px 40px rgba(0,0,0,.18)'
+  		},
+  		transitionDuration: {
+  			smooth: '300ms'
+  		},
+  		backgroundImage: {
+  			'gradient-primary': 'linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%)'
   		},
   		keyframes: {
   			'accordion-down': {

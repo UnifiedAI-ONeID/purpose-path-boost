@@ -31,7 +31,7 @@ const CoachingPrograms = () => {
   }, []);
 
   const lang = i18n.language as 'en' | 'zh-CN' | 'zh-TW';
-  const freeOfferSlug = offers.find(o => o.base_price_cents === 0)?.slug || 'discovery-20';
+  const freeOfferSlug = offers.find(o => o.base_price_cents === 0)?.slug || 'discovery-60';
 
   const outcomes = [
     {

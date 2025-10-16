@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data, error } = await supabase
       .from('coaching_offers')
-      .select('slug, title_en, title_zh_cn, title_zh_tw, summary_en, summary_zh_cn, summary_zh_tw, active, cal_event_type_slug')
+      .select('slug, title_en, title_zh_cn, title_zh_tw, summary_en, summary_zh_cn, summary_zh_tw, base_price_cents, base_currency, billing_type, cal_event_type_slug, active, sort')
       .eq('active', true)
       .order('sort', { ascending: true });
 
