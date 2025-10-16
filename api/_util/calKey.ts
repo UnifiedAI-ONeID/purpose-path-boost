@@ -3,8 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 let CACHED_KEY: { v: string; t: number } | null = null;
 
 export async function getCalKey() {
+  // First check environment variable (preferred for serverless)
+  const envKey = process.env.CAL_COM_API_KEY;
+  if (envKey) {
+    return envKey;
+  }
+
+  // Fallback to database lookup with caching
   const now = Date.now();
-  // Return cached key if less than 5 minutes old
   if (CACHED_KEY && now - CACHED_KEY.t < 5 * 60 * 1000) {
     return CACHED_KEY.v;
   }
@@ -24,7 +30,7 @@ export async function getCalKey() {
     .single();
 
   if (error || !data?.value) {
-    throw new Error('Cal.com API key not configured in secure_kv table');
+    throw new Error('Cal.com API key not configured. Please set CAL_COM_API_KEY environment variable or add to secure_kv table');
   }
 
   CACHED_KEY = { v: data.value, t: now };

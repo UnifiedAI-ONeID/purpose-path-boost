@@ -9,19 +9,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    proxy: {
-      '/api': {
-        target: mode === 'production' ? 'https://zhengrowth.com' : 'http://localhost:8080',
-        changeOrigin: true,
-        bypass: (req) => {
-          // In dev mode, bypass the proxy to serve API routes directly
-          if (mode === 'development' && req.url?.startsWith('/api/')) {
-            return req.url;
-          }
-        }
-      }
-    }
   },
+  // Prevent Vite from serving /api routes as static files
+  publicDir: mode === 'production' ? 'public' : false,
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -100,4 +90,10 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom"],
   },
+  build: {
+    rollupOptions: {
+      // Exclude API routes from build
+      external: mode === 'production' ? [] : [/^\/api\//],
+    }
+  }
 }));

@@ -6,6 +6,15 @@ const CAL_API = 'https://api.cal.com/v2';
 const cache: Record<string, { t: number; v: any }> = {};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     const slug = (req.query.slug as string) || req.body?.slug;
     const tz = (req.query.tz as string) || req.body?.tz || 'America/Vancouver';
