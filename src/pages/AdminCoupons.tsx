@@ -3,6 +3,8 @@ import AdminShell from '@/components/admin/AdminShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface Coupon {
   code: string;
@@ -23,9 +25,10 @@ export default function AdminCoupons() {
 
   async function fetchCoupons() {
     try {
-      const response = await fetch('/api/admin/coupons/list');
-      const json = await response.json();
-      setCoupons(json.rows || []);
+      const { data, error } = await supabase.functions.invoke('api-admin-coupons-list');
+      if (!error && data?.rows) {
+        setCoupons(data.rows);
+      }
     } catch (error) {
       console.error('Failed to fetch coupons:', error);
     } finally {
@@ -45,28 +48,33 @@ export default function AdminCoupons() {
     };
 
     try {
-      await fetch('/api/admin/coupons/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
+        body
       });
+      
+      if (error) throw error;
+      
       e.currentTarget.reset();
       fetchCoupons();
-    } catch (error) {
+      toast.success('Coupon created!');
+    } catch (error: any) {
       console.error('Failed to create coupon:', error);
+      toast.error(error.message || 'Failed to create coupon');
     }
   }
 
   async function handleDisable(code: string) {
     try {
-      await fetch('/api/admin/coupons/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, active: false }),
+      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
+        body: { code, active: false }
       });
+      
+      if (error) throw error;
       fetchCoupons();
-    } catch (error) {
+      toast.success('Coupon disabled');
+    } catch (error: any) {
       console.error('Failed to disable coupon:', error);
+      toast.error(error.message || 'Failed to disable coupon');
     }
   }
 

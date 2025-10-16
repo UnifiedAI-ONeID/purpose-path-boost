@@ -5,6 +5,8 @@ import { ROUTES } from '@/nav/routes';
 import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type Lang = 'en'|'zh-CN'|'zh-TW';
 
@@ -166,28 +168,42 @@ export default function ContactPage(){
 
   async function submit(){
     setBusy(true);
-    const payload = {
-      name: (document.getElementById('name') as HTMLInputElement).value.trim(),
-      email: (document.getElementById('email') as HTMLInputElement).value.trim(),
-      phone: (document.getElementById('phone') as HTMLInputElement).value.trim(),
-      wechat: (document.getElementById('wechat') as HTMLInputElement).value.trim(),
-      whatsapp: (document.getElementById('whatsapp') as HTMLInputElement).value.trim(),
-      topic: (document.getElementById('topic') as HTMLSelectElement).value,
-      budget: (document.getElementById('budget') as HTMLSelectElement).value,
-      lang_pref: (document.getElementById('langpref') as HTMLSelectElement).value,
-      channel_pref: (document.getElementById('channel') as HTMLSelectElement).value,
-      message: (document.getElementById('message') as HTMLTextAreaElement).value.trim(),
-      consent: (document.getElementById('consent') as HTMLInputElement).checked,
-      honey: (document.getElementById('website') as HTMLInputElement).value,
-      source: 'contact_page',
-    };
-    const r = await fetch('/api/contact/submit',{ 
-      method:'POST', 
-      headers:{'Content-Type':'application/json'}, 
-      body: JSON.stringify(payload) 
-    }).then(r=>r.json()).catch(()=>({ok:false}));
-    setBusy(false);
-    setSent(r.ok?'ok':'err');
+    try {
+      const payload = {
+        name: (document.getElementById('name') as HTMLInputElement).value.trim(),
+        email: (document.getElementById('email') as HTMLInputElement).value.trim(),
+        phone: (document.getElementById('phone') as HTMLInputElement).value.trim(),
+        wechat: (document.getElementById('wechat') as HTMLInputElement).value.trim(),
+        whatsapp: (document.getElementById('whatsapp') as HTMLInputElement).value.trim(),
+        topic: (document.getElementById('topic') as HTMLSelectElement).value,
+        budget: (document.getElementById('budget') as HTMLSelectElement).value,
+        lang_pref: (document.getElementById('langpref') as HTMLSelectElement).value,
+        channel_pref: (document.getElementById('channel') as HTMLSelectElement).value,
+        message: (document.getElementById('message') as HTMLTextAreaElement).value.trim(),
+        consent: (document.getElementById('consent') as HTMLInputElement).checked,
+        honey: (document.getElementById('website') as HTMLInputElement).value,
+        source: 'contact_page',
+      };
+      
+      const { data, error } = await supabase.functions.invoke('api-contact-submit', {
+        body: payload
+      });
+      
+      if (error || !data?.ok) {
+        toast.error('Failed to send message');
+        setBusy(false);
+        return;
+      }
+      
+      setBusy(false);
+      setSent('ok');
+      toast.success('Message sent successfully!');
+    } catch (err) {
+      console.error('Contact submit error:', err);
+      setBusy(false);
+      setSent('err');
+      toast.error('Failed to send message');
+    }
   }
 
   async function handleExpress(){

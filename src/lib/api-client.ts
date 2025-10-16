@@ -19,7 +19,15 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/version': 'api-version',
   '/api/testimonials/list': 'api-testimonials-list',
   '/api/coaching/list': 'api-coaching-list',
+  '/api/coaching/get': 'api-coaching-get',
+  '/api/coaching/book-url': 'api-coaching-book-url',
+  '/api/cal/book-url': 'api-cal-book-url',
+  '/api/contact/submit': 'api-contact-submit',
   '/api/admin/check-role': 'api-admin-check-role',
+  '/api/admin/coaching/list': 'api-admin-coaching-list',
+  '/api/admin/coaching/save': 'api-admin-coaching-save',
+  '/api/admin/coupons/list': 'api-admin-coupons-list',
+  '/api/admin/coupons/save': 'api-admin-coupons-save',
 };
 
 /**

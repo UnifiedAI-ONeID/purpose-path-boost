@@ -107,3 +107,27 @@ verify_jwt = false
 
 [functions.api-coaching-list]
 verify_jwt = false
+
+[functions.api-coaching-get]
+verify_jwt = false
+
+[functions.api-coaching-book-url]
+verify_jwt = false
+
+[functions.api-cal-book-url]
+verify_jwt = false
+
+[functions.api-contact-submit]
+verify_jwt = false
+
+[functions.api-admin-coaching-list]
+verify_jwt = true
+
+[functions.api-admin-coaching-save]
+verify_jwt = true
+
+[functions.api-admin-coupons-list]
+verify_jwt = true
+
+[functions.api-admin-coupons-save]
+verify_jwt = true
