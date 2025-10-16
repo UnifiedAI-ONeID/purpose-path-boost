@@ -80,14 +80,12 @@ export default function AdminSEO() {
 
   async function resolveAlert(id: string) {
     try {
-      const response = await fetch('/api/admin/seo/resolve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+      const { error } = await supabase.functions.invoke('api-admin-seo-resolve', {
+        body: { alertId: id }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to resolve alert');
+      if (error) {
+        throw error;
       }
 
       setAlerts(alerts.map(a => 

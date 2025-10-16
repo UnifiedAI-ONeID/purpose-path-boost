@@ -167,3 +167,27 @@ verify_jwt = false
 
 [functions.api-coaching-price-with-discount]
 verify_jwt = false
+
+[functions.api-admin-fx-rates]
+verify_jwt = true
+
+[functions.api-admin-fx-update]
+verify_jwt = true
+
+[functions.api-admin-fx-inspect]
+verify_jwt = true
+
+[functions.api-admin-pricing-suggest]
+verify_jwt = true
+
+[functions.api-admin-pricing-apply-suggestion]
+verify_jwt = true
+
+[functions.api-admin-pricing-adopt-winner]
+verify_jwt = true
+
+[functions.api-admin-seo-resolve]
+verify_jwt = true
+
+[functions.api-admin-tickets-overrides]
+verify_jwt = true

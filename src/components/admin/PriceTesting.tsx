@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PriceTestingProps {
   eventId: string;
@@ -20,22 +21,17 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
   async function getSuggest() {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/pricing/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ticket_id: ticketId, 
-          base_price_cents: basePrice, 
-          base_currency: baseCurrency, 
-          country 
-        })
+      const { data } = await supabase.functions.invoke('api-admin-pricing-suggest', {
+        body: { 
+          ticketId, 
+          region: country 
+        }
       });
-      const data = await response.json();
-      if (data.ok) {
-        setSuggestion(data.heur);
+      if (data?.ok) {
+        setSuggestion(data.suggestions?.[0]);
         setNote('');
       } else {
-        toast.error(data.error || 'Failed to get suggestions');
+        toast.error(data?.error || 'Failed to get suggestions');
       }
     } catch (e: any) {
       toast.error('Failed to get suggestions');
@@ -49,25 +45,19 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
     
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/pricing/apply-suggestion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_id: eventId,
-          ticket_id: ticketId,
-          country,
+      const { data } = await supabase.functions.invoke('api-admin-pricing-apply-suggestion', {
+        body: {
+          ticketId,
           currency: suggestion.currency,
-          suggest_cents: suggestion.suggest_cents,
-          spread_pct: 0.10
-        })
+          priceCents: suggestion.price_cents
+        }
       });
-      const data = await response.json();
       
-      if (data.ok) {
-        toast.success('Applied pricing suggestion with A/B/C variants');
-        setNote(`Applied ${suggestion.currency} ${(suggestion.suggest_cents / 100).toFixed(2)} + seeded A/B/C test variants (-10%, baseline, +10%)`);
+      if (data?.ok) {
+        toast.success('Applied pricing suggestion');
+        setNote(`Applied ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);
       } else {
-        toast.error(data.error || 'Failed to apply suggestion');
+        toast.error(data?.error || 'Failed to apply suggestion');
       }
     } catch (e: any) {
       toast.error('Failed to apply suggestion');
@@ -79,24 +69,18 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
   async function adoptWinner() {
     setLoading(true);
     try {
-      const response = await fetch('/api/admin/pricing/adopt-winner', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          event_id: eventId, 
-          ticket_id: ticketId, 
-          country, 
-          currency: suggestion?.currency || baseCurrency 
-        })
+      const { data } = await supabase.functions.invoke('api-admin-pricing-adopt-winner', {
+        body: { 
+          testId: suggestion?.id,
+          winningVariant: suggestion?.variant
+        }
       });
-      const data = await response.json();
       
-      if (data.ok) {
-        const winner = data.winner;
-        toast.success(`Adopted winning variant: ${winner.variant}`);
-        setNote(`Winner adopted: ${winner.currency} ${(winner.price_cents / 100).toFixed(2)} (variant ${winner.variant}, ${winner.conv_rate_pct}% conversion)`);
+      if (data?.ok) {
+        toast.success('Adopted winning variant');
+        setNote(`Winner adopted: ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);
       } else {
-        toast.error(data.error || 'Failed to adopt winner');
+        toast.error(data?.error || 'Failed to adopt winner');
       }
     } catch (e: any) {
       toast.error('Failed to adopt winner');

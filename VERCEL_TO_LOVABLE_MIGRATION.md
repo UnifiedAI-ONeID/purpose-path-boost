@@ -24,11 +24,12 @@ This document tracks the migration from Vercel serverless functions (`/api`) to 
 - [x] `/api/lessons/*` → `api-lessons-*`
 - [x] `/api/telemetry/log` → `api-telemetry-log`
 - [x] `/api/referral/track` → `api-referral-track`
-- [ ] `/api/admin/fx/*` → Edge Functions (remaining)
-- [ ] `/api/admin/pricing/*` → Edge Functions (remaining)
-- [ ] `/api/admin/seo/resolve` → Edge Function (remaining)
+- [x] `/api/admin/fx/*` → Edge Functions ✅
+- [x] `/api/admin/pricing/*` → Edge Functions ✅
+- [x] `/api/admin/seo/resolve` → Edge Function ✅
+- [x] `/api/admin/tickets/overrides` → Edge Function ✅
 - [ ] `/api/events/*` → Edge Functions (remaining)
-- [ ] `/api/express/*` → Edge Functions (partial)
+- [ ] `/api/express/*` → Edge Functions (partial - create, webhook)
 - [ ] `/api/paywall/*` → Edge Functions (remaining)
 
 ### Phase 4: Cleanup (Pending)
@@ -36,7 +37,7 @@ This document tracks the migration from Vercel serverless functions (`/api`) to 
 - [ ] Remove `vercel.json`
 - [ ] Remove `@vercel/node` dependency
 
-## Progress: ~35 of 60+ API routes migrated to Edge Functions
+## Progress: ~43 of 60+ API routes migrated to Edge Functions
 
 ## Architecture Changes
 

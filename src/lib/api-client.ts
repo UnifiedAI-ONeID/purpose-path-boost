@@ -40,6 +40,14 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/coaching/availability': 'api-coaching-availability',
   '/api/coaching/price-with-discount': 'api-coaching-price-with-discount',
   '/api/express/price': 'api-express-price',
+  '/api/admin/fx/rates': 'api-admin-fx-rates',
+  '/api/admin/fx/update': 'api-admin-fx-update',
+  '/api/admin/fx/inspect': 'api-admin-fx-inspect',
+  '/api/admin/pricing/suggest': 'api-admin-pricing-suggest',
+  '/api/admin/pricing/apply-suggestion': 'api-admin-pricing-apply-suggestion',
+  '/api/admin/pricing/adopt-winner': 'api-admin-pricing-adopt-winner',
+  '/api/admin/seo/resolve': 'api-admin-seo-resolve',
+  '/api/admin/tickets/overrides': 'api-admin-tickets-overrides',
 };
 
 /**

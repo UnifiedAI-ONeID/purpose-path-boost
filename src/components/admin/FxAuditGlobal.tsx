@@ -1,22 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function FxAuditGlobal() {
   const [data, setData] = useState<any>(null);
   const [busy, setBusy] = useState(false);
 
   async function load() { 
-    const response = await fetch('/api/admin/fx/rates');
-    const json = await response.json();
-    setData(json); 
+    const { data: result } = await supabase.functions.invoke('api-admin-fx-rates');
+    setData(result); 
   }
   
   useEffect(() => { load(); }, []);
 
   async function refresh() { 
     setBusy(true); 
-    await fetch('/api/admin/fx/update', { method: 'POST' }); 
+    await supabase.functions.invoke('api-admin-fx-update', { 
+      body: { base: 'USD', rates: {} } 
+    }); 
     setBusy(false); 
     load(); 
   }

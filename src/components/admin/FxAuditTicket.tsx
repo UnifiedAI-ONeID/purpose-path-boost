@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FxAuditTicketProps {
   ticketId: string;
@@ -15,12 +16,9 @@ export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
 
   async function load() {
     setBusy(true);
-    const response = await fetch('/api/admin/fx/inspect', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticket_id: ticketId, currency })
+    const { data } = await supabase.functions.invoke('api-admin-fx-inspect', {
+      body: { ticketId, currency }
     });
-    const data = await response.json();
     setQuote(data);
     setBusy(false);
   }
