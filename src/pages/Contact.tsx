@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
+import { motion } from 'framer-motion';
+import ScrollReveal from '@/components/motion/ScrollReveal';
 
 type Lang = 'en'|'zh-CN'|'zh-TW';
 
@@ -218,26 +220,33 @@ export default function ContactPage(){
     <>
     <main className="container mx-auto px-4 py-12 space-y-8 max-w-6xl">
         {/* Lang switcher */}
-        <div className="flex justify-end">
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex justify-end"
+        >
           <select className="select" value={lang} onChange={e=>setLang(e.target.value as Lang)}>
             <option value="en">EN</option>
             <option value="zh-CN">简体</option>
             <option value="zh-TW">繁体</option>
           </select>
-        </div>
+        </motion.div>
 
         {/* Hero */}
-        <section className="rounded-2xl bg-gradient-to-br from-primary to-primary-variant p-8 text-white">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold mb-3">{t.title}</h1>
-          <p className="text-lg opacity-90 mb-6">{t.subtitle}</p>
-          <div className="flex flex-wrap gap-3">
-            <a className="btn bg-white text-primary hover:bg-white/90" href="/coaching">{t.bookBtn}</a>
-            <a className="btn bg-white/10 text-white hover:bg-white/20 border-white/20" href="mailto:hello@zhengrowth.com">hello@zhengrowth.com</a>
-          </div>
-        </section>
+        <ScrollReveal>
+          <section className="rounded-2xl bg-gradient-to-br from-primary to-primary-variant p-8 text-white">
+            <h1 className="text-3xl md:text-4xl font-serif font-bold mb-3">{t.title}</h1>
+            <p className="text-lg opacity-90 mb-6">{t.subtitle}</p>
+            <div className="flex flex-wrap gap-3">
+              <a className="btn bg-white text-primary hover:bg-white/90 transition-smooth" href="/coaching">{t.bookBtn}</a>
+              <a className="btn bg-white/10 text-white hover:bg-white/20 border-white/20 transition-smooth" href="mailto:hello@zhengrowth.com">hello@zhengrowth.com</a>
+            </div>
+          </section>
+        </ScrollReveal>
 
         {/* Priority Lane Card */}
-        <section className="card border-2 border-accent space-y-4">
+        <ScrollReveal delay={0.1}>
+          <section className="card border-2 border-accent space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex-1">
               <div className="text-xl font-semibold mb-1">{t.priority}</div>
@@ -275,20 +284,21 @@ export default function ContactPage(){
             <li>After payment, you will be redirected to book your slot immediately.</li>
             <li>Refunds: 100% if canceled 24h+ before your slot.</li>
           </ul>
-        </section>
+          </section>
+        </ScrollReveal>
 
         {/* Two-column: info + form */}
         <section className="grid md:grid-cols-5 gap-6">
-          <aside className="md:col-span-2 space-y-4">
+          <ScrollReveal delay={0.2} className="md:col-span-2 space-y-4">
             <div className="card">
               <div className="font-semibold text-lg mb-3">{t.contact}</div>
               <p className="text-sm mb-2">{t.contactInfo}</p>
               <p className="text-sm font-medium mt-4 mb-1">{t.hours}:</p>
               <p className="text-sm text-muted">{t.hoursTxt}</p>
             </div>
-          </aside>
+          </ScrollReveal>
 
-          <div className="md:col-span-3">
+          <ScrollReveal delay={0.3} className="md:col-span-3">
             <div className="card space-y-4">
               <div className="font-semibold text-lg">{t.form}</div>
 
@@ -332,7 +342,7 @@ export default function ContactPage(){
               {sent==='ok' && <p className="text-emerald-600 text-sm font-medium">{t.success}</p>}
               {sent==='err' && <p className="text-red-600 text-sm font-medium">{t.fail}</p>}
             </div>
-          </div>
+          </ScrollReveal>
         </section>
 
         {/* JSON-LD */}
