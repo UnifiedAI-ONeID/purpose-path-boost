@@ -16,13 +16,21 @@ export function GlobalHead() {
         <link rel="manifest" href="/manifest.json" />
         
         {/* Theme color */}
-        <meta name="theme-color" content="#0B3D3C" />
+        <meta name="theme-color" content="#0b1f1f" />
         
         {/* Viewport */}
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         
         {/* Charset */}
         <meta charSet="utf-8" />
+        
+        {/* Apple PWA */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        
+        {/* Performance hints */}
+        <link rel="preconnect" href="https://cdn.zhengrowth.com" crossOrigin="anonymous" />
+        <link rel="preload" as="image" href="/app-icon.png" imageSizes="192x192" />
         
         {/* Security headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />

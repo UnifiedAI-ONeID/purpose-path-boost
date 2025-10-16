@@ -6,20 +6,10 @@ import { initAnalytics } from './lib/initAnalytics';
 import { initSessionTracking } from './analytics/events';
 import { metricsTracker } from './lib/metricsTracker';
 import { injectAnalytics } from './lib/loaders';
-import { registerSW } from 'virtual:pwa-register';
+import { registerSW } from './pwa/registerSW';
 
 // Register service worker for PWA
-if ('serviceWorker' in navigator) {
-  registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      console.log('[PWA] New content available, refreshing...');
-    },
-    onOfflineReady() {
-      console.log('[PWA] App ready for offline use');
-    },
-  });
-}
+registerSW();
 
 // Initialize analytics based on region
 if (!isChinaBuild()) {

@@ -1,35 +1,40 @@
 {
   "name": "ZhenGrowth",
   "short_name": "ZhenGrowth",
-  "description": "Grow with clarity, confidence, and purpose.",
-  "start_url": "/?source=pwa",
+  "start_url": "/coaching",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0B3D3C",
-  "theme_color": "#0B3D3C",
+  "background_color": "#0b1f1f",
+  "theme_color": "#0b1f1f",
+  "description": "Grow with clarity, confidence, and purpose.",
   "icons": [
     {
       "src": "/app-icon.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ],
-  "categories": ["lifestyle", "productivity", "education"],
   "shortcuts": [
     {
-      "name": "Book Session",
-      "short_name": "Book",
-      "description": "Book a coaching session",
-      "url": "/book",
+      "name": "Discovery Call",
+      "url": "/coaching/discovery-20",
+      "icons": [{ "src": "/app-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Priority Session",
+      "url": "/coaching/priority-30",
+      "icons": [{ "src": "/app-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Events",
+      "url": "/events",
       "icons": [{ "src": "/app-icon.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "categories": ["lifestyle", "productivity", "education"]
 }
