@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
+import AdminInstallButton from './AdminInstallButton';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -39,7 +40,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </svg>
           </button>
           <div className="font-semibold">Admin</div>
-          <a className="text-sm hover:text-primary" href="/">View site</a>
+          <div className="flex items-center gap-2">
+            <AdminInstallButton />
+            <a className="text-sm hover:text-primary transition-colors" href="/">View site</a>
+          </div>
         </header>
         <div className="p-4 md:p-6">{children}</div>
       </main>
