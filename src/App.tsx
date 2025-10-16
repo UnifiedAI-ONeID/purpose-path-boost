@@ -91,6 +91,78 @@ function useIsMobile() {
 function AppRoutes() {
   const isMobile = useIsMobile();
 
+  // Initialize all systems AFTER React has mounted safely
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Import all initialization functions dynamically to avoid early execution
+        const [
+          { registerSW },
+          { bootAnimOnLoad },
+          { normalizeEntryUrl },
+          { initAnalytics },
+          { initSessionTracking },
+          { injectAnalytics },
+          { isChinaBuild },
+          { bootVersionGuard }
+        ] = await Promise.all([
+          import('./pwa/registerSW'),
+          import('./anim/boot'),
+          import('./nav/deeplink'),
+          import('./lib/initAnalytics'),
+          import('./analytics/events'),
+          import('./lib/loaders'),
+          import('./lib/region'),
+          import('./lib/versionGuard')
+        ]);
+
+        // Register service worker for PWA
+        registerSW();
+
+        // Initialize global animation system
+        bootAnimOnLoad();
+
+        // Normalize entry URL with lang and ref/utm parameters
+        normalizeEntryUrl();
+
+        // Initialize analytics based on region
+        if (!isChinaBuild()) {
+          // Global build: Use Umami + PostHog + Metrics Tracker
+          initAnalytics();
+          initSessionTracking();
+          console.log('[Metrics] Tracker initialized');
+        } else {
+          // China build: Inject Baidu Tongji
+          injectAnalytics();
+          
+          // Session tracking for China analytics
+          if (typeof window !== 'undefined') {
+            let sessionStartTime = Date.now();
+            
+            window.addEventListener('beforeunload', () => {
+              const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+              if (window._hmt) {
+                window._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
+              }
+            });
+          }
+        }
+
+        // Initialize version guard last
+        setTimeout(() => {
+          bootVersionGuard({ pollMs: 60000 });
+        }, 2000);
+
+      } catch (error) {
+        console.error('[App] Initialization error:', error);
+      }
+    };
+
+    // Delay initialization to ensure React is fully ready
+    const timer = setTimeout(initializeApp, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Determine which layout and pages to use
   const Layout = isMobile ? AppShell : MainLayout;
   const HomePage = isMobile ? MobileHome : Home;
@@ -194,78 +266,6 @@ function AppRoutes() {
 }
 
 const App = () => {
-  // Initialize all systems AFTER React has mounted safely
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        // Import all initialization functions dynamically to avoid early execution
-        const [
-          { registerSW },
-          { bootAnimOnLoad },
-          { normalizeEntryUrl },
-          { initAnalytics },
-          { initSessionTracking },
-          { injectAnalytics },
-          { isChinaBuild },
-          { bootVersionGuard }
-        ] = await Promise.all([
-          import('./pwa/registerSW'),
-          import('./anim/boot'),
-          import('./nav/deeplink'),
-          import('./lib/initAnalytics'),
-          import('./analytics/events'),
-          import('./lib/loaders'),
-          import('./lib/region'),
-          import('./lib/versionGuard')
-        ]);
-
-        // Register service worker for PWA
-        registerSW();
-
-        // Initialize global animation system
-        bootAnimOnLoad();
-
-        // Normalize entry URL with lang and ref/utm parameters
-        normalizeEntryUrl();
-
-        // Initialize analytics based on region
-        if (!isChinaBuild()) {
-          // Global build: Use Umami + PostHog + Metrics Tracker
-          initAnalytics();
-          initSessionTracking();
-          console.log('[Metrics] Tracker initialized');
-        } else {
-          // China build: Inject Baidu Tongji
-          injectAnalytics();
-          
-          // Session tracking for China analytics
-          if (typeof window !== 'undefined') {
-            let sessionStartTime = Date.now();
-            
-            window.addEventListener('beforeunload', () => {
-              const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
-              if (window._hmt) {
-                window._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
-              }
-            });
-          }
-        }
-
-        // Initialize version guard last
-        setTimeout(() => {
-          bootVersionGuard({ pollMs: 60000 });
-        }, 2000);
-
-      } catch (error) {
-        console.error('[App] Initialization error:', error);
-      }
-    };
-
-    // Delay initialization to ensure React is fully ready
-    const timer = setTimeout(initializeApp, 100);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>

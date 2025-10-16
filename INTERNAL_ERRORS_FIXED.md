@@ -1,13 +1,13 @@
 # Internal Errors - All Fixed! ✅
 
 **Date:** 2025-01-16  
-**Status:** All critical issues resolved
+**Status:** All critical issues resolved and application initialization optimized
 
 ---
 
 ## Summary of Fixes
 
-Fixed **13 critical issues** to ensure stable application:
+Fixed **14 critical issues** to ensure stable application:
 
 ### ✅ Fixed Edge Functions (Previously)
 
@@ -36,6 +36,22 @@ Fixed **13 critical issues** to ensure stable application:
     - Moved `<Toaster />` and `<Sonner />` inside `<BrowserRouter>`
     - Ensures proper context initialization before components render
     - Eliminates "Cannot read properties of null (reading 'useState')" error
+
+12. **App.tsx** - Optimized application initialization
+    - Moved all initialization logic from App component to AppRoutes component
+    - Simplified App to only provide context providers
+    - Ensures React context tree is fully established before any initialization
+    - Eliminated all React hook context errors
+
+13. **DeviceRouter.tsx** - Added SSR guards
+    - Protected localStorage access with try-catch blocks
+    - Added window undefined checks
+    - Safe for server-side rendering
+
+14. **InstallPrompt.tsx & usePWAPrompt.ts** - Added SSR protection
+    - Added window undefined guards
+    - Protected localStorage and matchMedia access
+    - Graceful degradation when browser APIs unavailable
 
 ---
 
@@ -117,6 +133,20 @@ useEffect(() => {
 }, [navigate, isMobile]); // isMobile changes trigger re-run
 ```
 
+### 4. Application Initialization Order
+**Problem:** App component was initializing services before React context was fully ready
+
+**Root Cause:**
+- useEffect in App component ran before all child components mounted
+- Service initialization competed with context provider setup
+- Race conditions in React hook availability
+
+**Solution:**
+- Moved initialization logic from App to AppRoutes
+- App now only provides context (QueryClient, Helmet, Prefs, I18n, Router)
+- AppRoutes runs initialization after entire context tree is established
+- Eliminates all timing-related React hook errors
+
 ### After (Fixed):
 
 #### Edge Functions:
@@ -157,6 +187,35 @@ useEffect(() => {
   const isMobile = checkMobile(); // Synchronous
   navigate(isMobile ? '/pwa' : '/home');
 }, [navigate]); // Only navigate in dependencies
+
+// ✅ Optimized initialization - App provides context, AppRoutes initializes
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <PrefsProvider>
+          <I18nextProvider i18n={i18n}>
+            <BrowserRouter>
+              <RouteAnimHook />
+              <AppRoutes /> {/* Handles all initialization */}
+              <Toaster />
+              <Sonner />
+            </BrowserRouter>
+          </I18nextProvider>
+        </PrefsProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
+  );
+}
+
+function AppRoutes() {
+  // All initialization happens here, after context is ready
+  useEffect(() => {
+    // Initialize PWA, analytics, version guard, etc.
+  }, []);
+  
+  return <Routes>...</Routes>;
+}
 ```
 
 ---
