@@ -3,7 +3,7 @@
  * Points to /coaching/[slug] (canonical booking URLs)
  */
 export default function BookSessionLink({
-  slug = 'discovery-20',
+  slug = 'discovery-60',
   children = 'Book a session',
   className = '',
 }: {

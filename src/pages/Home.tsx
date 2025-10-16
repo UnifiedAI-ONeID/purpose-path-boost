@@ -102,7 +102,7 @@ const Home = () => {
                 <SmartCTA 
                   onClick={() => {
                     track("cta_click", { button: "Hero Book Session", location: "hero" });
-                    window.location.href = '/coaching/discovery-20';
+                    window.location.href = '/coaching/discovery-60';
                   }}
                   className="bg-brand text-white hover:bg-brand/90"
                 >
