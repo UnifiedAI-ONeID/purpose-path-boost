@@ -28,6 +28,7 @@ import LeadsOverview from '@/components/admin/LeadsOverview';
 import LeadsTable from '@/components/admin/LeadsTable';
 import FunnelTab from '@/components/admin/FunnelTab';
 import AdminSecrets from '@/components/admin/AdminSecrets';
+import AdminShell from '@/components/admin/AdminShell';
 
 interface Lead {
   id: string;

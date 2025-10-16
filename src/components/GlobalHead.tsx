@@ -13,7 +13,11 @@ export function GlobalHead() {
         <link rel="apple-touch-icon" href="/app-icon.png" />
         
         {/* Manifest */}
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href={
+          typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
+            ? '/admin/manifest.webmanifest'
+            : '/manifest.json'
+        } />
         
         {/* Theme color */}
         <meta name="theme-color" content="#0b1f1f" />

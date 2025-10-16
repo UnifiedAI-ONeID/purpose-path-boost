@@ -1,0 +1,5 @@
+/* Admin-specific theme overrides */
+:root[data-admin] {
+  --primary: 261 90% 65%;        /* Purple primary for admin */
+  --primary-foreground: 0 0% 100%;
+}

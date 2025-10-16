@@ -49,6 +49,8 @@ import AdminCalBookings from "./pages/AdminCalBookings";
 import AdminPricing from "./pages/AdminPricing";
 import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
+import AdminBookings from "./pages/AdminBookings";
+import AdminCoaching from "./pages/AdminCoaching";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +98,8 @@ function AppRoutes() {
         <Route path="/admin/pricing" element={<AdminPricing />} />
         <Route path="/admin/express" element={<AdminExpress />} />
         <Route path="/admin/ai" element={<AdminAI />} />
+        <Route path="/admin/bookings" element={<AdminBookings />} />
+        <Route path="/admin/coaching" element={<AdminCoaching />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
