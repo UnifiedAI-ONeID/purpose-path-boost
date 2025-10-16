@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, Copy, TrendingUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -24,7 +24,7 @@ export default function Dashboard() {
           variant: 'destructive'
         });
       });
-  }, []);
+  }, [toast]);
 
   if (!data) {
     return (
