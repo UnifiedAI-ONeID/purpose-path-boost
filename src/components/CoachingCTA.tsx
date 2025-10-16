@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { t } from '@/i18n/dict';
+import TransitionOverlay from './motion/TransitionOverlay';
 
 interface CoachingCTAProps {
   slug: string;
@@ -28,6 +29,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   const [coupon, setCoupon] = useState('');
   const [promo] = useState(new URLSearchParams(window.location.search).get('promo') || '');
   const [busy, setBusy] = useState(false);
+  const [overlay, setOverlay] = useState(false);
   const { slots, loading } = useAvailability(slug, { days: 14 });
 
   useEffect(() => {
@@ -62,25 +64,36 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   }, [slug, currency, coupon, promo]);
 
   async function openBooking() {
-    const response = await fetch('/api/coaching/book-url', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        slug,
-        name: defaultName,
-        email: defaultEmail,
-        coupon: coupon || undefined,
-        promo: promo || undefined
-      })
-    });
+    setOverlay(true);
+    setBusy(true);
     
-    const data = await response.json();
-    if (data.ok && data.url) {
-      window.open(data.url, '_blank', 'noopener,noreferrer');
+    try {
+      const response = await fetch('/api/coaching/book-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          name: defaultName,
+          email: defaultEmail,
+          coupon: coupon || undefined,
+          promo: promo || undefined
+        })
+      });
+      
+      const data = await response.json();
+      if (data.ok && data.url) {
+        window.open(data.url, '_blank', 'noopener,noreferrer');
+      }
+    } finally {
+      setTimeout(() => {
+        setOverlay(false);
+        setBusy(false);
+      }, 600);
     }
   }
 
   async function handlePayment() {
+    setOverlay(true);
     setBusy(true);
     
     try {
@@ -106,11 +119,13 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         await openBooking();
       } else {
         alert(data.error || 'Unable to start checkout');
+        setOverlay(false);
       }
     } catch (error) {
       alert('Payment error. Please try again.');
+      setOverlay(false);
     } finally {
-      setBusy(false);
+      setTimeout(() => setBusy(false), 800);
     }
   }
 
@@ -210,6 +225,9 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
           ))}
         </div>
       )}
+      
+      {/* Transition overlay */}
+      <TransitionOverlay show={overlay} />
     </div>
   );
 }
