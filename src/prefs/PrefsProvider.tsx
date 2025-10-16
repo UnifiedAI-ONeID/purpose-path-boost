@@ -17,10 +17,16 @@ const Ctx = createContext<Prefs | null>(null);
 export function PrefsProvider({ children }:{ children: React.ReactNode }){
   const [theme, setThemeState] = useState<Theme>(() => (localStorage.getItem('zg.theme') as Theme) || 'auto');
   const [lang, setLangState] = useState<Lang>(() => (localStorage.getItem('zg.lang') as Lang) || (document.documentElement.getAttribute('lang') as Lang) || 'en');
-  const [systemDark, setSystemDark] = useState<boolean>(matchMedia('(prefers-color-scheme: dark)').matches);
+  const [systemDark, setSystemDark] = useState<boolean>(() => 
+    typeof window !== 'undefined' && window.matchMedia 
+      ? window.matchMedia('(prefers-color-scheme: dark)').matches 
+      : false
+  );
 
   // Watch system changes
   useEffect(()=>{
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    
     const mq = matchMedia('(prefers-color-scheme: dark)');
     const on = (e:MediaQueryListEvent)=> setSystemDark(e.matches);
     mq.addEventListener?.('change', on);
