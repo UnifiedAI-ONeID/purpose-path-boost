@@ -9,6 +9,7 @@ import logo from '@/assets/images/logo.png';
 type Props = { delayMs?: number; minVisits?: number };
 
 function enoughTimeSinceDismiss(): boolean {
+  if (typeof window === 'undefined') return true;
   try {
     const last = Number(localStorage.getItem('zg.pwa.dismiss_at') || 0);
     return Date.now() - last > 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -18,10 +19,15 @@ function enoughTimeSinceDismiss(): boolean {
 }
 
 function incVisits(): number {
-  const k = 'zg.pwa.visits';
-  const v = Number(localStorage.getItem(k) || 0) + 1;
-  localStorage.setItem(k, String(v));
-  return v;
+  if (typeof window === 'undefined') return 0;
+  try {
+    const k = 'zg.pwa.visits';
+    const v = Number(localStorage.getItem(k) || 0) + 1;
+    localStorage.setItem(k, String(v));
+    return v;
+  } catch {
+    return 1;
+  }
 }
 
 export default function InstallPrompt({ delayMs = 8000, minVisits = 2 }: Props) {
@@ -31,7 +37,10 @@ export default function InstallPrompt({ delayMs = 8000, minVisits = 2 }: Props) 
   const [iosHelp, setIosHelp] = useState(false);
 
   useEffect(() => {
+    // SSR guard - only run in browser
+    if (typeof window === 'undefined') return;
     if (!eligible || installed) return;
+    
     const visits = incVisits();
     if (!enoughTimeSinceDismiss() || visits < minVisits) return;
 

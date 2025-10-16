@@ -77,6 +77,9 @@ export default function DeviceRouter() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // SSR guard - only run in browser
+    if (typeof window === 'undefined') return;
+    
     const currentPath = location.pathname;
     
     // Don't redirect if on excluded routes
@@ -92,13 +95,23 @@ export default function DeviceRouter() {
     // If user explicitly set a preference, respect it
     if (forceDesktop || forceMobile) {
       // Store preference
-      if (forceDesktop) localStorage.setItem('zg.devicePreference', 'desktop');
-      if (forceMobile) localStorage.setItem('zg.devicePreference', 'mobile');
+      try {
+        if (forceDesktop) localStorage.setItem('zg.devicePreference', 'desktop');
+        if (forceMobile) localStorage.setItem('zg.devicePreference', 'mobile');
+      } catch (e) {
+        console.warn('localStorage not available:', e);
+      }
       return;
     }
 
     // Check stored preference
-    const storedPreference = localStorage.getItem('zg.devicePreference');
+    let storedPreference: string | null = null;
+    try {
+      storedPreference = localStorage.getItem('zg.devicePreference');
+    } catch (e) {
+      console.warn('localStorage not available:', e);
+    }
+    
     let shouldUseMobile: boolean;
     
     if (storedPreference) {

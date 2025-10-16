@@ -17,6 +17,8 @@ function isiOS() {
 }
 
 function isStandalone() {
+  // SSR guard
+  if (typeof window === 'undefined') return false;
   // iOS + Android PWA check
   // @ts-ignore
   return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (window.navigator as any).standalone === true;
@@ -28,6 +30,9 @@ export function usePWAPrompt() {
   const [eligible, setEligible] = useState<boolean>(false);
 
   useEffect(() => {
+    // SSR guard
+    if (typeof window === 'undefined') return;
+    
     function onBeforeInstallPrompt(e: Event) {
       e.preventDefault();
       setDeferred(e as BIEvent);
@@ -37,7 +42,11 @@ export function usePWAPrompt() {
     function onAppInstalled() {
       setInstalled(true);
       setDeferred(null);
-      localStorage.setItem('zg.pwa.installed', '1');
+      try {
+        localStorage.setItem('zg.pwa.installed', '1');
+      } catch (e) {
+        console.warn('localStorage not available:', e);
+      }
     }
     
     window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt as any);
