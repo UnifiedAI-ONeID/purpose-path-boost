@@ -1,5 +1,5 @@
 /* ZhenGrowth SW — v10 */
-const VERSION = 'v10';
+const VERSION = 'v11';
 const STATIC = `static-${VERSION}`;
 const PAGES = `pages-${VERSION}`;
 const API = `api-${VERSION}`;
