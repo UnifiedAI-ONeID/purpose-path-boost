@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Calendar, Home, User, BookOpen, Layers } from "lucide-react";
+import LangNudge from '@/prefs/LangNudge';
 
 export default function AppShell() {
   return (
@@ -16,6 +17,7 @@ export default function AppShell() {
           <Tab to="/about" icon={<User size={22}/>} label="Me" />
         </ul>
       </nav>
+      <LangNudge />
     </div>
   );
 }
