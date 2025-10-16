@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./styles/fonts.css";
 import { isChinaBuild } from './lib/region';
 import { initAnalytics } from './lib/initAnalytics';
 import { initSessionTracking } from './analytics/events';
