@@ -263,7 +263,7 @@ export default function MobileBook() {
       sessionStorage.removeItem('booking_customer_name');
       sessionStorage.removeItem('booking_customer_email');
       sessionStorage.removeItem('booking_cal_link');
-      window.history.replaceState({}, '', '/book');
+      window.history.replaceState({}, '', '/coaching');
     }
   }, [calReady]);
 

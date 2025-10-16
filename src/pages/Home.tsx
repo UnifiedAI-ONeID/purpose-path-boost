@@ -9,6 +9,7 @@ import clarityIcon from '@/assets/images/icon-clarity.png';
 import confidenceIcon from '@/assets/images/icon-confidence.png';
 import growthIcon from '@/assets/images/icon-growth.png';
 import { track } from '@/analytics/events';
+import SmartCTA from '@/components/motion/SmartCTA';
 
 const Home = () => {
   const { t } = useTranslation(['home', 'common']);
@@ -98,15 +99,15 @@ const Home = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  asChild 
-                  variant="default" 
-                  size="lg"
+                <SmartCTA 
+                  onClick={() => {
+                    track("cta_click", { button: "Hero Book Session", location: "hero" });
+                    window.location.href = '/coaching/discovery-20';
+                  }}
                   className="bg-brand text-white hover:bg-brand/90"
-                  onClick={() => track("cta_click", { button: "Hero Book Session", location: "hero" })}
                 >
-                  <Link to="/coaching">{t("common:cta.book")}</Link>
-                </Button>
+                  {t("common:cta.book")}
+                </SmartCTA>
                 <Button 
                   asChild 
                   variant="outline" 

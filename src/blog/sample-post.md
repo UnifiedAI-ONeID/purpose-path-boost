@@ -58,4 +58,4 @@ If you're nodding along to these signs, it might be time to explore coaching.
 
 **Ready to take the next step?** Book a free discovery session to see if coaching is right for you.
 
-[Book Your Free Session](/book-session)
+[Book Your Free Session](/coaching/discovery-20)

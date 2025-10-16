@@ -32,6 +32,11 @@
       "source": "/book/:path*",
       "destination": "/coaching",
       "permanent": true
+    },
+    {
+      "source": "/book-session",
+      "destination": "/coaching/discovery-20",
+      "permanent": true
     }
   ],
   "headers": [
