@@ -4,6 +4,7 @@ import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { SEOHelmet } from '@/components/SEOHelmet';
 
 function getOrSetDevice() {
   let id = localStorage.getItem('zg.device');
@@ -52,14 +53,23 @@ export default function Home() {
     : 'Grow with Clarity';
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
-      <Card className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0">
-        <h1 className="text-3xl font-bold mb-2">{heroTitle}</h1>
-        <p className="opacity-90 mb-4">Start with a 60-second self-assessment.</p>
-        <Button size="lg" variant="secondary" asChild>
-          <SmartLink to={ROUTES.quiz}>Begin Assessment</SmartLink>
-        </Button>
-      </Card>
-    </div>
+    <>
+      <SEOHelmet
+        title="ZhenGrowth - Grow with Clarity"
+        description="Life & career coaching for Chinese-speaking professionals worldwide. Start with a 60-second self-assessment to discover your path to clarity and growth."
+        path="/pwa/home"
+        lang={lang as 'en'|'zh-CN'|'zh-TW'}
+        image="https://zhengrowth.com/app-icon.png"
+      />
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <Card className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0">
+          <h1 className="text-3xl font-bold mb-2">{heroTitle}</h1>
+          <p className="opacity-90 mb-4">Start with a 60-second self-assessment.</p>
+          <Button size="lg" variant="secondary" asChild>
+            <SmartLink to={ROUTES.quiz}>Begin Assessment</SmartLink>
+          </Button>
+        </Card>
+      </div>
+    </>
   );
 }

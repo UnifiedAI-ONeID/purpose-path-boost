@@ -5,6 +5,7 @@ import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { SEOHelmet } from '@/components/SEOHelmet';
 
 function langKey(l: string) {
   return l === 'zh-CN' ? 'zh_cn' : l === 'zh-TW' ? 'zh_tw' : 'en';
@@ -65,32 +66,41 @@ export default function Quiz() {
   const progress = ((idx + 1) / cfg.length) * 100;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <div className="mb-6">
-        <Progress value={progress} className="mb-2" />
-        <p className="text-sm text-muted-foreground">
-          Question {idx + 1} of {cfg.length}
-        </p>
-      </div>
+    <>
+      <SEOHelmet
+        title={lang === 'zh-CN' ? '自我评估 | ZhenGrowth' : lang === 'zh-TW' ? '自我評估 | ZhenGrowth' : '60-Second Self-Assessment | ZhenGrowth'}
+        description={lang === 'zh-CN' ? '通过60秒自我评估找到适合你的辅导项目' : lang === 'zh-TW' ? '通過60秒自我評估找到適合你的輔導項目' : 'Discover the right coaching path for you with our 60-second self-assessment'}
+        path="/pwa/quiz"
+        lang={lang as 'en'|'zh-CN'|'zh-TW'}
+        image="https://zhengrowth.com/app-icon.png"
+      />
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <div className="mb-6">
+          <Progress value={progress} className="mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Question {idx + 1} of {cfg.length}
+          </p>
+        </div>
 
-      <Card className="p-6 mb-4">
-        <h2 className="text-xl font-semibold mb-4">
-          {q[`title_${langKey(lang)}`] || q.title_en}
-        </h2>
-      </Card>
+        <Card className="p-6 mb-4">
+          <h2 className="text-xl font-semibold mb-4">
+            {q[`title_${langKey(lang)}`] || q.title_en}
+          </h2>
+        </Card>
 
-      <div className="grid gap-3">
-        {q.choices.map((c: any) => (
-          <Button
-            key={c.value}
-            variant="outline"
-            className="h-auto py-4 px-6 text-left justify-start hover:bg-accent"
-            onClick={() => choose(c)}
-          >
-            {c[`label_${langKey(lang)}`] || c.label_en}
-          </Button>
-        ))}
-      </div>
-    </main>
+        <div className="grid gap-3">
+          {q.choices.map((c: any) => (
+            <Button
+              key={c.value}
+              variant="outline"
+              className="h-auto py-4 px-6 text-left justify-start hover:bg-accent"
+              onClick={() => choose(c)}
+            >
+              {c[`label_${langKey(lang)}`] || c.label_en}
+            </Button>
+          ))}
+        </div>
+      </main>
+    </>
   );
 }

@@ -8,6 +8,7 @@ import EventsMobile from '@/components/mobile/EventsMobile';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
 import { toast } from 'sonner';
+import { SEOHelmet } from '@/components/SEOHelmet';
 
 export default function EventsList() {
   const isMobile = useIsMobile();
@@ -51,83 +52,92 @@ export default function EventsList() {
   }
 
   return (
-    <SiteShell>
-      <motion.header 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <h1 className="text-4xl font-serif font-bold mb-3">Events & Workshops</h1>
-        <p className="text-lg text-muted-foreground">
-          Join our upcoming sessions for personal growth and professional development
-        </p>
-      </motion.header>
+    <>
+      <SEOHelmet
+        title="Events & Workshops | ZhenGrowth"
+        description="Join our upcoming sessions for personal growth and professional development. Expert-led workshops and events for Chinese-speaking professionals worldwide."
+        path="/events"
+        lang="en"
+        image="https://zhengrowth.com/app-icon.png"
+      />
+      <SiteShell>
+        <motion.header 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl font-serif font-bold mb-3">Events & Workshops</h1>
+          <p className="text-lg text-muted-foreground">
+            Join our upcoming sessions for personal growth and professional development
+          </p>
+        </motion.header>
 
-      {events.length === 0 ? (
-        <ScrollReveal>
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              No upcoming events at the moment. Check back soon!
-            </CardContent>
-          </Card>
-        </ScrollReveal>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {events.map((event, index) => (
-            <ScrollReveal key={event.id} delay={index * 0.1}>
-              <a
-                href={`/events/${event.slug}`}
-                className="group block rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg transition-smooth"
-              >
-                <div className="aspect-video w-full overflow-hidden">
-                  <img
-                    src={event.cover_url || '/placeholder.svg'}
-                    alt={event.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                
-                <div className="p-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      <time>
-                        {new Date(event.start_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </time>
-                    </div>
-                    
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{event.location || 'Online'}</span>
-                    </div>
+        {events.length === 0 ? (
+          <ScrollReveal>
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                No upcoming events at the moment. Check back soon!
+              </CardContent>
+            </Card>
+          </ScrollReveal>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2">
+            {events.map((event, index) => (
+              <ScrollReveal key={event.id} delay={index * 0.1}>
+                <a
+                  href={`/events/${event.slug}`}
+                  className="group block rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg transition-smooth"
+                >
+                  <div className="aspect-video w-full overflow-hidden">
+                    <img
+                      src={event.cover_url || '/placeholder.svg'}
+                      alt={event.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
                   
-                  <h2 className="text-xl font-semibold mb-2 group-hover:text-brand-accent transition-colors">
-                    {event.title}
-                  </h2>
-                  
-                  {event.summary && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {event.summary}
-                    </p>
-                  )}
-                  
-                  {event.is_paid && (
-                    <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-accent/10 text-brand-accent">
-                      Paid Event
+                  <div className="p-4">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <time>
+                          {new Date(event.start_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </time>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        <span>{event.location || 'Online'}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </a>
-            </ScrollReveal>
-          ))}
-        </div>
-      )}
-    </SiteShell>
+                    
+                    <h2 className="text-xl font-semibold mb-2 group-hover:text-brand-accent transition-colors">
+                      {event.title}
+                    </h2>
+                    
+                    {event.summary && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {event.summary}
+                      </p>
+                    )}
+                    
+                    {event.is_paid && (
+                      <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-accent/10 text-brand-accent">
+                        Paid Event
+                      </div>
+                    )}
+                  </div>
+                </a>
+              </ScrollReveal>
+            ))}
+          </div>
+        )}
+      </SiteShell>
+    </>
   );
 }
