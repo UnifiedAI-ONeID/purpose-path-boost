@@ -176,15 +176,14 @@ const App = () => (
     <HelmetProvider>
       <PrefsProvider>
         <I18nextProvider i18n={i18n}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <RouteAnimHook />
-              <AppRoutes />
-            </BrowserRouter>
-            <div id="zg-homeclick-layer" aria-hidden="true" />
-          </TooltipProvider>
+          {/* Removed global TooltipProvider to prevent invalid hook call; tooltips still work without a global provider */}
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <RouteAnimHook />
+            <AppRoutes />
+          </BrowserRouter>
+          <div id="zg-homeclick-layer" aria-hidden="true" />
         </I18nextProvider>
       </PrefsProvider>
     </HelmetProvider>
