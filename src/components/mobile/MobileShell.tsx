@@ -36,9 +36,10 @@ export default function MobileShell({ children }: { children: React.ReactNode })
             <img 
               src="/app-icon.png" 
               alt="ZhenGrowth" 
-              width={28} 
-              height={28} 
-              decoding="async" 
+              width={32} 
+              height={32} 
+              decoding="async"
+              className="rounded-lg"
             />
             <span className="font-semibold text-base">ZhenGrowth</span>
           </a>
