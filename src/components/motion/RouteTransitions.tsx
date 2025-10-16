@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import TransitionOverlay from './TransitionOverlay';
+import JadeGoldOverlay from './JadeGoldOverlay';
 
 export default function RouteTransitions() {
   const location = useLocation();
@@ -24,10 +24,10 @@ export default function RouteTransitions() {
     const timer = setTimeout(() => {
       setShow(false);
       setPrevPath(location.pathname);
-    }, 450);
+    }, 520);
 
     return () => clearTimeout(timer);
   }, [location.pathname, prevPath]);
 
-  return <TransitionOverlay show={show} />;
+  return <JadeGoldOverlay show={show} />;
 }

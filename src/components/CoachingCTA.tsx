@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { t } from '@/i18n/dict';
-import TransitionOverlay from './motion/TransitionOverlay';
+import JadeGoldOverlay from './motion/JadeGoldOverlay';
 
 interface CoachingCTAProps {
   slug: string;
@@ -88,7 +88,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       setTimeout(() => {
         setOverlay(false);
         setBusy(false);
-      }, 600);
+      }, 700);
     }
   }
 
@@ -125,7 +125,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       alert('Payment error. Please try again.');
       setOverlay(false);
     } finally {
-      setTimeout(() => setBusy(false), 800);
+      setTimeout(() => setBusy(false), 900);
     }
   }
 
@@ -227,7 +227,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       )}
       
       {/* Transition overlay */}
-      <TransitionOverlay show={overlay} />
+      <JadeGoldOverlay show={overlay} />
     </div>
   );
 }

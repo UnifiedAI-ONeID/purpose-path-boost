@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
-import TransitionOverlay from '../motion/TransitionOverlay';
+import JadeGoldOverlay from '../motion/JadeGoldOverlay';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -51,7 +51,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground grid md:grid-cols-[240px_1fr]">
-      <TransitionOverlay show={animating} minDurationMs={350} />
+      <JadeGoldOverlay show={animating} minDurationMs={380} />
       <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
         <div className="p-4 font-semibold text-primary">ZG Admin</div>
         <nav className="p-2 grid gap-1 text-sm">

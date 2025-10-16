@@ -17,8 +17,18 @@
   --radius: 16px;
   --shadow: 0 6px 24px rgba(0,0,0,.08);
 
+  /* Jade & Gold palette */
+  --jade-900: #062222;
+  --jade-800: #0b1f1f;
+  --jade-700: #113232;
+  --jade-600: #184646;
+  --gold-600: #caa75a;
+  --gold-500: #e7c873;
+  --gold-400: #f3de9a;
+
   /* Transition overlay */
-  --overlay-bg: rgba(255, 255, 255, 0.8);
+  --overlay-bg: rgba(255, 255, 255, 0.82);
+  --brand-600: var(--gold-500);
 
   /* Legacy compatibility */
   --background: var(--bg);
@@ -63,7 +73,8 @@
   --shadow: 0 8px 28px rgba(0,0,0,.35);
 
   /* Transition overlay */
-  --overlay-bg: rgba(0, 0, 0, 0.65);
+  --overlay-bg: rgba(0, 0, 0, 0.66);
+  --brand-600: var(--gold-400);
 
   /* Legacy compatibility */
   --background: var(--bg);

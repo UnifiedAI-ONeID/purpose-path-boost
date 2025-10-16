@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import TransitionOverlay from './TransitionOverlay';
+import JadeGoldOverlay from './JadeGoldOverlay';
 
 type Tab = {
   id: string;
@@ -38,7 +38,7 @@ export default function TransitionTabs({ tabs, initial = 0 }: Props) {
     setTimeout(() => {
       setActiveIndex(newIndex);
       setAnimating(false);
-    }, 400);
+    }, 460);
   }
 
   return (
@@ -67,7 +67,7 @@ export default function TransitionTabs({ tabs, initial = 0 }: Props) {
       </div>
 
       {/* Transition overlay */}
-      <TransitionOverlay show={animating} minDurationMs={350} />
+      <JadeGoldOverlay show={animating} minDurationMs={420} />
     </div>
   );
 }
