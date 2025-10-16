@@ -14,6 +14,7 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import Startup from './components/Startup';
 import InstallPrompt from './components/InstallPrompt';
 import { GlobalHead } from './components/GlobalHead';
+import DeviceRouter from './components/DeviceRouter';
 import Home from "./pages/Home";
 import MobileHome from "./pages/MobileHome";
 import About from "./pages/About";
@@ -97,6 +98,7 @@ function AppRoutes() {
   return (
     <>
       <GlobalHead />
+      <DeviceRouter />
       <Routes>
         {/* Startup splash screen */}
         <Route path="/" element={<Startup />} />
@@ -125,6 +127,11 @@ function AppRoutes() {
             <PWALayout />
           </Suspense>
         }>
+          <Route index element={
+            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+              <PWAHome />
+            </Suspense>
+          } />
           <Route path="home" element={
             <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
               <PWAHome />
