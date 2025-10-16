@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { Calendar, MapPin, Video, Download, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,9 +200,9 @@ export default function EventDetail() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Event not found</h1>
-          <a href="/events" className="text-brand-accent hover:underline">
+          <SmartLink to={ROUTES.events} className="text-brand-accent hover:underline">
             View all events
-          </a>
+          </SmartLink>
         </div>
       </div>
     );

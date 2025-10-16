@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
@@ -88,10 +90,10 @@ const BlogDetail = () => {
             The blog post you're looking for doesn't exist or has been removed.
           </p>
           <Button asChild>
-            <Link to="/blog">
+            <SmartLink to={ROUTES.blog}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Blog
-            </Link>
+            </SmartLink>
           </Button>
         </div>
       </div>
@@ -107,10 +109,10 @@ const BlogDetail = () => {
         >
           {/* Back Button */}
           <Button variant="ghost" asChild className="mb-8">
-            <Link to="/blog">
+            <SmartLink to={ROUTES.blog}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Blog
-            </Link>
+            </SmartLink>
           </Button>
 
           {/* Header */}
@@ -176,7 +178,7 @@ const BlogDetail = () => {
             size="lg"
             onClick={() => track('cta_click', { button: 'Blog Detail CTA Book Session', location: 'blog_detail_footer' })}
           >
-            <Link to="/coaching">Book a Free Session</Link>
+            <SmartLink to={ROUTES.coaching}>Book a Free Session</SmartLink>
           </Button>
           </div>
         </motion.div>

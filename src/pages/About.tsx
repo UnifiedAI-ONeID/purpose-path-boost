@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import ThemeToggle from '../components/ThemeToggle';
 import { useEffect } from 'react';
 import { track } from '@/analytics/events';
@@ -38,13 +39,13 @@ export default function About(){
           <p className="text-fg">{t('life')}</p>
           <p className="text-lg font-medium text-fg">{t('mission')}</p>
 
-          <Link
-            to="/coaching" 
+          <SmartLink
+            to={ROUTES.coaching} 
             className="inline-flex mt-4 items-center gap-2 px-5 py-3 rounded-xl bg-cta text-white shadow-soft hover:opacity-90 transition-smooth"
             onClick={() => track('cta_click', { button: 'Book Free Call', location: 'about_page' })}
           >
             {t('cta')}
-          </Link>
+          </SmartLink>
         </ScrollReveal>
 
         <ScrollReveal dir="left" delay={0.2} className="space-y-4">

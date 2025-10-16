@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
@@ -238,7 +240,7 @@ export default function ContactPage(){
             <h1 className="text-3xl md:text-4xl font-serif font-bold mb-3">{t.title}</h1>
             <p className="text-lg opacity-90 mb-6">{t.subtitle}</p>
             <div className="flex flex-wrap gap-3">
-              <a className="btn bg-white text-primary hover:bg-white/90 transition-smooth" href="/coaching">{t.bookBtn}</a>
+              <SmartLink to={ROUTES.coaching} className="btn bg-white text-primary hover:bg-white/90 transition-smooth">{t.bookBtn}</SmartLink>
               <a className="btn bg-white/10 text-white hover:bg-white/20 border-white/20 transition-smooth" href="mailto:hello@zhengrowth.com">hello@zhengrowth.com</a>
             </div>
           </section>
@@ -336,7 +338,7 @@ export default function ContactPage(){
                 <button className="btn btn-cta" onClick={submit} disabled={busy}>
                   {busy?'...':t.submit}
                 </button>
-                <a className="btn btn-ghost" href="/coaching">{t.bookBtn}</a>
+                <SmartLink to={ROUTES.coaching} className="btn btn-ghost">{t.bookBtn}</SmartLink>
               </div>
 
               {sent==='ok' && <p className="text-emerald-600 text-sm font-medium">{t.success}</p>}

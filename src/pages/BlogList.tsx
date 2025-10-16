@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -134,10 +135,10 @@ const BlogList = () => {
                       className="p-0"
                       onClick={() => track('blog_read', { slug: post.slug })}
                     >
-                      <Link to={`/blog/${post.slug}`}>
+                      <SmartLink to={`${ROUTES.blogDetail.replace('[slug]', post.slug)}`}>
                         Read More
                         <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
+                      </SmartLink>
                     </Button>
                   </div>
                 </CardContent>
@@ -161,7 +162,7 @@ const BlogList = () => {
             size="lg"
             onClick={() => track('cta_click', { button: 'Blog CTA Book Session', location: 'blog_footer' })}
           >
-            <Link to="/coaching">Book a Free Session</Link>
+            <SmartLink to={ROUTES.coaching}>Book a Free Session</SmartLink>
           </Button>
         </div>
       </div>

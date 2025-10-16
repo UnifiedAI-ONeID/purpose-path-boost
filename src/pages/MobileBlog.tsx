@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { track } from '@/analytics/events';
-import { Link } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { BlogSheet } from '@/components/BlogSheet';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
@@ -76,12 +77,12 @@ export default function MobileBlog() {
               </button>
             ))}
 
-            <Link 
-              to="/blog"
+            <SmartLink 
+              to={ROUTES.blog}
               className="block w-full h-12 rounded-xl border-2 border-brand text-brand hover:bg-brand/5 transition-all flex items-center justify-center font-medium mt-6"
             >
               See all articles
-            </Link>
+            </SmartLink>
           </div>
         )}
       </div>

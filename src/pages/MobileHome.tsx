@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { track } from '@/analytics/events';
-import { Link } from 'react-router-dom';
+import { ROUTES } from '@/nav/routes';
 import { ProgramSheet } from '@/components/ProgramSheet';
 import { A2HSPrompt } from '@/components/A2HSPrompt';
 import MobileShell, { Section, MobileCard, MobileCTA, StatRow } from '@/components/mobile/MobileShell';
@@ -147,7 +147,7 @@ export default function MobileHome() {
 
       <Section title="Quick Wins" subtitle="Start your journey today">
         <div className="grid gap-3">
-          <MobileCard href="/quiz">
+          <MobileCard href={ROUTES.quiz}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">🎯</span>
               <div>
@@ -157,7 +157,7 @@ export default function MobileHome() {
             </div>
           </MobileCard>
 
-          <MobileCard href="/events">
+          <MobileCard href={ROUTES.events}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">📅</span>
               <div>
@@ -167,7 +167,7 @@ export default function MobileHome() {
             </div>
           </MobileCard>
 
-          <MobileCard href="/coaching">
+          <MobileCard href={ROUTES.coaching}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚡</span>
               <div>
@@ -188,7 +188,7 @@ export default function MobileHome() {
       </Section>
 
       <Section title="Ready to Start?">
-        <MobileCTA href="/coaching">Book Your Free Call</MobileCTA>
+        <MobileCTA href={ROUTES.coaching}>Book Your Free Call</MobileCTA>
       </Section>
 
       <ProgramSheet 

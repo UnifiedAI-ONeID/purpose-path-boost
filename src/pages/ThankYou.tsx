@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
@@ -76,10 +77,10 @@ const ThankYou = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button asChild variant="default" size="lg" className="flex-1">
-                      <Link to="/">Return Home</Link>
+                      <SmartLink to={ROUTES.home}>Return Home</SmartLink>
                     </Button>
                     <Button asChild variant="outline" size="lg" className="flex-1">
-                      <Link to="/quiz">Take the Clarity Quiz</Link>
+                      <SmartLink to={ROUTES.quiz}>Take the Clarity Quiz</SmartLink>
                     </Button>
                   </div>
                 </div>

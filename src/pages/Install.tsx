@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Smartphone, CheckCircle2 } from 'lucide-react';
@@ -59,7 +61,7 @@ export default function Install() {
                 You can find ZhenGrowth on your home screen
               </p>
               <Button asChild>
-                <a href="/home">Go to App</a>
+                <SmartLink to={ROUTES.home}>Go to App</SmartLink>
               </Button>
             </div>
           ) : (
@@ -128,7 +130,7 @@ export default function Install() {
                 variant="outline"
                 className="w-full"
               >
-                <a href="/home">Continue in Browser</a>
+                <SmartLink to={ROUTES.home}>Continue in Browser</SmartLink>
               </Button>
             </>
           )}

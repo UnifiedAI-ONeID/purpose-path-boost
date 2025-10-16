@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -225,13 +227,13 @@ const Payment = () => {
 
                     <p className="text-xs text-center text-muted-foreground">
                       By proceeding, you agree to our{' '}
-                      <a href="/terms" className="underline">
+                      <SmartLink to={ROUTES.terms} className="underline">
                         Terms of Service
-                      </a>{' '}
+                      </SmartLink>{' '}
                       and{' '}
-                      <a href="/privacy" className="underline">
+                      <SmartLink to={ROUTES.privacy} className="underline">
                         Privacy Policy
-                      </a>
+                      </SmartLink>
                     </p>
                   </form>
                 </CardContent>
