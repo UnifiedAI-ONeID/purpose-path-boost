@@ -137,6 +137,111 @@ export type Database = {
         }
         Relationships: []
       }
+      cal_bookings: {
+        Row: {
+          attendee_email: string
+          attendee_name: string
+          attendee_timezone: string | null
+          cal_booking_id: string
+          cal_uid: string
+          created_at: string | null
+          end_time: string
+          event_type_id: string
+          event_type_slug: string | null
+          id: string
+          location: string | null
+          meeting_url: string | null
+          metadata: Json | null
+          start_time: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          attendee_email: string
+          attendee_name: string
+          attendee_timezone?: string | null
+          cal_booking_id: string
+          cal_uid: string
+          created_at?: string | null
+          end_time: string
+          event_type_id: string
+          event_type_slug?: string | null
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          metadata?: Json | null
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          attendee_email?: string
+          attendee_name?: string
+          attendee_timezone?: string | null
+          cal_booking_id?: string
+          cal_uid?: string
+          created_at?: string | null
+          end_time?: string
+          event_type_id?: string
+          event_type_slug?: string | null
+          id?: string
+          location?: string | null
+          meeting_url?: string | null
+          metadata?: Json | null
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      cal_event_types: {
+        Row: {
+          active: boolean | null
+          cal_event_type_id: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          last_synced_at: string | null
+          length: number
+          metadata: Json | null
+          price: number | null
+          slug: string
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          cal_event_type_id: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          last_synced_at?: string | null
+          length: number
+          metadata?: Json | null
+          price?: number | null
+          slug: string
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          cal_event_type_id?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          last_synced_at?: string | null
+          length?: number
+          metadata?: Json | null
+          price?: number | null
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
       event_coupon_uses: {
         Row: {
           coupon_id: string | null

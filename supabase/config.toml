@@ -38,3 +38,15 @@ verify_jwt = false
 
 [functions.metrics-rollup]
 verify_jwt = false
+
+[functions.cal-webhook]
+verify_jwt = false
+
+[functions.cal-bookings]
+verify_jwt = true
+
+[functions.cal-availability]
+verify_jwt = false
+
+[functions.cal-event-types]
+verify_jwt = false
