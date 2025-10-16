@@ -44,6 +44,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import EventsList from "./pages/EventsList";
 import EventDetail from "./pages/EventDetail";
 import CoachingDetail from "./pages/CoachingDetail";
+import BookRedirect from "./pages/BookRedirect";
 import AdminEvents from "./pages/AdminEvents";
 import AdminEventEdit from "./pages/AdminEventEdit";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -112,7 +113,8 @@ function AppRoutes() {
             <Route path="/events/:slug" element={<EventDetail />} />
             <Route path="/coaching/:slug" element={<CoachingDetail />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/book" element={<BookPage />} />
+        <Route path="/book" element={<BookRedirect />} />
+        <Route path="/book-legacy" element={<BookPage />} />
         <Route path="/book-session" element={
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
             <BookingPage />
