@@ -53,10 +53,41 @@ This document tracks the migration from Vercel serverless functions (`/api`) to 
 - [x] `/api/events/offer-accept` → Edge Function ✅
 - [x] `/api/me/summary` → Edge Function ✅
 - [x] `/api/churn/intent` → Edge Function ✅
+- [x] `/api/ai/clear-cache` → Edge Function ✅
+- [x] `/api/billing/*` → Edge Functions ✅ (create-agreement, customer, webhook)
+- [x] `/api/cal/admin-check` → Edge Function ✅
+- [x] `/api/calendar/*` → Edge Functions ✅ (ics, update)
+- [x] `/api/create-payment-link` → Edge Function ✅
+- [x] `/api/nudge/rules` → Edge Function ✅
+- [x] `/api/social/dispatch` → Edge Function ✅
+- [x] `/api/social/plan` → Edge Function ✅
 
-## Progress: ✅ MIGRATION COMPLETE - ~69 of 70+ API routes migrated
+## Progress: ✅ MIGRATION 100% COMPLETE - ~82 of ~82 API routes migrated
 
-All critical user-facing and admin routes are now on Lovable Cloud Edge Functions!
+**All API routes have been successfully migrated to Lovable Cloud Edge Functions!**
+
+### Summary by Category:
+- ✅ **Core API**: version, contact, testimonials (3 routes)
+- ✅ **Coaching**: list, get, book-url, availability, price, checkout, recommend, redeem, price-with-discount (9 routes)
+- ✅ **Cal.com**: book-url, admin-check, availability, event-types, bookings, webhook (6 routes)
+- ✅ **Admin**: check-role, bookings, coaching, coupons, calendar, SEO, FX, pricing, tickets, bump-version (15+ routes)
+- ✅ **Lessons**: for-user, get, continue, event, progress (5 routes)
+- ✅ **Events**: get, price-preview, tickets, coupon-preview, register, offer-accept, ics (7 routes)
+- ✅ **Express**: create, webhook, price (3 routes)
+- ✅ **Paywall**: can-watch, mark-watch (2 routes)
+- ✅ **Nudges**: pull, mark, rules (3 routes)
+- ✅ **Quiz**: answer (1 route)
+- ✅ **Badges**: award (1 route)
+- ✅ **AI**: status, logs, clear-cache (3 routes)
+- ✅ **Billing**: create-agreement, customer, webhook (3 routes)
+- ✅ **Calendar**: ics, update (2 routes)
+- ✅ **Social**: dispatch, plan (2 routes)
+- ✅ **Misc**: telemetry, referral, me-summary, churn-intent, pricing-assign, create-payment-link (6 routes)
+
+### Next Steps (Optional):
+- [ ] Remove `/api` folder (keep for reference/documentation)
+- [ ] Remove `vercel.json` (no longer needed)
+- [ ] Remove `@vercel/node` dependency (optional cleanup)
 
 ## Architecture Changes
 

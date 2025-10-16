@@ -176,3 +176,36 @@ verify_jwt = false
 
 [functions.api-pricing-assign]
 verify_jwt = false
+
+[functions.api-ai-clear-cache]
+verify_jwt = true
+
+[functions.api-billing-create-agreement]
+verify_jwt = false
+
+[functions.api-billing-customer]
+verify_jwt = false
+
+[functions.api-billing-webhook]
+verify_jwt = false
+
+[functions.api-cal-admin-check]
+verify_jwt = true
+
+[functions.api-calendar-ics]
+verify_jwt = false
+
+[functions.api-calendar-update]
+verify_jwt = true
+
+[functions.api-create-payment-link]
+verify_jwt = false
+
+[functions.api-nudge-rules]
+verify_jwt = false
+
+[functions.api-social-dispatch]
+verify_jwt = true
+
+[functions.api-social-plan]
+verify_jwt = true

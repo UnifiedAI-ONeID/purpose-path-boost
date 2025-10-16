@@ -75,6 +75,17 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/events/offer-accept': 'api-events-offer-accept',
   '/api/me/summary': 'api-me-summary',
   '/api/churn/intent': 'api-churn-intent',
+  '/api/ai/clear-cache': 'api-ai-clear-cache',
+  '/api/billing/create-agreement': 'api-billing-create-agreement',
+  '/api/billing/customer': 'api-billing-customer',
+  '/api/billing/webhook': 'api-billing-webhook',
+  '/api/cal/admin-check': 'api-cal-admin-check',
+  '/api/calendar/ics': 'api-calendar-ics',
+  '/api/calendar/update': 'api-calendar-update',
+  '/api/create-payment-link': 'api-create-payment-link',
+  '/api/nudge/rules': 'api-nudge-rules',
+  '/api/social/dispatch': 'api-social-dispatch',
+  '/api/social/plan': 'api-social-plan',
 };
 
 /**
