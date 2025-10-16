@@ -39,6 +39,15 @@ function pickFields(row: any, lang: Lang) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers for development
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept-Language');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 

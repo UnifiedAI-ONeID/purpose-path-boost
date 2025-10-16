@@ -48,12 +48,26 @@ export default function CoachingPrograms() {
         </div>
       ) : error ? (
         <div className="rounded-2xl border border-destructive/50 bg-destructive/10 p-6 text-center">
-          <p className="text-destructive font-semibold mb-2">Failed to load coaching programs</p>
+          <p className="text-destructive font-semibold mb-2">
+            {lang === 'zh-CN' ? '无法加载辅导项目' : 
+             lang === 'zh-TW' ? '無法加載輔導項目' : 
+             'Unable to load coaching programs'}
+          </p>
           <p className="text-sm text-muted-foreground">{String(error)}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            {lang === 'zh-CN' ? '重试' : lang === 'zh-TW' ? '重試' : 'Retry'}
+          </button>
         </div>
       ) : !data?.ok || !data?.rows?.length ? (
         <div className="rounded-2xl border border-border p-8 text-center">
-          <p className="text-muted-foreground">No coaching programs available at this time.</p>
+          <p className="text-muted-foreground">
+            {lang === 'zh-CN' ? '目前没有可用的辅导项目。' : 
+             lang === 'zh-TW' ? '目前沒有可用的輔導項目。' : 
+             'No coaching programs available at this time.'}
+          </p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">

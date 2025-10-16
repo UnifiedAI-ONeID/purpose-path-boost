@@ -44,9 +44,15 @@ export function useI18nFetch<T = any>(
         
         const response = await fetch(u.toString(), {
           headers: { 
+            'Accept': 'application/json',
             'Accept-Language': lang 
           }
         });
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Invalid response format');
+        }
         
         const result = await response.json();
         

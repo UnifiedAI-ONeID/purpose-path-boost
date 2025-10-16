@@ -28,7 +28,16 @@ export const Header = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-3">
-          <img src={logo} alt="ZhenGrowth Logo" className="h-10 w-10" />
+          <img 
+            src={logo} 
+            alt="ZhenGrowth Logo" 
+            className="h-10 w-10"
+            loading="eager"
+            onError={(e) => {
+              // Fallback to app icon if logo fails
+              e.currentTarget.src = '/app-icon-192.png';
+            }}
+          />
           <span className="text-2xl font-serif font-bold text-primary">ZhenGrowth</span>
         </Link>
 
