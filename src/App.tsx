@@ -271,11 +271,11 @@ const App = () => {
       <HelmetProvider>
         <PrefsProvider>
           <I18nextProvider i18n={i18n}>
-            <Toaster />
-            <Sonner />
             <BrowserRouter>
               <RouteAnimHook />
               <AppRoutes />
+              <Toaster />
+              <Sonner />
             </BrowserRouter>
             <div id="zg-homeclick-layer" aria-hidden="true" />
           </I18nextProvider>

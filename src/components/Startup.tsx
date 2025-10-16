@@ -1,20 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { triggerHomeAnim } from '@/anim/animator';
 
 export default function Startup() {
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     // Detect if device is mobile
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768 || 
+    const isMobile = window.innerWidth < 768 || 
                      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      setIsMobile(mobile);
-    };
-    
-    checkMobile();
     
     // Show branding animation, then navigate
     triggerHomeAnim(600);
@@ -28,7 +22,7 @@ export default function Startup() {
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [navigate, isMobile]);
+  }, [navigate]);
 
   return (
     <section className="startup">

@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       .select('*')
       .eq('slug', plan_slug)
       .eq('active', true)
-      .single();
+      .maybeSingle();
 
     if (!plan) {
       return new Response(
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
         .eq('code', coupon)
         .eq('active', true)
         .gte('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
       if (couponData?.percent_off && (!couponData.applies_to?.length || couponData.applies_to.includes(plan_slug))) {
         percent_off = couponData.percent_off;
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       .from('zg_profiles')
       .select('email, name, locale')
       .eq('id', profile_id)
-      .single();
+      .maybeSingle();
 
     if (!profile?.email) {
       return new Response(
