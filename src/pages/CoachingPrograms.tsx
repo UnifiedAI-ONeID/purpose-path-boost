@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -9,14 +10,28 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
-import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
-import { COACHING_PACKAGES } from '@/lib/airwallex';
+import { CheckCircle, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { track } from '@/analytics/events';
 
 const CoachingPrograms = () => {
-  const { t } = useTranslation('coaching');
+  const { t, i18n } = useTranslation('coaching');
+  const [offers, setOffers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const packages = Object.values(COACHING_PACKAGES);
+  useEffect(() => {
+    fetch('/api/coaching/list')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.rows) {
+          setOffers(data.rows);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const lang = i18n.language as 'en' | 'zh-CN' | 'zh-TW';
+  const freeOfferSlug = offers.find(o => o.base_price_cents === 0)?.slug || 'discovery-20';
 
   const outcomes = [
     {
@@ -85,104 +100,104 @@ const CoachingPrograms = () => {
 
       {/* Packages */}
       <section className="container mb-20">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {packages.map((pkg, index) => {
-            const isFeatured = pkg.id === 'monthly';
-            return (
-              <motion.div
-                key={pkg.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="relative"
-              >
-                {isFeatured && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                    <div className="bg-brand-accent text-brand-dark px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Most Popular
-                    </div>
-                  </div>
-                )}
-                <Card
-                  className={`h-full ${
-                    isFeatured
-                      ? 'border-2 border-brand-accent shadow-strong'
-                      : 'hover:shadow-medium'
-                  } transition-smooth`}
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : offers.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">No coaching programs available at this time.</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {offers.map((offer, index) => {
+              const isFree = offer.base_price_cents === 0;
+              const isFeatured = offer.sort === 1; // Assuming sort=1 for featured
+              const title = lang === 'zh-CN' ? (offer.title_zh_cn || offer.title_en) :
+                           lang === 'zh-TW' ? (offer.title_zh_tw || offer.title_en) :
+                           offer.title_en;
+              const summary = lang === 'zh-CN' ? (offer.summary_zh_cn || offer.summary_en) :
+                             lang === 'zh-TW' ? (offer.summary_zh_tw || offer.summary_en) :
+                             offer.summary_en;
+              
+              return (
+                <motion.div
+                  key={offer.slug}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="relative"
                 >
-                  <CardHeader>
-                    <CardTitle className="text-2xl">{pkg.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{pkg.duration}</p>
-                    <div className="mt-4">
-                      {pkg.price === 0 ? (
-                        <p className="text-4xl font-bold text-brand-accent">Free</p>
-                      ) : (
-                        <div>
-                          <p className="text-4xl font-bold">${pkg.price}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {pkg.currency}
-                          </p>
-                        </div>
-                      )}
+                  {isFeatured && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <div className="bg-brand-accent text-brand-dark px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Most Popular
+                      </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-6">{pkg.description}</p>
-                    <ul className="space-y-3 mb-6">
-                      {pkg.features.map((feature, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="h-5 w-5 text-brand-accent flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="space-y-3">
-                      {pkg.price === 0 ? (
+                  )}
+                  <Card
+                    className={`h-full ${
+                      isFeatured
+                        ? 'border-2 border-brand-accent shadow-strong'
+                        : 'hover:shadow-medium'
+                    } transition-smooth`}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-2xl">{title}</CardTitle>
+                      <div className="mt-4">
+                        {isFree ? (
+                          <p className="text-4xl font-bold text-brand-accent">Free</p>
+                        ) : (
+                          <div>
+                            <p className="text-4xl font-bold">
+                              ${(offer.base_price_cents / 100).toFixed(0)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {offer.base_currency || 'USD'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-6">{summary}</p>
+                      <div className="space-y-3">
                         <Button
                           asChild
                           variant={isFeatured ? 'cta' : 'default'}
                           className="w-full"
                           onClick={() =>
-                            track('cta_click', { package: pkg.id, action: 'book' })
+                            track('cta_click', { offer: offer.slug, action: 'view' })
                           }
                         >
-                          <Link to="/coaching">Book Free Call</Link>
+                          <Link to={`/coaching/${offer.slug}`}>
+                            {isFree ? 'Book Free Call' : 'View Details'}
+                          </Link>
                         </Button>
-                      ) : (
-                        <>
-                          <Button
-                            asChild
-                            variant={isFeatured ? 'cta' : 'default'}
-                            className="w-full"
-                            onClick={() =>
-                              track('pay_click', { package: pkg.id })
-                            }
-                          >
-                            <Link to={`/pay?package=${pkg.id}`}>Pay Now</Link>
-                          </Button>
+                        {!isFree && (
                           <Button
                             asChild
                             variant="outline"
                             className="w-full"
                             onClick={() =>
                               track('cta_click', {
-                                package: pkg.id,
-                                action: 'call_first',
+                                offer: offer.slug,
+                                action: 'free_call',
                               })
                             }
                           >
-                            <Link to="/coaching">Free Call First</Link>
+                            <Link to={`/coaching/${freeOfferSlug}`}>Free Call First</Link>
                           </Button>
-                        </>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Outcomes */}
@@ -271,7 +286,7 @@ const CoachingPrograms = () => {
               your goals
             </p>
             <Button asChild variant="hero" size="lg">
-              <Link to="/coaching">
+              <Link to={`/coaching/${freeOfferSlug}`}>
                 Book Your Free Session
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
