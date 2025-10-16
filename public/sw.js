@@ -100,6 +100,36 @@ self.addEventListener('sync', (e) => {
   }
 });
 
+/* Listen for cache purge messages from version guard */
+self.addEventListener('message', async (event) => {
+  if (event.data === 'ZG_PURGE_ALL') {
+    console.log('[SW] Received cache purge request');
+    
+    try {
+      // Delete all caches
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => {
+        console.log('[SW] Deleting cache:', name);
+        return caches.delete(name);
+      }));
+      
+      console.log('[SW] All caches purged');
+      
+      // Unregister this service worker so a fresh one loads
+      await self.registration.unregister();
+      console.log('[SW] Service worker unregistered');
+      
+      // Navigate all clients to force reload
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage('RELOAD_REQUIRED');
+      });
+    } catch (err) {
+      console.error('[SW] Cache purge failed:', err);
+    }
+  }
+});
+
 async function flushLeadQueue() {
   try {
     const db = await openDB('zg-queue', 1);

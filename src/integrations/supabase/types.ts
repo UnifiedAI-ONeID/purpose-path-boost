@@ -2338,6 +2338,24 @@ export type Database = {
           },
         ]
       }
+      zg_versions: {
+        Row: {
+          key: string
+          updated_at: string | null
+          v: number
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          v?: number
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          v?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_funnel_weekly: {
@@ -2400,6 +2418,10 @@ export type Database = {
       admin_metrics_summary: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      bump_version_now: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_expired_bookings: {
         Args: Record<PropertyKey, never>

@@ -30,6 +30,7 @@ import FunnelTab from '@/components/admin/FunnelTab';
 import AdminSecrets from '@/components/admin/AdminSecrets';
 import AdminShell from '@/components/admin/AdminShell';
 import SeoAlertBanner from '@/components/admin/SeoAlertBanner';
+import { VersionControl } from '@/components/admin/VersionControl';
 
 interface Lead {
   id: string;
@@ -250,6 +251,11 @@ const AdminDashboard = () => {
         >
           {/* SEO Alert Banner */}
           <SeoAlertBanner />
+          
+          {/* Version Control */}
+          <div className="mb-8">
+            <VersionControl />
+          </div>
           
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
