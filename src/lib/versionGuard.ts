@@ -44,8 +44,8 @@ export function bootVersionGuard({ pollMs = 90000 }: { pollMs?: number } = {}) {
   // 2) Polling fallback
   setInterval(() => checkAndRefresh(false), pollMs);
 
-  // 3) Check once at boot
-  checkAndRefresh(false);
+  // 3) Check once at boot after React has initialized (5 second delay to avoid disrupting initial load)
+  setTimeout(() => checkAndRefresh(false), 5000);
 
   console.log('[VersionGuard] Initialized with polling every', pollMs, 'ms');
 }
@@ -62,10 +62,19 @@ async function fetchVersion(): Promise<number> {
 }
 
 async function checkAndRefresh(force: boolean) {
+  // Don't reload if we're still in the initial page load (within first 3 seconds)
+  const pageLoadTime = performance.timing?.loadEventEnd || 0;
+  const timeSinceLoad = Date.now() - pageLoadTime;
+  
+  if (!force && timeSinceLoad < 3000) {
+    console.log('[VersionGuard] Skipping check during initial page load');
+    return;
+  }
+
   const remote = await fetchVersion();
   const local = Number(localStorage.getItem(LS_KEY) || 0);
 
-  console.log('[VersionGuard] Version check:', { local, remote, force });
+  console.log('[VersionGuard] Version check:', { local, remote, force, timeSinceLoad });
 
   if (force || remote > local) {
     console.log('[VersionGuard] Version mismatch - will reload');
