@@ -77,3 +77,12 @@ verify_jwt = false
 
 [functions.pwa-me-summary]
 verify_jwt = false
+
+[functions.pwa-me-goals]
+verify_jwt = false
+
+[functions.pwa-me-notes]
+verify_jwt = false
+
+[functions.pwa-ai-suggest]
+verify_jwt = false

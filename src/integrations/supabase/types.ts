@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_suggestions_cache: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          profile_id: string
+          score: number | null
+          suggestion_lang: string
+          suggestion_md: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          profile_id: string
+          score?: number | null
+          suggestion_lang: string
+          suggestion_md: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          profile_id?: string
+          score?: number | null
+          suggestion_lang?: string
+          suggestion_md?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string | null
@@ -1627,6 +1657,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      remote_flags: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
       }
       rollup_daily: {
         Row: {

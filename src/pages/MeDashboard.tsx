@@ -7,6 +7,7 @@ import { Calendar, Target, TrendingUp, Share2, Plus, Loader2 } from 'lucide-reac
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import SuggestedNextStep from '@/components/SuggestedNextStep';
 
 type Summary = {
   ok: boolean;
@@ -127,10 +128,22 @@ export default function MeDashboard() {
       />
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-20">
         <div className="container mx-auto max-w-6xl">
+          {/* AI Suggested Next Step */}
+          {data.profile && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <SuggestedNextStep profileId={data.profile.id} />
+            </motion.section>
+          )}
+
           {/* Next Session */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
             className="mb-6"
           >
             <Card>
@@ -181,7 +194,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="mb-6"
           >
             <Card>
@@ -242,7 +255,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.3 }}
             className="mb-6"
           >
             <div className="flex items-center justify-between mb-4">
@@ -283,7 +296,7 @@ export default function MeDashboard() {
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
             >
               <h2 className="text-xl font-semibold mb-4">
                 {lang === 'zh-CN' ? '最近付款' : lang === 'zh-TW' ? '最近付款' : 'Recent Payments'}
