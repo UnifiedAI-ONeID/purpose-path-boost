@@ -68,12 +68,13 @@ async function checkAndRefresh(force: boolean) {
   console.log('[VersionGuard] Version check:', { local, remote, force });
 
   if (force || remote > local) {
-    console.log('[VersionGuard] Version mismatch - clearing caches and reloading');
-    await nukeCaches();
+    console.log('[VersionGuard] Version mismatch - will reload');
     localStorage.setItem(LS_KEY, String(remote));
     
-    // Hard reload to bypass any lazy caches/modules
-    window.location.reload();
+    // Simple reload without aggressive cache clearing to avoid module import errors
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   }
 }
 
