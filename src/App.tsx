@@ -46,6 +46,7 @@ import EventDetail from "./pages/EventDetail";
 import AdminEvents from "./pages/AdminEvents";
 import AdminEventEdit from "./pages/AdminEventEdit";
 import AdminCalendar from "./pages/AdminCalendar";
+import AdminCalBookings from "./pages/AdminCalBookings";
 import AdminPricing from "./pages/AdminPricing";
 import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
@@ -93,9 +94,10 @@ function AppRoutes() {
         <Route path="/admin/events" element={<AdminEvents />} />
         <Route path="/admin/events/:slug" element={<AdminEventEdit />} />
         <Route path="/admin/calendar" element={<AdminCalendar />} />
-          <Route path="/admin/pricing" element={<AdminPricing />} />
-          <Route path="/admin/express" element={<AdminExpress />} />
-          <Route path="/admin/ai" element={<AdminAI />} />
+        <Route path="/admin/cal-bookings" element={<AdminCalBookings />} />
+        <Route path="/admin/pricing" element={<AdminPricing />} />
+        <Route path="/admin/express" element={<AdminExpress />} />
+        <Route path="/admin/ai" element={<AdminAI />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
