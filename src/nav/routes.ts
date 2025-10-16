@@ -1,9 +1,9 @@
 export type RouteKey = 
   | 'home' | 'coaching' | 'coachingDetail' | 'events' | 'eventDetail' 
   | 'blog' | 'blogDetail' | 'about' | 'contact' | 'quiz' 
-  | 'privacy' | 'terms' | 'resources'
+  | 'privacy' | 'terms' | 'resources' | 'pricing' | 'pricingSuccess' | 'accountCancel'
   | 'pwaHome' | 'pwaQuiz' | 'pwaCoaching' | 'pwaCoachingDetail' 
-  | 'sessions' | 'dashboard' | 'me' | 'checkout';
+  | 'sessions' | 'dashboard' | 'me' | 'checkout' | 'admin' | 'adminCoupons';
 
 export const ROUTES: Record<RouteKey, string> = {
   // Public pages
@@ -20,6 +20,9 @@ export const ROUTES: Record<RouteKey, string> = {
   quiz:           '/quiz',
   privacy:        '/privacy',
   terms:          '/terms',
+  pricing:        '/pricing',
+  pricingSuccess: '/pricing/success',
+  accountCancel:  '/account/cancel',
   
   // PWA pages
   pwaHome:            '/pwa',
@@ -29,7 +32,11 @@ export const ROUTES: Record<RouteKey, string> = {
   sessions:           '/pwa/sessions',
   dashboard:          '/pwa/dashboard',
   me:                 '/pwa/me',
-  checkout:           '/checkout'
+  checkout:           '/checkout',
+  
+  // Admin pages
+  admin:        '/admin',
+  adminCoupons: '/admin/coupons',
 };
 
 // Helper to build path with params

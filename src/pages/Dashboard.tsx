@@ -8,12 +8,14 @@ import { Calendar, BookOpen, TrendingUp, Award, LogOut, User as UserIcon } from 
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import Nudges from '@/components/Nudges';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -29,13 +31,24 @@ export default function Dashboard() {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
       
       if (!session) {
         navigate('/auth');
+      } else {
+        // Get profile ID for nudges
+        const { data: profile } = await supabase
+          .from('zg_profiles')
+          .select('id')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          setProfileId(profile.id);
+        }
       }
     });
 
@@ -70,6 +83,9 @@ export default function Dashboard() {
         title="My Dashboard - ZhenGrowth"
         description="Track your coaching progress, manage bookings, and access your personalized growth journey."
       />
+      
+      {/* In-app nudges */}
+      {profileId && <Nudges profileId={profileId} />}
       
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <div className="container mx-auto px-4 py-8 max-w-7xl">

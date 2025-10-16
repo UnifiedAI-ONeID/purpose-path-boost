@@ -92,9 +92,75 @@ export default function Pricing() {
     const code = prompt('Enter coupon code');
     if (!code) return;
     
-    // TODO: Implement coupon validation and application
-    toast.success('Coupon applied!');
-    startCheckout(slug);
+    // Validate and apply coupon
+    fetch('/api/coaching/price-with-discount', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        offer_slug: slug, 
+        coupon: code,
+        currency: 'USD' 
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          toast.success(`Coupon applied! ${data.discount_pct}% off`);
+          // Add coupon to checkout
+          startCheckoutWithCoupon(slug, code);
+        } else {
+          toast.error(data.error || 'Invalid coupon');
+        }
+      })
+      .catch(() => toast.error('Failed to validate coupon'));
+  }
+
+  async function startCheckoutWithCoupon(slug: string, coupon: string) {
+    setLoading(slug);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please sign in first');
+        window.location.href = '/auth?redirect=/pricing';
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('zg_profiles')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (!profile) {
+        toast.error('Profile not found');
+        return;
+      }
+
+      const response = await fetch('/api/billing/create-agreement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profile_id: profile.id,
+          plan_slug: slug,
+          interval: cycle === 'm' ? 'month' : 'year',
+          coupon
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        toast.error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setLoading(null);
+    }
   }
 
   return (

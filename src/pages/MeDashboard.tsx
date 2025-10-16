@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SuggestedNextStep from '@/components/SuggestedNextStep';
+import Nudges from '@/components/Nudges';
 
 type Summary = {
   ok: boolean;
@@ -137,6 +138,10 @@ export default function MeDashboard() {
         title="My Dashboard - ZhenGrowth"
         description="Track your personal growth journey and manage your coaching sessions."
       />
+      
+      {/* In-app nudges */}
+      {data.profile && <Nudges profileId={data.profile.id} />}
+      
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-20">
         <div className="container mx-auto max-w-6xl">
           {/* AI Suggested Next Step */}
@@ -461,6 +466,37 @@ export default function MeDashboard() {
                     </div>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.section>
+
+          {/* Subscription Management */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mb-6"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {lang === 'zh-CN' ? '订阅管理' : lang === 'zh-TW' ? '訂閱管理' : 'Subscription'}
+                </CardTitle>
+                <CardDescription>
+                  {lang === 'zh-CN' ? '管理您的订阅计划' : lang === 'zh-TW' ? '管理您的訂閱計劃' : 'Manage your subscription plan'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button asChild variant="outline" className="w-full">
+                  <a href="/pricing">
+                    {lang === 'zh-CN' ? '查看所有计划' : lang === 'zh-TW' ? '查看所有方案' : 'View All Plans'}
+                  </a>
+                </Button>
+                <Button asChild variant="ghost" className="w-full">
+                  <a href="/account/cancel">
+                    {lang === 'zh-CN' ? '取消订阅' : lang === 'zh-TW' ? '取消訂閱' : 'Cancel Subscription'}
+                  </a>
+                </Button>
               </CardContent>
             </Card>
           </motion.section>

@@ -114,6 +114,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <Nav href="/admin/express">{at(lang, 'Express')}</Nav>
           
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {at(lang, 'Marketing')}
+          </div>
+          <Nav href="/admin/coupons">Coupons</Nav>
+          
+          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {at(lang, 'Settings')}
           </div>
           <Nav href="/admin/pricing">{at(lang, 'Pricing')}</Nav>

@@ -4,6 +4,7 @@ import { ROUTES } from '@/nav/routes';
 import { triggerHomeAnim } from '@/anim/animator';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import Testimonials from '@/components/Testimonials';
 
 export default function Home() {
   const { lang } = usePrefs();
@@ -40,6 +41,13 @@ export default function Home() {
             </button>
           </SmartLink>
         </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">
+          {lang === 'zh-CN' ? '客户评价' : lang === 'zh-TW' ? '客戶評價' : 'What Our Clients Say'}
+        </h2>
+        <Testimonials />
       </section>
     </SiteShell>
   );
