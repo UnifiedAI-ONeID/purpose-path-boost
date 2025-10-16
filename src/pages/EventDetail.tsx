@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Event {
   id: string;
@@ -28,16 +30,19 @@ interface Ticket {
   name: string;
   price_cents: number;
   currency: string;
+  base_currency: string;
   qty: number;
 }
 
 export default function EventDetail() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
+  const isMobile = useIsMobile();
   const [event, setEvent] = useState<Event | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedTicket, setSelectedTicket] = useState('');
@@ -402,6 +407,30 @@ export default function EventDetail() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Mobile Fixed Bottom Button */}
+      {isMobile && (
+        <>
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border z-40">
+            <Button
+              onClick={() => setShowMobileSheet(true)}
+              className="w-full h-12 text-base font-semibold"
+              disabled={tickets.length === 0}
+            >
+              Register for Event
+            </Button>
+          </div>
+
+          <EventRegisterSheet
+            open={showMobileSheet}
+            onClose={() => setShowMobileSheet(false)}
+            eventId={event.id}
+            eventSlug={event.slug}
+            tickets={tickets}
+            defaultEmail={email}
+          />
+        </>
+      )}
     </main>
   );
 }

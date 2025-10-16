@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { track } from '@/analytics/events';
 import { sanitizeHtml } from '@/lib/sanitize';
+import { useIsMobile } from '@/hooks/use-mobile';
+import BlogDetailMobile from '@/components/mobile/BlogDetailMobile';
 
 interface BlogPost {
   id: string;
@@ -27,8 +29,14 @@ interface BlogPost {
 
 const BlogDetail = () => {
   const { slug } = useParams<{ slug: string }>();
+  const isMobile = useIsMobile();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Use mobile version on mobile devices
+  if (isMobile) {
+    return <BlogDetailMobile />;
+  }
 
   useEffect(() => {
     if (slug) {
