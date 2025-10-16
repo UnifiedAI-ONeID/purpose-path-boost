@@ -167,6 +167,10 @@ textarea::placeholder {
 /* ========================================
    Container
    ======================================== */
+.max-w-container {
+  max-width: var(--container);
+}
+
 .mx-container {
   max-width: var(--container);
   margin-left: auto;

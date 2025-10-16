@@ -1,52 +1,54 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin Offline — ZhenGrowth</title>
-  <style>
-    body {
-      margin: 0;
-      font: 15px/1.5 Inter, system-ui;
-      background: #0b1f1f;
-      color: #e8f2f2;
-      display: grid;
-      place-items: center;
-      height: 100vh;
-    }
-    .card {
-      background: #0b1f1fe6;
-      border: 1px solid #1f3737;
-      border-radius: 16px;
-      padding: 20px;
-      max-width: 360px;
-      text-align: center;
-    }
-    h1 {
-      margin: 0 0 12px;
-      font-size: 24px;
-      color: #8b5cf6;
-    }
-    p {
-      margin: 0 0 16px;
-      color: #94a3b8;
-    }
-    a.btn {
-      display: inline-block;
-      padding: 10px 20px;
-      border-radius: 12px;
-      background: #8b5cf6;
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>Admin offline</h1>
-    <p>The admin dashboard needs internet for secure updates. Try again when online.</p>
-    <a class="btn" href="/admin" onclick="location.reload()">Reload</a>
-  </div>
-</body>
+<!DOCTYPE html>
+<html lang="en" data-admin="true" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline - Admin</title>
+    <link rel="stylesheet" href="/styles/tokens.css">
+    <link rel="stylesheet" href="/styles/primitives.css">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", "PingFang TC", "Noto Sans CJK TC", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      .offline-card {
+        max-width: 400px;
+        margin: 10vh auto;
+        padding: 2rem;
+        text-align: center;
+      }
+      .offline-icon {
+        font-size: 48px;
+        margin-bottom: 1rem;
+        color: var(--gold-400);
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0.5rem 0 1rem;
+        font-weight: 600;
+      }
+      .offline-text {
+        margin-bottom: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card offline-card">
+      <div class="offline-icon">⚠️</div>
+      <h1>You're offline</h1>
+      <p class="text-muted offline-text">Admin panel requires an active connection.</p>
+      <button class="btn btn-cta" onclick="location.reload()">Try Again</button>
+    </div>
+  </body>
 </html>

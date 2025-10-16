@@ -59,7 +59,7 @@
 
   /* Layout */
   --container: 1200px;
-  --mobile: 18px;
+  --mobile: 20px;
 
   /* Legacy Shadcn compatibility */
   --background: var(--bg);
