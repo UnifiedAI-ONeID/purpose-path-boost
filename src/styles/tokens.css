@@ -1,0 +1,121 @@
+:root {
+  /* ========================================
+     Jade & Gold Palette
+     ======================================== */
+  --jade-900: #062222;
+  --jade-800: #0b1f1f;
+  --jade-700: #113232;
+  --jade-600: #184646;
+  --jade-500: #1e5c5c;
+
+  --gold-600: #caa75a;
+  --gold-500: #e7c873;
+  --gold-400: #f3de9a;
+
+  /* Neutral Palette */
+  --ink-hi: #0b1212;
+  --ink-lo: #e8f2f2;
+  --gray-300: #d3dfdf;
+  --gray-500: #93a5a5;
+  --gray-700: #3a4949;
+  --gray-800: #223232;
+
+  /* ========================================
+     Semantic Tokens (Light Mode)
+     ======================================== */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --subtle: #f8fbfb;
+  --text: #0b1212;
+  --muted: #3a4949;
+  --border: #d3dfdf;
+  
+  /* Interactive */
+  --cta: var(--gold-500);
+  --cta-pressed: var(--gold-600);
+  --accent: var(--jade-600);
+  
+  /* Gradients */
+  --grad-brand: radial-gradient(900px 500px at 50% 110%, var(--jade-700), transparent 60%), 
+                linear-gradient(180deg, var(--jade-800), var(--jade-900));
+  
+  /* Overlays */
+  --overlay: rgba(255, 255, 255, 0.82);
+  --brand-600: var(--gold-500);
+
+  /* ========================================
+     Design System Primitives
+     ======================================== */
+  /* Radius */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+
+  /* Shadows */
+  --sh-1: 0 6px 20px rgba(0, 0, 0, 0.12);
+  --sh-2: 0 10px 28px rgba(0, 0, 0, 0.18);
+
+  /* Layout */
+  --container: 1200px;
+  --mobile: 18px;
+
+  /* Legacy Shadcn compatibility */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--subtle);
+  --secondary-foreground: var(--text);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--text);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --input: var(--border);
+  --ring: var(--accent);
+  --radius: var(--r-lg);
+}
+
+/* ========================================
+   Dark Mode
+   ======================================== */
+:root[data-theme="dark"] {
+  --bg: var(--jade-900);
+  --surface: var(--jade-800);
+  --subtle: #0e2929;
+  --text: var(--ink-lo);
+  --muted: #9fb3b3;
+  --border: var(--gray-800);
+  
+  --cta: var(--gold-400);
+  --cta-pressed: var(--gold-500);
+  --overlay: rgba(0, 0, 0, 0.66);
+  --brand-600: var(--gold-400);
+
+  /* Legacy compatibility */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--gold-400);
+  --primary-foreground: var(--jade-900);
+  --secondary: var(--gray-800);
+  --secondary-foreground: var(--text);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--text);
+}
+
+/* ========================================
+   Admin Mode Overrides
+   ======================================== */
+:root[data-admin="true"] {
+  --cta: var(--gold-600);
+  --cta-pressed: var(--gold-500);
+}

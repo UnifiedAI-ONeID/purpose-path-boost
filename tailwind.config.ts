@@ -23,65 +23,91 @@ export default {
   			serif: 'var(--font-serif)'
   		},
   		colors: {
-  			bg: 'hsl(var(--bg))',
-  			fg: 'hsl(var(--fg))',
-  			brand: 'hsl(var(--brand))',
-  			accent: 'hsl(var(--accent))',
-  			cta: 'hsl(var(--cta))',
-  			surface: 'hsl(var(--surface))',
-  			border: 'hsl(var(--border))',
-  			muted: 'hsl(var(--muted))',
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
+        // Semantic tokens - NO hsl() wrapper, vars already contain hex values
+  			bg: 'var(--bg)',
+  			fg: 'var(--text)',
+  			text: 'var(--text)',
+  			muted: 'var(--muted)',
+  			surface: 'var(--surface)',
+  			subtle: 'var(--subtle)',
+  			border: 'var(--border)',
+  			cta: 'var(--cta)',
+  			accent: 'var(--accent)',
+        
+        // Jade palette
+        jade: {
+          900: 'var(--jade-900)',
+          800: 'var(--jade-800)',
+          700: 'var(--jade-700)',
+          600: 'var(--jade-600)',
+          500: 'var(--jade-500)'
+        },
+        
+        // Gold palette
+        gold: {
+          600: 'var(--gold-600)',
+          500: 'var(--gold-500)',
+          400: 'var(--gold-400)'
+        },
+        
+        // Shadcn compatibility - NO hsl() wrapper
+  			background: 'var(--background)',
+  			foreground: 'var(--foreground)',
   			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
+  				DEFAULT: 'var(--card)',
+  				foreground: 'var(--card-foreground)'
   			},
   			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
+  				DEFAULT: 'var(--popover)',
+  				foreground: 'var(--popover-foreground)'
   			},
   			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				DEFAULT: 'var(--primary)',
+  				foreground: 'var(--primary-foreground)'
   			},
   			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
+  				DEFAULT: 'var(--secondary)',
+  				foreground: 'var(--secondary-foreground)'
   			},
   			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
+  				DEFAULT: 'var(--destructive)',
+  				foreground: 'var(--destructive-foreground)'
   			},
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
+  			input: 'var(--input)',
+  			ring: 'var(--ring)',
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))',
-  				foreground: 'hsl(var(--sidebar-foreground))',
-  				primary: 'hsl(var(--sidebar-primary))',
-  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-  				accent: 'hsl(var(--sidebar-accent))',
-  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
+  				DEFAULT: 'var(--sidebar-background)',
+  				foreground: 'var(--sidebar-foreground)',
+  				primary: 'var(--sidebar-primary)',
+  				'primary-foreground': 'var(--sidebar-primary-foreground)',
+  				accent: 'var(--sidebar-accent)',
+  				'accent-foreground': 'var(--sidebar-accent-foreground)',
+  				border: 'var(--sidebar-border)',
+  				ring: 'var(--sidebar-ring)'
   			}
   		},
   		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)',
-  			xl: 'var(--radius)'
+        sm: 'var(--r-sm)',
+        md: 'var(--r-md)',
+  			lg: 'var(--r-lg)',
+        xl: 'var(--r-xl)',
+        '2xl': 'var(--r-2xl)'
   		},
   		boxShadow: {
-  			soft: 'var(--shadow)',
+  			soft: 'var(--sh-1)',
+        elev1: 'var(--sh-1)',
+        elev2: 'var(--sh-2)',
   			medium: '0 8px 24px rgba(0,0,0,.12)',
   			strong: '0 12px 40px rgba(0,0,0,.18)'
   		},
+      maxWidth: {
+        container: 'var(--container)'
+      },
+      spacing: {
+        mobile: 'var(--mobile)'
+      },
   		transitionDuration: {
   			smooth: '300ms'
-  		},
-  		backgroundImage: {
-  			'gradient-primary': 'linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%)'
   		},
   		keyframes: {
   			'accordion-down': {

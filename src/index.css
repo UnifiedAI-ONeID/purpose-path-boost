@@ -2,106 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light (default) */
-:root {
-  --bg: 0 0% 100%;
-  --fg: 0 0% 6%;
-  --muted: 160 8% 45%;
+/* Import design tokens */
+@import './tokens.css';
+@import './primitives.css';
 
-  --brand: 160 84% 18%;     /* 深玉綠 Deep Jade */
-  --accent: 45 95% 52%;     /* 古典金 Classic Gold */
-  --cta: 160 60% 35%;       /* 玉石綠 Jade Stone */
-  --surface: 160 20% 97%;   /* 玉霧白 Jade Mist */
-  --border: 160 15% 90%;
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-  --radius: 16px;
-  --shadow: 0 6px 24px rgba(0,0,0,.08);
-
-  /* Jade & Gold palette */
-  --jade-900: #062222;
-  --jade-800: #0b1f1f;
-  --jade-700: #113232;
-  --jade-600: #184646;
-  --gold-600: #caa75a;
-  --gold-500: #e7c873;
-  --gold-400: #f3de9a;
-
-  /* Transition overlay */
-  --overlay-bg: rgba(255, 255, 255, 0.82);
-  --brand-600: var(--gold-500);
-
-  /* Legacy compatibility */
-  --background: var(--bg);
-  --foreground: var(--fg);
-  --card: var(--bg);
-  --card-foreground: var(--fg);
-  --popover: var(--bg);
-  --popover-foreground: var(--fg);
-  --primary: var(--brand);
-  --primary-foreground: var(--surface);
-  --secondary: var(--accent);
-  --secondary-foreground: var(--brand);
-  --muted-foreground: var(--muted);
-  --accent-foreground: var(--brand);
-  --destructive: var(--cta);
-  --destructive-foreground: var(--surface);
-  --input: var(--border);
-  --ring: var(--brand);
-
-  --sidebar-background: var(--surface);
-  --sidebar-foreground: var(--fg);
-  --sidebar-primary: var(--brand);
-  --sidebar-primary-foreground: var(--surface);
-  --sidebar-accent: var(--surface);
-  --sidebar-accent-foreground: var(--fg);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--brand);
-}
-
-/* Dark */
-:root.dark {
-  --bg: 160 8% 8%;
-  --fg: 160 5% 95%;
-  --muted: 160 8% 65%;
-
-  --brand: 160 65% 55%;     /* 翠玉 Jade Green */
-  --accent: 45 100% 65%;    /* 明金 Bright Gold */
-  --cta: 160 55% 48%;       /* 玉光 Jade Glow */
-  --surface: 160 10% 12%;   /* 墨玉 Dark Jade */
-  --border: 160 12% 20%;
-
-  --shadow: 0 8px 28px rgba(0,0,0,.35);
-
-  /* Transition overlay */
-  --overlay-bg: rgba(0, 0, 0, 0.66);
-  --brand-600: var(--gold-400);
-
-  /* Legacy compatibility */
-  --background: var(--bg);
-  --foreground: var(--fg);
-  --card: var(--surface);
-  --card-foreground: var(--fg);
-  --popover: var(--bg);
-  --popover-foreground: var(--fg);
-  --primary: var(--accent);
-  --primary-foreground: var(--bg);
-  --secondary: 160 50% 25%;
-  --secondary-foreground: var(--fg);
-  --muted-foreground: var(--muted);
-  --accent-foreground: var(--bg);
-  --destructive: var(--cta);
-  --destructive-foreground: var(--fg);
-  --input: var(--border);
-  --ring: var(--accent);
-
-  --sidebar-background: 160 10% 12%;
-  --sidebar-foreground: 160 5% 95%;
-  --sidebar-primary: 160 65% 55%;
-  --sidebar-primary-foreground: 160 8% 8%;
-  --sidebar-accent: 160 12% 18%;
-  --sidebar-accent-foreground: 160 5% 95%;
-  --sidebar-border: 160 12% 20%;
-  --sidebar-ring: 45 100% 65%;
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+  }
 }
 
 /* Hide scrollbar for carousel */
@@ -251,12 +165,6 @@
 }
 
 /* PWA Styles */
-:root, :root.dark {
-  --grad-1: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%);
-  --glass: rgba(255, 255, 255, 0.15);
-}
-
-/* Utility classes */
 .shadow-soft {
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
@@ -273,36 +181,6 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.bg-gradient-primary {
-  background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--cta)) 100%);
-}
-
-/* Brand utility classes */
-.text-brand-accent {
-  color: hsl(var(--accent));
-}
-
-.bg-brand-accent {
-  background-color: hsl(var(--accent));
-}
-
-.text-brand-dark {
-  color: hsl(var(--brand));
-}
-
-.gradient-hero {
-  background: var(--grad-1);
-  color: white;
-  border-radius: var(--radius);
-  padding: 1rem;
-}
-
-.glass {
-  background: var(--glass);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-}
-
 /* Startup Screen */
 .startup {
   height: 100svh;
@@ -310,8 +188,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: hsl(var(--bg));
-  color: hsl(var(--fg));
+  background: var(--bg);
+  color: var(--text);
 }
 
 @keyframes pop {
@@ -353,12 +231,12 @@
   justify-content: space-between;
   gap: 0.75rem;
   align-items: center;
-  background: hsl(var(--surface));
-  color: hsl(var(--fg));
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   padding: 0.75rem;
-  box-shadow: var(--shadow);
+  box-shadow: var(--sh-1);
 }
 
 .install-banner__text {
@@ -373,56 +251,12 @@
   gap: 0.5rem;
 }
 
-.btn-ghost {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: hsl(var(--muted));
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.btn-ghost:hover {
-  background: hsl(var(--border));
-}
-
-.btn-cta {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: hsl(var(--cta));
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-cta:hover {
-  background: hsl(var(--brand));
-}
-
 /* China-friendly font stack */
 :root, :root.dark {
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
                "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans CJK TC",
                "Helvetica Neue", Arial, system-ui, sans-serif;
   --font-serif: "Noto Serif SC", "Songti SC", STSong, "Times New Roman", serif;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    background: hsl(var(--bg));
-    color: hsl(var(--fg));
-    font-family: var(--font-sans);
-  }
 }
 
 /* Reduced motion support */
