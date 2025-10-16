@@ -131,29 +131,27 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   });
 
   return (
-    <div className="rounded-2xl border border-border p-4 bg-card">
-      {/* Header with action button */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex-1">
-          <div className="font-semibold text-card-foreground">
-            {isPaid ? t(lang, 'priority') : t(lang, 'freeCall')}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {loading ? t(lang, 'checking') : t(lang, 'nextSlots')}
-          </div>
-        </div>
-
-        {/* Action area */}
-        {isPaid ? (
-          <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-3">
+      {/* For paid programs: show pricing and payment options */}
+      {isPaid ? (
+        <div className="space-y-3">
+          {discount > 0 && (
+            <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm">
+              <span className="font-semibold text-primary">
+                {fmt.format(discount / 100)} discount applied!
+              </span>
+            </div>
+          )}
+          
+          <div className="flex flex-wrap items-center gap-2">
             <Input
-              className="h-10 w-32"
-              placeholder={t(lang, 'coupon')}
+              className="flex-1 min-w-[120px]"
+              placeholder={t(lang, 'coupon') || 'Coupon code'}
               value={coupon}
               onChange={e => setCoupon(e.target.value.toUpperCase())}
             />
             <select
-              className="h-10 px-3 rounded-md border border-input bg-background text-sm"
+              className="h-10 px-3 rounded-md border border-input bg-background text-sm font-medium"
               value={currency}
               onChange={e => setCurrency(e.target.value)}
             >
@@ -161,63 +159,52 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <Button
-              variant="cta"
-              onClick={handlePayment}
-              disabled={busy}
-              className="h-10"
-            >
-              {busy ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t(lang, 'processing')}
-                </>
-              ) : discount > 0 ? (
-                `${t(lang,'pay')} ${fmt.format((meta?.price?.cents || 0) / 100)} (−${fmt.format(discount / 100)})`
-              ) : (
-                `${t(lang,'pay')} ${fmt.format((meta?.price?.cents || 0) / 100)}`
-              )}
-            </Button>
           </div>
-        ) : (
-          <Button variant="cta" onClick={openBooking} className="h-10">
-            {t(lang, 'seeTimes')}
+
+          <Button
+            variant="default"
+            size="lg"
+            onClick={handlePayment}
+            disabled={busy}
+            className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold text-base shadow-lg"
+          >
+            {busy ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {t(lang, 'processing') || 'Processing...'}
+              </>
+            ) : discount > 0 ? (
+              <>
+                {t(lang,'pay') || 'Pay'} {fmt.format((meta?.price?.cents || 0) / 100)}
+                <span className="ml-2 text-xs opacity-80">
+                  (saved {fmt.format(discount / 100)})
+                </span>
+              </>
+            ) : (
+              <>
+                {t(lang,'pay') || 'Pay'} {fmt.format((meta?.price?.cents || 0) / 100)}
+              </>
+            )}
           </Button>
-        )}
-      </div>
-
-      {/* Quick slots */}
-      {!loading && slots.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
-          {slots.slice(0, 3).map((slot, i) => {
-            const date = new Date(slot.start);
-            const label = date.toLocaleString(undefined, {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-            return (
-              <button
-                key={i}
-                onClick={openBooking}
-                className="h-10 px-3 rounded-xl border border-border bg-muted/50 text-sm hover:bg-muted transition-colors"
-              >
-                {label}
-              </button>
-            );
-          })}
         </div>
-      )}
-
-      {/* Loading state */}
-      {loading && (
-        <div className="grid grid-cols-3 gap-2 mt-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-10 rounded-xl bg-muted/50 animate-pulse" />
-          ))}
-        </div>
+      ) : (
+        /* For free programs: simple booking button */
+        <Button
+          variant="default"
+          size="lg"
+          onClick={openBooking}
+          disabled={busy}
+          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground font-semibold text-base shadow-lg"
+        >
+          {busy ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {t(lang, 'loading') || 'Loading...'}
+            </>
+          ) : (
+            <>{t(lang, 'seeTimes') || 'Book Your Free Session'}</>
+          )}
+        </Button>
       )}
     </div>
   );

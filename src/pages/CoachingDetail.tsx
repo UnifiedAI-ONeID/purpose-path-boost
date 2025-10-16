@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import SEOHelmet from '@/components/SEOHelmet';
 import CoachingCTA from '@/components/CoachingCTA';
 import { usePrefs } from '@/prefs/PrefsProvider';
@@ -50,7 +50,16 @@ export default function CoachingDetail() {
   if (!data?.ok || !data.offer) {
     return (
       <main className="container mx-auto px-4 py-12">
-        <h1 className="text-2xl font-bold">Coaching program not found</h1>
+        <div className="rounded-2xl border border-border p-8 text-center">
+          <h1 className="text-2xl font-bold mb-2">Coaching program not found</h1>
+          <p className="text-muted-foreground mb-4">The coaching program you're looking for doesn't exist.</p>
+          <Link 
+            to="/coaching" 
+            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            View All Programs
+          </Link>
+        </div>
       </main>
     );
   }
@@ -58,16 +67,36 @@ export default function CoachingDetail() {
   const { offer, page } = data;
 
   return (
-    <main className="container mx-auto px-4 py-12">
+    <main className="container mx-auto px-4 py-12 max-w-4xl">
       <SEOHelmet
         title={`${localized?.title || 'Coaching'} | ZhenGrowth Coaching`}
         description={localized?.summary || 'Professional coaching with Amelda Chen'}
         path={`/coaching/${offer.slug}`}
       />
 
-      <header className="rounded-2xl p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-        <h1 className="text-3xl font-bold mb-2">{localized?.title}</h1>
-        {localized?.summary && <p className="text-lg text-muted-foreground mb-4">{localized.summary}</p>}
+      {/* Back link */}
+      <Link 
+        to="/coaching" 
+        className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+      >
+        ← Back to all programs
+      </Link>
+
+      {/* Hero section */}
+      <header className="rounded-2xl p-8 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-4xl font-bold mb-3 text-foreground">{localized?.title}</h1>
+            {localized?.summary && (
+              <p className="text-lg text-muted-foreground leading-relaxed">{localized.summary}</p>
+            )}
+          </div>
+          {offer.billing_type === 'free' && (
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary whitespace-nowrap">
+              FREE SESSION
+            </span>
+          )}
+        </div>
         <CoachingCTA slug={offer.slug} />
       </header>
 

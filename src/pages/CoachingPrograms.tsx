@@ -23,28 +23,45 @@ export default function CoachingPrograms() {
         lang={lang as 'en'|'zh-CN'|'zh-TW'}
         image="https://zhengrowth.com/app-icon.png"
       />
-      <header className="rounded-2xl p-5 md:p-8 text-white mb-4" style={{ background: 'var(--grad-brand)' }}>
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">
-          {lang === 'zh-CN' ? '辅导项目' : lang === 'zh-TW' ? '輔導項目' : 'Coaching'}
+      
+      <header className="rounded-2xl p-6 md:p-8 mb-6 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+        <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground">
+          {lang === 'zh-CN' ? '辅导项目' : lang === 'zh-TW' ? '輔導項目' : 'Coaching Programs'}
         </h1>
-        <p className="opacity-90">
-          {lang === 'zh-CN' ? '选择适合你的路径 — 立即预约' : lang === 'zh-TW' ? '選擇適合你的路徑 — 立即預約' : 'Choose the path that fits — book instantly'}
+        <p className="text-lg text-muted-foreground">
+          {lang === 'zh-CN' ? '选择适合你的路径 — 立即预约专业的生涯与生活辅导' : 
+           lang === 'zh-TW' ? '選擇適合你的路徑 — 立即預約專業的生涯與生活輔導' : 
+           'Choose the path that fits — book instantly with professional life and career coaching'}
         </p>
       </header>
 
-      <section className="grid md:grid-cols-2 gap-3" data-coaching-grid>
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="card animate-pulse h-40" />
-          ))
-        ) : error ? (
-          <div className="card col-span-2 text-destructive">
-            {String(error)}
-          </div>
-        ) : (
-          data?.rows?.map((o: any) => <CoachingCard key={o.slug} offer={o} />)
-        )}
-      </section>
+{loading ? (
+        <div className="grid md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border p-6 animate-pulse">
+              <div className="h-6 bg-muted rounded w-3/4 mb-3" />
+              <div className="h-4 bg-muted rounded w-full mb-2" />
+              <div className="h-4 bg-muted rounded w-5/6 mb-4" />
+              <div className="h-10 bg-muted rounded w-full" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-2xl border border-destructive/50 bg-destructive/10 p-6 text-center">
+          <p className="text-destructive font-semibold mb-2">Failed to load coaching programs</p>
+          <p className="text-sm text-muted-foreground">{String(error)}</p>
+        </div>
+      ) : !data?.ok || !data?.rows?.length ? (
+        <div className="rounded-2xl border border-border p-8 text-center">
+          <p className="text-muted-foreground">No coaching programs available at this time.</p>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-4">
+          {data.rows.map((offer: any) => (
+            <CoachingCard key={offer.slug} offer={offer} />
+          ))}
+        </div>
+      )}
     </SiteShell>
   );
 }
