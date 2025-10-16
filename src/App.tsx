@@ -56,6 +56,8 @@ import AdminCoaching from "./pages/AdminCoaching";
 // Lazy load PWA screens
 const PWAHome = lazy(() => import("./pwa/screens/Home"));
 const PWAQuiz = lazy(() => import("./pwa/screens/Quiz"));
+const PWADashboard = lazy(() => import("./pwa/screens/Dashboard"));
+const PWACoaching = lazy(() => import("./pwa/screens/Coaching"));
 
 const queryClient = new QueryClient();
 
@@ -115,6 +117,16 @@ function AppRoutes() {
         <Route path="/pwa/quiz" element={
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
             <PWAQuiz />
+          </Suspense>
+        } />
+        <Route path="/pwa/dashboard" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <PWADashboard />
+          </Suspense>
+        } />
+        <Route path="/pwa/coaching" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <PWACoaching />
           </Suspense>
         } />
         

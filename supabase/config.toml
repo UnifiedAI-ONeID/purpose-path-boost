@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.pwa-telemetry]
 verify_jwt = false
+
+[functions.pwa-coaching-recommend]
+verify_jwt = false
+
+[functions.pwa-me-summary]
+verify_jwt = false

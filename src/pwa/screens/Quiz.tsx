@@ -49,7 +49,7 @@ export default function Quiz() {
     } else {
       // Navigate to recommended coaching
       const params = new URLSearchParams({ tags: newTags.join(','), lang });
-      navigate(`/coaching?${params}`);
+      navigate(`/pwa/coaching?${params}`);
     }
   }
 

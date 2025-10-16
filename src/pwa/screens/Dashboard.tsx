@@ -14,16 +14,31 @@ export default function Dashboard() {
     const device = localStorage.getItem('zg.device');
     if (!device) return;
 
-    fetch(`/api/me/summary?device=${device}`)
-      .then(r => r.json())
-      .then(setData)
-      .catch(() => {
-        toast({
-          title: 'Error loading dashboard',
-          description: 'Please try again later',
-          variant: 'destructive'
+    import('@/integrations/supabase/client').then(({ supabase }) => {
+      supabase.functions
+        .invoke('pwa-me-summary', {
+          body: { device },
+          headers: { 'x-zg-device': device }
+        })
+        .then(({ data }) => {
+          if (data?.ok) {
+            setData(data);
+          } else {
+            toast({
+              title: 'Error loading dashboard',
+              description: 'Please try again later',
+              variant: 'destructive'
+            });
+          }
+        })
+        .catch(() => {
+          toast({
+            title: 'Error loading dashboard',
+            description: 'Please try again later',
+            variant: 'destructive'
+          });
         });
-      });
+    });
   }, [toast]);
 
   if (!data) {

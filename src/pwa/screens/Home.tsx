@@ -61,7 +61,7 @@ export default function Home() {
       </Card>
 
       <div className="mt-6 space-y-3">
-        <SmartLink href="/coaching">
+        <SmartLink href="/pwa/coaching">
           <Button variant="outline" className="w-full">Explore Coaching Programs</Button>
         </SmartLink>
         <SmartLink href="/pwa/dashboard">
