@@ -74,31 +74,21 @@ export default function Auth() {
 
     setLoading(true);
     try {
-      // Generate password reset token via Supabase
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`
+      // Send custom branded password reset email via our edge function
+      // This will generate the proper Supabase recovery token and send our branded email
+      const { data, error: emailError } = await supabase.functions.invoke('send-password-reset', {
+        body: {
+          email,
+          language: lang
+        }
       });
 
-      if (resetError) throw resetError;
-
-      // Send custom branded email via our edge function
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-password-reset', {
-          body: {
-            email,
-            resetLink: `${window.location.origin}/auth#type=recovery`,
-            language: lang
-          }
-        });
-
-        if (emailError) {
-          console.error('Custom email error:', emailError);
-          // Continue anyway - Supabase will send default email as fallback
-        }
-      } catch (emailError) {
-        console.error('Email function error:', emailError);
-        // Continue anyway - user will get default Supabase email
+      if (emailError) {
+        console.error('Password reset error:', emailError);
+        throw new Error(emailError.message || 'Failed to send reset email');
       }
+
+      console.log('Password reset email sent:', data);
 
       toast.success(
         lang === 'zh-CN' ? '密码重置链接已发送到您的邮箱' :
@@ -106,9 +96,15 @@ export default function Auth() {
         'Password reset link sent to your email'
       );
       setResetMode(false);
+      setEmail(''); // Clear email field
     } catch (error: any) {
       console.error('Password reset error:', error);
-      toast.error(error.message || 'Failed to send reset email');
+      toast.error(
+        error.message || 
+        (lang === 'zh-CN' ? '发送重置邮件失败' :
+         lang === 'zh-TW' ? '發送重置郵件失敗' :
+         'Failed to send reset email')
+      );
     } finally {
       setLoading(false);
     }

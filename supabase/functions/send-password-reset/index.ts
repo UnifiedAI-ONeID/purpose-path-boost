@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { generatePasswordResetEmail, generatePasswordResetText } from './email-template.ts';
 
 // Resend types and client
@@ -49,7 +50,6 @@ const corsHeaders = {
 
 interface PasswordResetRequest {
   email: string;
-  resetLink: string;
   language?: string;
 }
 
@@ -60,13 +60,47 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, resetLink, language = 'en' }: PasswordResetRequest = await req.json();
+    const { email, language = 'en' }: PasswordResetRequest = await req.json();
 
     console.log('Password reset email request for:', email);
 
-    if (!email || !resetLink) {
-      throw new Error('Email and reset link are required');
+    if (!email) {
+      throw new Error('Email is required');
     }
+
+    // Initialize Supabase Admin client to generate proper recovery link
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase credentials not configured');
+      throw new Error('Service not configured');
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    // Generate password recovery link using Supabase Admin API
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+    });
+
+    if (linkError) {
+      console.error('Error generating recovery link:', linkError);
+      throw new Error('Failed to generate recovery link');
+    }
+
+    if (!linkData?.properties?.action_link) {
+      throw new Error('No recovery link generated');
+    }
+
+    const resetLink = linkData.properties.action_link;
+    console.log('Generated recovery link for:', email);
 
     // Initialize Resend
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
