@@ -12,7 +12,7 @@ export default function LinkEventRegister({
   className?: string;
 }) {
   return (
-    <a className={`btn btn-cta ${className}`} href={`/events/${slug}#register`}>
+    <a className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-cta text-surface hover:bg-cta/90 shadow-medium hover:shadow-strong transition-smooth font-semibold h-10 px-4 py-2 ${className}`} href={`/events/${slug}#register`}>
       {children}
     </a>
   );

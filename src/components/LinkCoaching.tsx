@@ -12,7 +12,7 @@ export default function LinkCoaching({
   className?: string;
 }) {
   return (
-    <a className={`btn btn-cta ${className}`} href={`/coaching/${slug}`}>
+    <a className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-cta text-surface hover:bg-cta/90 shadow-medium hover:shadow-strong transition-smooth font-semibold h-10 px-4 py-2 ${className}`} href={`/coaching/${slug}`}>
       {children}
     </a>
   );
