@@ -53,6 +53,10 @@ import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
 
+// Lazy load PWA screens
+const PWAHome = lazy(() => import("./pwa/screens/Home"));
+const PWAQuiz = lazy(() => import("./pwa/screens/Quiz"));
+
 const queryClient = new QueryClient();
 
 // Hook to detect mobile device
@@ -101,6 +105,18 @@ function AppRoutes() {
         <Route path="/admin/ai" element={<AdminAI />} />
         <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/admin/coaching" element={<AdminCoaching />} />
+        
+        {/* PWA routes (standalone) */}
+        <Route path="/pwa/home" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <PWAHome />
+          </Suspense>
+        } />
+        <Route path="/pwa/quiz" element={
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <PWAQuiz />
+          </Suspense>
+        } />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>

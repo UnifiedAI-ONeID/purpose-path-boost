@@ -23,21 +23,26 @@ export default function Home() {
 
   useEffect(() => {
     const device = getOrSetDevice();
-    fetch(`/api/pwa/boot?device=${device}`, {
-      headers: { 'Accept-Language': lang }
-    })
-      .then(r => r.json())
-      .then(setBoot);
+    
+    // Use Supabase function
+    import('@/integrations/supabase/client').then(({ supabase }) => {
+      supabase.functions
+        .invoke('pwa-boot', {
+          body: { device, lang },
+          headers: { 'Accept-Language': lang, 'x-zg-device': device }
+        })
+        .then(({ data }) => {
+          if (data?.ok) setBoot(data);
+        });
 
-    // Track page view
-    fetch('/api/telemetry/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        device_id: device,
-        event: 'view_home',
-        payload: { source: 'pwa' }
-      })
+      // Track page view
+      supabase.functions.invoke('pwa-telemetry', {
+        body: {
+          device_id: device,
+          event: 'view_home',
+          payload: { source: 'pwa' }
+        }
+      });
     });
   }, [lang]);
 

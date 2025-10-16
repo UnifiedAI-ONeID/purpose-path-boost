@@ -17,24 +17,28 @@ export default function Quiz() {
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch('/api/pwa/boot', {
-      headers: { 'Accept-Language': lang }
-    })
-      .then(r => r.json())
-      .then(j => setCfg(j.quiz || []));
+    import('@/integrations/supabase/client').then(({ supabase }) => {
+      supabase.functions
+        .invoke('pwa-boot', {
+          body: { lang },
+          headers: { 'Accept-Language': lang }
+        })
+        .then(({ data }) => {
+          if (data?.ok) setCfg(data.quiz || []);
+        });
+    });
   }, [lang]);
 
   async function choose(choice: any) {
     const device_id = localStorage.getItem('zg.device')!;
     
-    fetch('/api/quiz/answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const { supabase } = await import('@/integrations/supabase/client');
+    supabase.functions.invoke('pwa-quiz-answer', {
+      body: {
         device_id,
         question_key: cfg[idx].key,
         choice_value: choice.value
-      })
+      }
     });
 
     const newTags = Array.from(new Set([...tags, choice.tag].filter(Boolean)));
