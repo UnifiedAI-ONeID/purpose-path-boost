@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminExpress(){
   const [rows,setRows]=useState<any[]>([]);
@@ -21,7 +22,7 @@ export default function AdminExpress(){
   }
 
   return (
-    <main className="container mx-auto p-6 max-w-7xl">
+    <AdminShell>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-serif font-bold">Express Orders</h1>
           <button className="btn btn-ghost" onClick={loadOrders}>Refresh</button>
@@ -69,6 +70,6 @@ export default function AdminExpress(){
             </table>
           )}
         </div>
-      </main>
+      </AdminShell>
   );
 }

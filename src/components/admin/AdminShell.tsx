@@ -22,14 +22,25 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="p-4 font-semibold text-primary">ZG Admin</div>
         <nav className="p-2 grid gap-1 text-sm">
           <Nav href="/admin">Dashboard</Nav>
-          <Nav href="/admin/bookings">Bookings</Nav>
+          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Bookings
+          </div>
+          <Nav href="/admin/bookings">All Bookings</Nav>
+          <Nav href="/admin/cal-bookings">Cal.com Bookings</Nav>
+          <Nav href="/admin/calendar">Calendar View</Nav>
+          
+          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Products
+          </div>
           <Nav href="/admin/coaching">Coaching</Nav>
           <Nav href="/admin/events">Events</Nav>
-          <Nav href="/admin/calendar">Calendar</Nav>
-          <Nav href="/admin/pricing">Pricing</Nav>
-          <Nav href="/admin/express">Express</Nav>
-          <Nav href="/admin/social">Social</Nav>
-          <Nav href="/admin/ai">AI</Nav>
+          <Nav href="/admin/express">Express Pay</Nav>
+          
+          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Settings
+          </div>
+          <Nav href="/admin/pricing">Pricing & FX</Nav>
+          <Nav href="/admin/ai">AI System</Nav>
         </nav>
       </aside>
       <main>

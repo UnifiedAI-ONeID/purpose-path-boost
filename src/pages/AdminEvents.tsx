@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminEvents() {
   const navigate = useNavigate();
@@ -41,14 +42,17 @@ export default function AdminEvents() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
-      </div>
+      <AdminShell>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
+        </div>
+      </AdminShell>
     );
   }
 
   return (
-    <main className="container max-w-6xl mx-auto p-4 md:p-6">
+    <AdminShell>
+      <div>
       <header className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-serif font-bold">Events & Workshops</h1>
@@ -136,6 +140,7 @@ export default function AdminEvents() {
           )}
         </CardContent>
       </Card>
-    </main>
+      </div>
+    </AdminShell>
   );
 }

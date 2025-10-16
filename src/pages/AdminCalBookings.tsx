@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminCalBookings() {
   const [rows, setRows] = useState<any[]>([]);
@@ -19,15 +20,15 @@ export default function AdminCalBookings() {
 
   if (loading) {
     return (
-      <main className="max-w-6xl mx-auto p-4 md:p-6">
+      <AdminShell>
         <h1 className="text-2xl font-semibold mb-3">Cal.com Bookings</h1>
         <p className="text-muted">Loading...</p>
-      </main>
+      </AdminShell>
     );
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-4 md:p-6">
+    <AdminShell>
       <h1 className="text-2xl font-semibold mb-3">Cal.com Bookings</h1>
       <div className="rounded-xl bg-surface border border-border overflow-x-auto">
         <table className="w-full text-sm">
@@ -74,6 +75,6 @@ export default function AdminCalBookings() {
           <div className="p-6 text-center text-muted">No bookings found</div>
         )}
       </div>
-    </main>
+    </AdminShell>
   );
 }

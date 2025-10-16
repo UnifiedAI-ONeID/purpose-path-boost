@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import FxOverridesEditor from '@/components/admin/FxOverridesEditor';
 import FxAuditTicket from '@/components/admin/FxAuditTicket';
 import PriceTesting from '@/components/admin/PriceTesting';
+import AdminShell from '@/components/admin/AdminShell';
 
 interface Event {
   id?: string;
@@ -231,14 +232,17 @@ export default function AdminEventEdit() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
-      </div>
+      <AdminShell>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
+        </div>
+      </AdminShell>
     );
   }
 
   return (
-    <main className="container max-w-6xl mx-auto p-4 md:p-6">
+    <AdminShell>
+      <div>
       <header className="flex items-center justify-between mb-6">
         <Button variant="ghost" onClick={() => navigate('/admin/events')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -472,6 +476,7 @@ export default function AdminEventEdit() {
           </CardContent>
         </Card>
       )}
-    </main>
+      </div>
+    </AdminShell>
   );
 }

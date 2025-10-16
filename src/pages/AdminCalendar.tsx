@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import AdminShell from '@/components/admin/AdminShell';
 
 type ItemType = 'event' | 'post' | 'social';
 
@@ -112,14 +113,17 @@ export default function AdminCalendar() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
-      </div>
+      <AdminShell>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent"></div>
+        </div>
+      </AdminShell>
     );
   }
 
   return (
-    <main className="container max-w-7xl mx-auto p-4 md:p-6">
+    <AdminShell>
+      <div>
       {/* Header */}
       <header className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -233,9 +237,11 @@ export default function AdminCalendar() {
           <span>Social Posts</span>
         </div>
       </div>
-    </main>
+      </div>
+    </AdminShell>
   );
 }
+
 
 function getTypeColor(type: ItemType): string {
   switch (type) {
