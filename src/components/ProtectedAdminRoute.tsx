@@ -68,7 +68,7 @@ export default function ProtectedAdminRoute({ children }: Props) {
 
   // Redirect non-admin users
   if (!isAdmin) {
-    return <Navigate to="/auth?redirect=/admin" replace />;
+    return <Navigate to="/auth?returnTo=/admin" replace />;
   }
 
   // Render protected content for admin users

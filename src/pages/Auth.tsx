@@ -25,10 +25,24 @@ export default function Auth() {
 
   useEffect(() => {
     // Check if already authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        const returnTo = searchParams.get('returnTo') || '/me';
-        navigate(returnTo);
+        // Support both 'returnTo' and 'redirect' parameters for backward compatibility
+        const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
+        
+        if (returnTo) {
+          navigate(returnTo);
+        } else {
+          // Check admin status to route appropriately
+          const response = await fetch('/api/admin/check-role', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          });
+          const result = await response.json();
+          
+          navigate(result.is_admin ? '/admin' : '/me');
+        }
       }
       setCheckingAuth(false);
     });
@@ -71,7 +85,8 @@ export default function Auth() {
         });
         
         const result = await response.json();
-        const returnTo = searchParams.get('returnTo');
+        // Support both 'returnTo' and 'redirect' parameters for backward compatibility
+        const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
         if (returnTo) {
           navigate(returnTo);
@@ -102,7 +117,8 @@ export default function Auth() {
 
   const handleOAuth = async (provider: 'google' | 'apple') => {
     try {
-      const returnTo = searchParams.get('returnTo') || '/me';
+      // Support both 'returnTo' and 'redirect' parameters for backward compatibility
+      const returnTo = searchParams.get('returnTo') || searchParams.get('redirect') || '/me';
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

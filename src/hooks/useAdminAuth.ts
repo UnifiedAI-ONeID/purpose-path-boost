@@ -9,7 +9,7 @@ export function useAdminAuth() {
       const r = await fetch('/api/admin/self').then(r => r.json()).catch(() => ({ ok: false }));
       setOk(!!r.ok);
       if (!r.ok) {
-        location.href = '/auth?redirect=/admin';
+        location.href = '/auth?returnTo=/admin';
       }
     })();
   }, []);

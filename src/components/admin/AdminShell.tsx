@@ -38,7 +38,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       
       if (!session?.user) {
         toast.error('Authentication required');
-        navigate('/auth?redirect=/admin');
+        navigate('/auth?returnTo=/admin');
         return;
       }
 
