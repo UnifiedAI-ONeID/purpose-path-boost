@@ -54,6 +54,18 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/express/webhook': 'api-express-webhook',
   '/api/paywall/can-watch': 'api-paywall-can-watch',
   '/api/paywall/mark-watch': 'api-paywall-mark-watch',
+  '/api/events/tickets': 'api-events-tickets',
+  '/api/events/coupon-preview': 'api-events-coupon-preview',
+  '/api/nudge/pull': 'api-nudge-pull',
+  '/api/quiz/answer': 'api-quiz-answer',
+  '/api/badges/award': 'api-badges-award',
+  '/api/admin/bump-version': 'api-admin-bump-version',
+  '/api/ai/status': 'api-ai-status',
+  '/api/nudge/mark': 'api-nudge-mark',
+  '/api/events/ics': 'api-events-ics',
+  '/api/ai/logs': 'api-ai-logs',
+  '/api/admin/seo/sources': 'api-admin-seo-sources',
+  '/api/pricing/assign': 'api-pricing-assign',
 };
 
 /**

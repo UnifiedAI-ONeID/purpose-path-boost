@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 type Health = { ok:boolean; ai_enabled:boolean; has_key:boolean; cn_mode:boolean; timeout_ms:number; cache_ttl_s:number };
 type LogRow = { id:number; at:string; route:string; mode:string; error:string|null; duration_ms:number|null; request:any };
@@ -11,7 +12,7 @@ export default function AdminAI(){
 
   async function load(){
     setLoading(true);
-    const h = await fetch('/api/ai/status').then(r=>r.json()).catch(()=>null);
+    const { data: h } = await supabase.functions.invoke('api-ai-status');
     setHealth(h);
     const l = await fetch(`/api/ai/logs?range=${range}`).then(r=>r.json()).catch(()=>({rows:[]}));
     setLogs(l.rows||[]);

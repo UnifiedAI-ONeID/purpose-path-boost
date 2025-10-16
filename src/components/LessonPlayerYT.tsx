@@ -51,22 +51,19 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   useEffect(() => {
     (async () => {
       try {
-        const gateCheck = await fetch(
-          `/api/paywall/can-watch?profile_id=${encodeURIComponent(profileId)}&lesson_slug=${encodeURIComponent(slug)}`,
-          { cache: 'no-store' }
-        ).then(r => r.json());
+        const { data: gateCheck } = await supabase.functions.invoke('api-paywall-can-watch', {
+          body: { profile_id: profileId, lesson_slug: slug }
+        });
 
-        if (!gateCheck.access) {
+        if (!gateCheck?.access) {
           setShowUpsell(true);
-          setUpsellPlan(gateCheck.upsell?.recommended || 'starter');
+          setUpsellPlan(gateCheck?.upsell?.recommended || 'starter');
           return;
         }
 
         setHasAccess(true);
-        await fetch('/api/paywall/mark-watch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profile_id: profileId, lesson_slug: slug })
+        await supabase.functions.invoke('api-paywall-mark-watch', {
+          body: { profile_id: profileId, lesson_slug: slug }
         });
 
         if (gateCheck.plan_slug === 'free' && gateCheck.remaining === 1) {

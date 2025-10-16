@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Nudge {
   id: string;
@@ -16,11 +17,10 @@ export default function Nudges({ profileId }: { profileId: string }) {
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch(`/api/nudge/pull?profile_id=${profileId}`, {
-          cache: 'no-store',
+        const { data } = await supabase.functions.invoke('api-nudge-pull', {
+          body: { profile_id: profileId }
         });
-        const json = await response.json();
-        setRows(json.rows || []);
+        setRows(data?.rows || []);
       } catch (error) {
         console.error('Failed to fetch nudges:', error);
       }
@@ -124,10 +124,8 @@ function Modal({ n, onDismiss }: { n: Nudge; onDismiss: () => void }) {
 
 async function dismiss(id: string, setRows: React.Dispatch<React.SetStateAction<Nudge[]>>) {
   try {
-    await fetch('/api/nudge/mark', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+    await supabase.functions.invoke('api-nudge-mark', {
+      body: { id }
     });
     setRows((prev) => prev.filter((n) => n.id !== id));
   } catch (error) {

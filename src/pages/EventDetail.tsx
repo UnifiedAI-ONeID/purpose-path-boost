@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Event {
   id: string;
@@ -59,13 +60,17 @@ export default function EventDetail() {
   useEffect(() => {
     async function load() {
       try {
-        const eventData = await fetch(`/api/events/get?slug=${slug}`).then(r => r.json());
+        const { data: eventData } = await supabase.functions.invoke('api-events-get', {
+          body: { slug }
+        });
         setEvent(eventData);
 
         if (eventData?.id) {
-          const ticketsData = await fetch(`/api/events/tickets?event_id=${eventData.id}`).then(r => r.json());
-          setTickets(ticketsData);
-          if (ticketsData.length > 0) {
+          const { data: ticketsData } = await supabase.functions.invoke('api-events-tickets', {
+            body: { event_id: eventData.id }
+          });
+          setTickets(ticketsData || []);
+          if (ticketsData && ticketsData.length > 0) {
             setSelectedTicket(ticketsData[0].id);
           }
         }
@@ -113,11 +118,9 @@ export default function EventDetail() {
         }
 
         // Fallback to standard price preview
-        const result = await fetch('/api/events/price-preview', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticket_id: selectedTicket, currency: selectedCurrency })
-        }).then(r => r.json());
+        const { data: result } = await supabase.functions.invoke('api-events-price-preview', {
+          body: { ticket_id: selectedTicket, currency: selectedCurrency }
+        });
         
         if (result.ok) {
           setDisplayPrice({ cents: result.display_cents, currency: result.currency });
@@ -357,23 +360,19 @@ export default function EventDetail() {
                       }
 
                       try {
-                        const resp = await fetch('/api/events/coupon-preview', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
+                        const { data: resp } = await supabase.functions.invoke('api-events-coupon-preview', {
+                          body: {
                             event_id: event!.id,
                             ticket_id: selectedTicket,
                             email,
                             code: couponCode
-                          })
+                          }
                         });
                         
-                        const result = await resp.json();
-                        
-                        if (result.ok) {
-                          toast.success(`Coupon applied! New price: ${result.currency} ${(result.total_cents / 100).toFixed(2)}`);
+                        if (resp?.ok) {
+                          toast.success(`Coupon applied! New price: ${resp.currency} ${(resp.total_cents / 100).toFixed(2)}`);
                         } else {
-                          toast.error(result.reason || 'Invalid coupon code');
+                          toast.error(resp?.reason || 'Invalid coupon code');
                         }
                       } catch (e) {
                         toast.error('Failed to validate coupon');

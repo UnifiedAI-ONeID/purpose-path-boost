@@ -209,3 +209,39 @@ verify_jwt = false
 
 [functions.api-paywall-mark-watch]
 verify_jwt = false
+
+[functions.api-events-tickets]
+verify_jwt = false
+
+[functions.api-events-coupon-preview]
+verify_jwt = false
+
+[functions.api-nudge-pull]
+verify_jwt = false
+
+[functions.api-quiz-answer]
+verify_jwt = false
+
+[functions.api-badges-award]
+verify_jwt = false
+
+[functions.api-admin-bump-version]
+verify_jwt = true
+
+[functions.api-ai-status]
+verify_jwt = false
+
+[functions.api-nudge-mark]
+verify_jwt = false
+
+[functions.api-events-ics]
+verify_jwt = false
+
+[functions.api-ai-logs]
+verify_jwt = true
+
+[functions.api-admin-seo-sources]
+verify_jwt = true
+
+[functions.api-pricing-assign]
+verify_jwt = false

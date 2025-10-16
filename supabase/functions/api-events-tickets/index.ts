@@ -11,32 +11,37 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const url = new URL(req.url);
+    const event_id = url.searchParams.get('event_id');
+
+    if (!event_id) {
+      return new Response(
+        JSON.stringify({ error: 'Event ID is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!
     );
 
     const { data, error } = await supabase
-      .from('testimonials')
+      .from('event_tickets')
       .select('*')
-      .order('sort', { ascending: true });
+      .eq('event_id', event_id)
+      .order('price_cents', { ascending: true });
 
-    if (error) {
-      console.error('Testimonials fetch error:', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: error.message, rows: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
+    if (error) throw error;
 
     return new Response(
-      JSON.stringify({ ok: true, rows: data || [] }),
+      JSON.stringify(data || []),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('Testimonials handler error:', error);
+  } catch (e: any) {
+    console.error('Tickets fetch error:', e);
     return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error', rows: [] }),
+      JSON.stringify({ error: e.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
