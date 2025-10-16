@@ -1317,6 +1317,154 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_assignments: {
+        Row: {
+          id: string
+          lesson_slug: string
+          offer_slug: string | null
+          order_index: number | null
+          tag: string | null
+        }
+        Insert: {
+          id?: string
+          lesson_slug: string
+          offer_slug?: string | null
+          order_index?: number | null
+          tag?: string | null
+        }
+        Update: {
+          id?: string
+          lesson_slug?: string
+          offer_slug?: string | null
+          order_index?: number | null
+          tag?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_assignments_lesson_slug_fkey"
+            columns: ["lesson_slug"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      lesson_events: {
+        Row: {
+          at_sec: number | null
+          created_at: string | null
+          ev: string
+          id: string
+          lesson_slug: string
+          profile_id: string
+        }
+        Insert: {
+          at_sec?: number | null
+          created_at?: string | null
+          ev: string
+          id?: string
+          lesson_slug: string
+          profile_id: string
+        }
+        Update: {
+          at_sec?: number | null
+          created_at?: string | null
+          ev?: string
+          id?: string
+          lesson_slug?: string
+          profile_id?: string
+        }
+        Relationships: []
+      }
+      lesson_progress: {
+        Row: {
+          completed: boolean | null
+          id: string
+          last_position_sec: number | null
+          last_watched_at: string | null
+          lesson_slug: string
+          profile_id: string
+          watched_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          last_position_sec?: number | null
+          last_watched_at?: string | null
+          lesson_slug: string
+          profile_id: string
+          watched_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          last_position_sec?: number | null
+          last_watched_at?: string | null
+          lesson_slug?: string
+          profile_id?: string
+          watched_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_slug_fkey"
+            columns: ["lesson_slug"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          captions_vtt_url: string | null
+          cn_alt_url: string | null
+          created_at: string | null
+          duration_sec: number | null
+          id: string
+          order_index: number | null
+          poster_url: string | null
+          published: boolean | null
+          slug: string
+          summary_en: string | null
+          tags: string[] | null
+          title_en: string
+          updated_at: string | null
+          yt_id: string | null
+        }
+        Insert: {
+          captions_vtt_url?: string | null
+          cn_alt_url?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          order_index?: number | null
+          poster_url?: string | null
+          published?: boolean | null
+          slug: string
+          summary_en?: string | null
+          tags?: string[] | null
+          title_en: string
+          updated_at?: string | null
+          yt_id?: string | null
+        }
+        Update: {
+          captions_vtt_url?: string | null
+          cn_alt_url?: string | null
+          created_at?: string | null
+          duration_sec?: number | null
+          id?: string
+          order_index?: number | null
+          poster_url?: string | null
+          published?: boolean | null
+          slug?: string
+          summary_en?: string | null
+          tags?: string[] | null
+          title_en?: string
+          updated_at?: string | null
+          yt_id?: string | null
+        }
+        Relationships: []
+      }
       me_goals: {
         Row: {
           created_at: string | null
