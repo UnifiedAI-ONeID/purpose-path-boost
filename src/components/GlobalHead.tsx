@@ -1,10 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { OrgJsonLD, WebsiteJsonLD } from './JsonLD';
 import Robots from './Robots';
 
 /** Common head bundle for site-wide meta tags */
 export function GlobalHead() {
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure Helmet only renders after mount to avoid SSR issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <Helmet>

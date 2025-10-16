@@ -1,8 +1,28 @@
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
+import { useEffect, useState } from "react";
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure component only renders after mount to avoid SSR/hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Safe hook call with error boundary
+  let toasts = [];
+  try {
+    const toastState = useToast();
+    toasts = toastState.toasts;
+  } catch (error) {
+    console.warn('Toaster: Toast context not ready', error);
+    return null;
+  }
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <ToastProvider>

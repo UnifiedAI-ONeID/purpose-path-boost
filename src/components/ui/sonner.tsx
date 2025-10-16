@@ -1,10 +1,29 @@
 import { Toaster as Sonner, toast } from "sonner";
 import { usePrefs } from "@/prefs/PrefsProvider";
+import { useEffect, useState } from "react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme } = usePrefs();
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure component only renders after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Safe hook call with error boundary
+  let theme = 'light';
+  try {
+    const prefs = usePrefs();
+    theme = prefs.theme;
+  } catch (error) {
+    console.warn('Sonner: PrefsProvider context not ready', error);
+  }
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Sonner
