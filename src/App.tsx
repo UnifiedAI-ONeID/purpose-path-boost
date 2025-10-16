@@ -57,7 +57,7 @@ import AdminCoupons from "./pages/AdminCoupons";
 import AdminSEO from "./pages/AdminSEO";
 import PricingSuccess from "./pages/PricingSuccess";
 import AccountCancel from "./pages/AccountCancel";
-import Dashboard from "./pages/Dashboard";
+import DashboardRedirect from "./pages/DashboardRedirect";
 import MeDashboard from "./pages/MeDashboard";
 import RequireAuth from "./components/RequireAuth";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
@@ -147,9 +147,11 @@ function AppRoutes() {
             </Suspense>
           } />
           <Route path="dashboard" element={
-            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-              <PWADashboard />
-            </Suspense>
+            <RequireAuth>
+              <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
+                <PWADashboard />
+              </Suspense>
+            </RequireAuth>
           } />
           <Route path="coaching" element={
             <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
@@ -161,7 +163,7 @@ function AppRoutes() {
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/me" element={<RequireAuth><MeDashboard /></RequireAuth>} />
         <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
