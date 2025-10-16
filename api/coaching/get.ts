@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('coaching_pages')
       .select('*')
       .eq('offer_slug', slug)
-      .single();
+      .maybeSingle();
 
     return res.status(200).json({ ok: true, offer, page });
   } catch (error: any) {

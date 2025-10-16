@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('*')
       .eq('offer_slug', slug)
       .eq('currency', finalCurrency)
-      .single();
+      .maybeSingle();
 
     if (override) {
       return res.status(200).json({ 
@@ -103,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .from('fx_rates')
       .select('*')
       .eq('base', offer.base_currency)
-      .single();
+      .maybeSingle();
 
     const rate = fxData?.rates?.[finalCurrency];
     
