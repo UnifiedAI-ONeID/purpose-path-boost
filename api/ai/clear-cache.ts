@@ -26,7 +26,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       .from('profiles')
       .select('is_admin')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!profile?.is_admin) {
       return res.status(403).json({ ok: false, error: 'Admin access required' });

@@ -8,6 +8,14 @@
     {
       "source": "/api/create-payment-link",
       "destination": "/api/create-payment-link.ts"
+    },
+    {
+      "source": "/sitemap-blogs.xml",
+      "destination": "/api/sitemap-blogs.ts"
+    },
+    {
+      "source": "/sitemap-events.xml",
+      "destination": "/api/sitemap-events.ts"
     }
   ],
   "headers": [

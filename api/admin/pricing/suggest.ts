@@ -3,10 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '../../events/admin-check';
 import { strictFetch } from '../../_util/strictFetch';
 import { getCache, setCache } from '../../_util/cache';
-
-const AI_ENABLE = true;
-const AI_TIMEOUT = 6000;
-const AI_CACHE_TTL = 900;
+import { AI, EDGE_COUNTRY_HEADER } from '../../../src/lib/ai-config';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const startTime = Date.now();
@@ -26,8 +23,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Check cache
     const cacheKey = `pricing:${ticket_id}:${country}:${base_price_cents}`;
-    const cached = getCache(cacheKey, AI_CACHE_TTL);
+    const cached = getCache(cacheKey, AI.CACHE_TTL);
     if (cached) {
+      await supabase.from('ai_logs').insert([{
+        route: '/api/admin/pricing/suggest',
+        mode: 'cache',
+        request: { country, base_price_cents, base_currency, ticket_id },
+        duration_ms: Date.now() - startTime
+      }]);
       return res.status(200).json({ ok: true, source: 'cache', heur: cached });
     }
 
@@ -57,10 +60,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Check if CN or AI disabled
     const host = req.headers.host || '';
-    const edgeCountry = (req.headers['x-edge-country'] || '').toString().toUpperCase();
-    const isCN = edgeCountry === 'CN' || host.endsWith('.cn');
+    const edgeCountry = (req.headers[EDGE_COUNTRY_HEADER] || '').toString().toUpperCase();
+    const isCN = AI.isCN(host, edgeCountry);
     
-    if (!isCN && AI_ENABLE && process.env.GOOGLE_AI_API_KEY) {
+    if (!isCN && AI.ENABLE && process.env.GOOGLE_AI_API_KEY) {
       try {
         const prompt = `Suggest optimal local price for a life coaching session priced at ${base_currency} ${(base_price_cents / 100).toFixed(2)} in ${country}. 
 Return JSON with: 
@@ -78,7 +81,7 @@ Consider local purchasing power, market positioning, and psychological pricing.`
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
           },
-          AI_TIMEOUT
+          AI.TIMEOUT
         ).then(r => r.json());
 
         const text = r?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -112,12 +115,34 @@ Consider local purchasing power, market positioning, and psychological pricing.`
           duration_ms: Date.now() - startTime
         }]);
       }
+    } else {
+      // Log heuristic usage
+      await supabase.from('ai_logs').insert([{
+        route: '/api/admin/pricing/suggest',
+        mode: 'heuristic',
+        request: { country, base_price_cents, base_currency, ticket_id },
+        duration_ms: Date.now() - startTime
+      }]);
     }
 
     setCache(cacheKey, heuristic);
     res.status(200).json({ ok: true, source: heuristic.source || 'heuristic', heur: heuristic });
   } catch (e: any) {
     console.error('Pricing suggestion error:', e);
+    
+    // Log error
+    const supabase = createClient(
+      process.env.VITE_SUPABASE_URL!,
+      process.env.VITE_SUPABASE_ANON_KEY!
+    );
+    await supabase.from('ai_logs').insert([{
+      route: '/api/admin/pricing/suggest',
+      mode: 'error',
+      request: req.body,
+      error: e.message,
+      duration_ms: Date.now() - startTime
+    }]);
+    
     res.status(400).json({ ok: false, error: e.message });
   }
 }
