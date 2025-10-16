@@ -8,6 +8,8 @@ import { Calendar, Video, MessageCircle, Loader2 } from 'lucide-react';
 import { track } from '@/analytics/events';
 import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
+import BookCTA from '@/components/BookCTA';
+import Robots from '@/components/Robots';
 
 const Book = () => {
   const { t } = useTranslation('common');
@@ -16,9 +18,40 @@ const Book = () => {
   const [customerEmail, setCustomerEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [calReady, setCalReady] = useState(false);
+  const [offers, setOffers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     track('page_view', { page: 'book' });
+    
+    // Check for direct slug redirect
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('slug') || params.get('type');
+    
+    if (slug) {
+      fetch('/api/coaching/book-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok && data.url) {
+            window.location.href = data.url;
+          }
+        })
+        .catch(() => setLoading(false));
+      return;
+    }
+
+    // Load coaching offers
+    fetch('/api/coaching/list')
+      .then(r => r.json())
+      .then(data => {
+        setOffers(data.rows || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
     
     // Initialize and check if Cal.com is ready
     const initializeCal = () => {
@@ -268,9 +301,51 @@ const Book = () => {
     }
   }, []);
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/2" />
+          <div className="h-32 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-20 bg-bg">
+      <Robots content="noindex,follow" />
       <div className="container max-w-5xl">
+        {/* Show coaching offers if available */}
+        {offers.length > 0 && !selectedSession && (
+          <div className="mb-12">
+            <div className="text-center mb-8">
+              <p className="text-sm text-muted">Choose a coaching session to continue:</p>
+            </div>
+            <div className="grid gap-4">
+              {offers.map(offer => (
+                <Card key={offer.slug} className="border-border">
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-semibold mb-2 text-fg">{offer.title_en}</h2>
+                    {offer.summary_en && (
+                      <p className="text-muted mb-4">{offer.summary_en}</p>
+                    )}
+                    <div className="flex gap-3">
+                      <a
+                        href={`/coaching/${offer.slug}`}
+                        className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors"
+                      >
+                        Learn more
+                      </a>
+                      <BookCTA slug={offer.slug} campaign="book-index" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!selectedSession ? (
           <>
             <div className="text-center mb-12">

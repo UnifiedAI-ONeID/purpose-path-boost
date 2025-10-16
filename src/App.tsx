@@ -43,6 +43,7 @@ import Install from "./pages/Install";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventsList from "./pages/EventsList";
 import EventDetail from "./pages/EventDetail";
+import CoachingDetail from "./pages/CoachingDetail";
 import AdminEvents from "./pages/AdminEvents";
 import AdminEventEdit from "./pages/AdminEventEdit";
 import AdminCalendar from "./pages/AdminCalendar";
@@ -107,8 +108,9 @@ function AppRoutes() {
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/blog" element={<BlogPage />} />
         <Route path="/blog/:slug" element={<BlogDetail />} />
-        <Route path="/events" element={<EventsList />} />
-        <Route path="/events/:slug" element={<EventDetail />} />
+            <Route path="/events" element={<EventsList />} />
+            <Route path="/events/:slug" element={<EventDetail />} />
+            <Route path="/coaching/:slug" element={<CoachingDetail />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/book" element={<BookPage />} />
         <Route path="/book-session" element={

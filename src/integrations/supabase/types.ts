@@ -337,6 +337,95 @@ export type Database = {
         }
         Relationships: []
       }
+      coaching_offers: {
+        Row: {
+          active: boolean | null
+          cal_event_type_slug: string
+          created_at: string | null
+          id: string
+          slug: string
+          sort: number | null
+          summary_en: string | null
+          summary_zh_cn: string | null
+          summary_zh_tw: string | null
+          title_en: string
+          title_zh_cn: string | null
+          title_zh_tw: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          cal_event_type_slug: string
+          created_at?: string | null
+          id?: string
+          slug: string
+          sort?: number | null
+          summary_en?: string | null
+          summary_zh_cn?: string | null
+          summary_zh_tw?: string | null
+          title_en: string
+          title_zh_cn?: string | null
+          title_zh_tw?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          cal_event_type_slug?: string
+          created_at?: string | null
+          id?: string
+          slug?: string
+          sort?: number | null
+          summary_en?: string | null
+          summary_zh_cn?: string | null
+          summary_zh_tw?: string | null
+          title_en?: string
+          title_zh_cn?: string | null
+          title_zh_tw?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      coaching_pages: {
+        Row: {
+          body_html_en: string | null
+          body_html_zh_cn: string | null
+          body_html_zh_tw: string | null
+          created_at: string | null
+          faqs: Json | null
+          hero_image: string | null
+          offer_slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          body_html_en?: string | null
+          body_html_zh_cn?: string | null
+          body_html_zh_tw?: string | null
+          created_at?: string | null
+          faqs?: Json | null
+          hero_image?: string | null
+          offer_slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          body_html_en?: string | null
+          body_html_zh_cn?: string | null
+          body_html_zh_tw?: string | null
+          created_at?: string | null
+          faqs?: Json | null
+          hero_image?: string | null
+          offer_slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_pages_offer_slug_fkey"
+            columns: ["offer_slug"]
+            isOneToOne: true
+            referencedRelation: "coaching_offers"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       event_coupon_uses: {
         Row: {
           coupon_id: string | null
