@@ -16,9 +16,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const GOOGLE_AI_API_KEY = Deno.env.get('GOOGLE_AI_API_KEY');
+    if (!GOOGLE_AI_API_KEY) {
+      throw new Error('GOOGLE_AI_API_KEY not configured');
     }
 
     // Get past 90 days of metrics
@@ -87,18 +87,21 @@ Based on what's working, generate:
 
 Keep bullets concise. Avoid generic clichés. Focus on what has proven engagement.`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_API_KEY}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: 'You are a bilingual social media strategist specializing in life coaching and career development content.' },
-          { role: 'user', content: prompt }
-        ],
+        contents: [{
+          parts: [{
+            text: `You are a bilingual social media strategist specializing in life coaching and career development content.\n\n${prompt}`
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        }
       }),
     });
 
@@ -120,7 +123,7 @@ Keep bullets concise. Avoid generic clichés. Focus on what has proven engagemen
     }
 
     const aiData = await aiResponse.json();
-    const suggestions = aiData.choices?.[0]?.message?.content || 'No suggestions generated';
+    const suggestions = aiData.candidates?.[0]?.content?.parts?.[0]?.text || 'No suggestions generated';
 
     return new Response(JSON.stringify({ ok: true, topics: suggestions, summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

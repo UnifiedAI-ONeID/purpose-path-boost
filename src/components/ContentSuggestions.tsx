@@ -80,7 +80,7 @@ export default function ContentSuggestions() {
       )}
 
       <div className="mt-4 text-xs text-muted-foreground">
-        Powered by Lovable AI • Analyzes your past 90 days of social metrics
+        Powered by Google Gemini AI • Analyzes your past 90 days of social metrics
       </div>
     </Card>
   );
