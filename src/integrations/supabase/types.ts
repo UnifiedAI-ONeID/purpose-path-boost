@@ -2139,28 +2139,43 @@ export type Database = {
       }
       zg_profiles: {
         Row: {
+          auth_user_id: string | null
+          avatar_url: string | null
           created_at: string | null
           device_id: string | null
           email: string | null
           id: string
+          interests: string[] | null
           locale: string | null
           name: string | null
+          preferred_currency: string | null
+          tz: string | null
         }
         Insert: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           device_id?: string | null
           email?: string | null
           id?: string
+          interests?: string[] | null
           locale?: string | null
           name?: string | null
+          preferred_currency?: string | null
+          tz?: string | null
         }
         Update: {
+          auth_user_id?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           device_id?: string | null
           email?: string | null
           id?: string
+          interests?: string[] | null
           locale?: string | null
           name?: string | null
+          preferred_currency?: string | null
+          tz?: string | null
         }
         Relationships: []
       }

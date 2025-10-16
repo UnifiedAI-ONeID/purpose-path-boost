@@ -86,3 +86,9 @@ verify_jwt = false
 
 [functions.pwa-ai-suggest]
 verify_jwt = false
+
+[functions.pwa-me-update]
+verify_jwt = false
+
+[functions.pwa-me-analytics]
+verify_jwt = false

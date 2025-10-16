@@ -1,210 +1,200 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SEOHelmet } from '@/components/SEOHelmet';
+import { usePrefs } from '@/prefs/PrefsProvider';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { User, Session } from '@supabase/supabase-js';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-const authSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
-
-type AuthFormData = z.infer<typeof authSchema>;
-
-const Auth = () => {
+export default function Auth() {
+  const { lang } = usePrefs();
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
-  });
+  const [searchParams] = useSearchParams();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Redirect authenticated users to admin dashboard
-        if (session?.user) {
-          setTimeout(() => {
-            navigate('/admin');
-          }, 0);
-        }
-      }
-    );
-
-    // THEN check for existing session
+    // Check if already authenticated
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        navigate('/admin');
+      if (session) {
+        const returnTo = searchParams.get('returnTo') || '/me';
+        navigate(returnTo);
       }
+      setCheckingAuth(false);
     });
+  }, [navigate, searchParams]);
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const onSubmit = async (data: AuthFormData) => {
-    setIsLoading(true);
-    
     try {
-      if (isLogin) {
-        // Login
-        const { error } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-        });
-
-        if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            toast.error('Invalid email or password');
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
-
-        toast.success('Welcome back!');
-      } else {
-        // Sign up
-        const redirectUrl = `${window.location.origin}/`;
-        
+      if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
+          email,
+          password,
           options: {
-            emailRedirectTo: redirectUrl
+            emailRedirectTo: `${window.location.origin}/me`
           }
         });
 
-        if (error) {
-          if (error.message.includes('already registered')) {
-            toast.error('This email is already registered. Please login instead.');
-          } else {
-            toast.error(error.message);
-          }
-          return;
-        }
+        if (error) throw error;
 
-        toast.success('Account created! You can now login.');
-        setIsLogin(true);
-        reset();
+        toast.success(
+          lang === 'zh-CN' ? '注册成功！请检查您的邮箱以确认账户。' :
+          lang === 'zh-TW' ? '註冊成功！請檢查您的郵箱以確認帳戶。' :
+          'Sign up successful! Please check your email to confirm your account.'
+        );
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) throw error;
+
+        const returnTo = searchParams.get('returnTo') || '/me';
+        navigate(returnTo);
+        
+        toast.success(
+          lang === 'zh-CN' ? '登录成功！' :
+          lang === 'zh-TW' ? '登入成功！' :
+          'Signed in successfully!'
+        );
       }
     } catch (error: any) {
-      console.error('Auth error');
-      toast.error('An unexpected error occurred');
+      console.error('Auth error:', error);
+      toast.error(
+        error.message || 
+        (lang === 'zh-CN' ? '认证失败，请重试。' :
+         lang === 'zh-TW' ? '認證失敗，請重試。' :
+         'Authentication failed. Please try again.')
+      );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const title = mode === 'signin'
+    ? (lang === 'zh-CN' ? '登录' : lang === 'zh-TW' ? '登入' : 'Sign In')
+    : (lang === 'zh-CN' ? '创建账户' : lang === 'zh-TW' ? '建立帳戶' : 'Create Account');
+
+  const description = mode === 'signin'
+    ? (lang === 'zh-CN' ? '登录以访问您的仪表板' : lang === 'zh-TW' ? '登入以存取您的儀表板' : 'Sign in to access your dashboard')
+    : (lang === 'zh-CN' ? '开始您的成长之旅' : lang === 'zh-TW' ? '開始您的成長之旅' : 'Start your growth journey');
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-20">
-      <div className="container max-w-md">
+    <>
+      <SEOHelmet
+        title={`${title} - ZhenGrowth`}
+        description={description}
+      />
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">
-                {isLogin ? 'Admin Login' : 'Create Admin Account'}
-              </CardTitle>
-              <CardDescription>
-                {isLogin
-                  ? 'Sign in to access the admin dashboard'
-                  : 'Create a new admin account'}
-              </CardDescription>
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl font-bold">{title}</CardTitle>
+              <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    {lang === 'zh-CN' ? '邮箱' : lang === 'zh-TW' ? '郵箱' : 'Email'}
+                  </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@zhengrowth.com"
-                    {...register('email')}
-                    disabled={isLoading}
+                    placeholder={lang === 'zh-CN' ? '输入您的邮箱' : lang === 'zh-TW' ? '輸入您的郵箱' : 'Enter your email'}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
                   />
-                  {errors.email && (
-                    <p className="text-sm text-destructive mt-1">
-                      {errors.email.message}
-                    </p>
-                  )}
                 </div>
 
-                <div>
-                  <Label htmlFor="password">Password</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="password">
+                    {lang === 'zh-CN' ? '密码' : lang === 'zh-TW' ? '密碼' : 'Password'}
+                  </Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
-                    {...register('password')}
-                    disabled={isLoading}
+                    placeholder={lang === 'zh-CN' ? '输入您的密码' : lang === 'zh-TW' ? '輸入您的密碼' : 'Enter your password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                    minLength={6}
                   />
-                  {errors.password && (
-                    <p className="text-sm text-destructive mt-1">
-                      {errors.password.message}
-                    </p>
-                  )}
                 </div>
 
-                <Button
-                  type="submit"
-                  variant="cta"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading
-                    ? 'Please wait...'
-                    : isLogin
-                    ? 'Sign In'
-                    : 'Create Account'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : mode === 'signin' ? (
+                    <LogIn className="mr-2 h-4 w-4" />
+                  ) : (
+                    <UserPlus className="mr-2 h-4 w-4" />
+                  )}
+                  {loading
+                    ? (lang === 'zh-CN' ? '处理中...' : lang === 'zh-TW' ? '處理中...' : 'Processing...')
+                    : title
+                  }
                 </Button>
-              </form>
 
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsLogin(!isLogin);
-                    reset();
-                  }}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  disabled={isLoading}
-                >
-                  {isLogin
-                    ? "Don't have an account? Sign up"
-                    : 'Already have an account? Sign in'}
-                </button>
-              </div>
+                <div className="text-center text-sm">
+                  {mode === 'signin' ? (
+                    <>
+                      {lang === 'zh-CN' ? '还没有账户？' : lang === 'zh-TW' ? '還沒有帳戶？' : "Don't have an account?"}{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('signup')}
+                        className="text-primary hover:underline font-medium"
+                        disabled={loading}
+                      >
+                        {lang === 'zh-CN' ? '注册' : lang === 'zh-TW' ? '註冊' : 'Sign up'}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {lang === 'zh-CN' ? '已有账户？' : lang === 'zh-TW' ? '已有帳戶？' : 'Already have an account?'}{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('signin')}
+                        className="text-primary hover:underline font-medium"
+                        disabled={loading}
+                      >
+                        {lang === 'zh-CN' ? '登录' : lang === 'zh-TW' ? '登入' : 'Sign in'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </form>
             </CardContent>
           </Card>
         </motion.div>
       </div>
-    </div>
+    </>
   );
-};
-
-export default Auth;
+}
