@@ -88,31 +88,27 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     setBusy(true);
     
     try {
-      const response = await fetch('/api/coaching/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('api-coaching-checkout', {
+        body: {
           slug,
           name: defaultName || 'Client',
           email: defaultEmail || '',
           currency,
           coupon: coupon || undefined,
           promo: promo || undefined
-        })
+        }
       });
 
-      const data = await response.json();
-      
-      if (data.ok && data.url) {
+      if (!error && data?.ok && data.url) {
         window.location.href = data.url;
-      } else if (data.ok && data.free) {
+      } else if (!error && data?.ok && data.free) {
         // Free after discount - go straight to booking
         await openBooking();
       } else {
-        alert(data.error || 'Unable to start checkout');
+        toast.error(data?.error || error?.message || 'Unable to start checkout');
       }
-    } catch (error) {
-      alert('Payment error. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Payment error. Please try again.');
     } finally {
       setTimeout(() => setBusy(false), 900);
     }

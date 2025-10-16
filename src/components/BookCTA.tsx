@@ -1,4 +1,6 @@
 import { useAvailability } from '@/hooks/useAvailability';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface BookCTAProps {
   slug: string;
@@ -14,23 +16,24 @@ export default function BookCTA({ slug, campaign = 'site', prefill }: BookCTAPro
 
   async function handleBook() {
     try {
-      const response = await fetch('/api/cal/book-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('api-cal-book-url', {
+        body: {
           slug,
           campaign,
           name: prefill?.name || '',
           email: prefill?.email || ''
-        })
+        }
       });
 
-      const data = await response.json();
-      if (data.ok && data.url) {
+      if (!error && data?.ok && data.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer');
+      } else {
+        console.error('Booking error:', error || data?.error);
+        toast.error('Unable to open booking');
       }
     } catch (error) {
       console.error('Booking error:', error);
+      toast.error('Failed to open booking');
     }
   }
 

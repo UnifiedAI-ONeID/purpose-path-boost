@@ -93,9 +93,14 @@ export default function AdminEventEdit() {
         .from('events')
         .select('*')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
 
       if (eventError) throw eventError;
+      if (!eventData) {
+        toast.error('Event not found');
+        navigate('/admin/events');
+        return;
+      }
       
       setEvent({
         ...eventData,
@@ -160,9 +165,10 @@ export default function AdminEventEdit() {
           .from('events')
           .insert([eventData])
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+        if (!data) throw new Error('Failed to create event');
         
         toast.success('Event created successfully');
         navigate(`/admin/events/${data.slug}`);

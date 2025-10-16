@@ -95,7 +95,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
         .from('blog_posts')
         .select('*')
         .eq('id', blogId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -148,9 +148,10 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
           .from('blog_posts')
           .insert([blogData])
           .select()
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
+        if (!newBlog) throw new Error('Failed to create blog post');
 
         // If published, trigger social media posting
         if (data.published && selectedPlatforms.length > 0) {

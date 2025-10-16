@@ -52,13 +52,13 @@ export default function Pricing() {
       }
 
       // Get profile_id
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('zg_profiles')
         .select('id')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!profile) {
+      if (profileError || !profile) {
         toast.error('Profile not found');
         return;
       }
@@ -126,13 +126,13 @@ export default function Pricing() {
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('zg_profiles')
         .select('id')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!profile) {
+      if (profileError || !profile) {
         toast.error('Profile not found');
         return;
       }
