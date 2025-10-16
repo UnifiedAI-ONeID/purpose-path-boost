@@ -41,12 +41,12 @@ Deno.serve(async (req) => {
         events!inner(*)
       `)
       .eq('offer_token', token)
-      .single();
+      .maybeSingle();
 
     if (regError || !reg) {
       return new Response(
         JSON.stringify({ error: 'Invalid or expired offer token' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       .from('express_offers')
       .select('*')
       .eq('slug', offer_slug)
-      .single();
+      .maybeSingle();
 
     if (offerError || !offer) {
       return new Response(

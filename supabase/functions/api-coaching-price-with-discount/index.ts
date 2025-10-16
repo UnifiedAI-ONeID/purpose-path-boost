@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
       .from('coaching_offers')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
     if (offerError || !offer) {
       return new Response(

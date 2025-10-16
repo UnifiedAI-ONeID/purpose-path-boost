@@ -66,18 +66,18 @@ Deno.serve(async (req) => {
       .from('event_tickets')
       .select('*')
       .eq('id', ticket_id)
-      .single();
+      .maybeSingle();
 
     const { data: event } = await supabase
       .from('events')
       .select('*')
       .eq('id', event_id)
-      .single();
+      .maybeSingle();
 
     if (!ticket || !event) {
       return new Response(
         JSON.stringify({ error: 'Invalid ticket or event' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
@@ -150,15 +150,15 @@ Deno.serve(async (req) => {
       .from('event_regs')
       .insert([{ ...baseReg, status }])
       .select()
-      .single();
+      .maybeSingle();
 
-    if (regError) {
+    if (regError || !regData) {
       // Rollback ticket if registration fails
       await supabase.rpc('decrement_ticket_qty', {
         p_ticket_id: ticket_id,
         p_amount: -1
       });
-      throw regError;
+      throw regError || new Error('Failed to create registration');
     }
 
     // Record coupon usage if applicable

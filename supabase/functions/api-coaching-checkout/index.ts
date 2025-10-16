@@ -37,12 +37,12 @@ Deno.serve(async (req) => {
       .from('coaching_offers')
       .select('*')
       .eq('slug', slug)
-      .single();
+      .maybeSingle();
 
     if (offerError || !offer) {
       return new Response(
         JSON.stringify({ ok: false, error: 'Offer not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
       );
     }
 
