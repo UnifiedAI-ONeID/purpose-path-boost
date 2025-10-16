@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { CheckCircle, Quote } from 'lucide-react';
-import heroImage from '@/assets/images/hero.jpg';
+import heroImage from '@/assets/images/hero-new.jpg';
 import clarityIcon from '@/assets/images/icon-clarity.png';
 import confidenceIcon from '@/assets/images/icon-confidence.png';
 import growthIcon from '@/assets/images/icon-growth.png';
