@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { pathOf } from '@/nav/routes';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -71,7 +73,9 @@ export default function Coaching() {
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">{offer.summary}</p>
               <Button asChild className="w-full">
-                <Link to={`/coaching/${offer.slug}`}>Learn More</Link>
+                <SmartLink to={pathOf('/coaching/[slug]', { slug: offer.slug })}>
+                  Learn More
+                </SmartLink>
               </Button>
             </CardContent>
           </Card>

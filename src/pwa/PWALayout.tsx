@@ -1,12 +1,16 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, LayoutDashboard, GraduationCap } from 'lucide-react';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 
 export default function PWALayout() {
+  const location = useLocation();
+  
   const navItems = [
-    { to: '/pwa/home', icon: Home, label: 'Home' },
-    { to: '/pwa/quiz', icon: ClipboardList, label: 'Quiz' },
-    { to: '/pwa/coaching', icon: GraduationCap, label: 'Programs' },
-    { to: '/pwa/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: ROUTES.home, icon: Home, label: 'Home' },
+    { to: ROUTES.quiz, icon: ClipboardList, label: 'Quiz' },
+    { to: ROUTES.coaching, icon: GraduationCap, label: 'Programs' },
+    { to: ROUTES.dashboard, icon: LayoutDashboard, label: 'Dashboard' },
   ];
 
   return (
@@ -19,22 +23,21 @@ export default function PWALayout() {
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const isActive = location.pathname === item.to;
             
             return (
-              <NavLink
+              <SmartLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
-                  `flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
-                    isActive 
-                      ? 'text-primary font-semibold' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`
-                }
+                className={`flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors ${
+                  isActive 
+                    ? 'text-primary font-semibold' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
               >
                 <Icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.label}</span>
-              </NavLink>
+              </SmartLink>
             );
           })}
         </div>

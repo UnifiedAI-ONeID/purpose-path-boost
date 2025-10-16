@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNav } from '@/nav/useNav';
+import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -11,7 +12,7 @@ function langKey(l: string) {
 
 export default function Quiz() {
   const { lang } = usePrefs();
-  const navigate = useNavigate();
+  const nav = useNav();
   const [cfg, setCfg] = useState<any[]>([]);
   const [idx, setIdx] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
@@ -48,8 +49,7 @@ export default function Quiz() {
       setIdx(idx + 1);
     } else {
       // Navigate to recommended coaching
-      const params = new URLSearchParams({ tags: newTags.join(','), lang });
-      navigate(`/pwa/coaching?${params}`);
+      nav.push(nav.href(ROUTES.coaching, { tags: newTags.join(',') }));
     }
   }
 

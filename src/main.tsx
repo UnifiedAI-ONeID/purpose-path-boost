@@ -11,6 +11,7 @@ import { metricsTracker } from './lib/metricsTracker';
 import { injectAnalytics } from './lib/loaders';
 import { registerSW } from './pwa/registerSW';
 import { bootAnimOnLoad } from './anim/boot';
+import { normalizeEntryUrl } from './nav/deeplink';
 import './components/ui/HomeClickAnimation'; // Pre-load animation
 
 // Register service worker for PWA
@@ -18,6 +19,9 @@ registerSW();
 
 // Initialize global animation system
 bootAnimOnLoad();
+
+// Normalize entry URL with lang and ref/utm parameters
+normalizeEntryUrl();
 
 // Initialize analytics based on region
 if (!isChinaBuild()) {

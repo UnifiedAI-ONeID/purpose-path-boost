@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { Link } from 'react-router-dom';
+import SmartLink from '@/components/SmartLink';
+import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -56,7 +57,7 @@ export default function Home() {
         <h1 className="text-3xl font-bold mb-2">{heroTitle}</h1>
         <p className="opacity-90 mb-4">Start with a 60-second self-assessment.</p>
         <Button size="lg" variant="secondary" asChild>
-          <Link to="/pwa/quiz">Begin Assessment</Link>
+          <SmartLink to={ROUTES.quiz}>Begin Assessment</SmartLink>
         </Button>
       </Card>
     </div>
