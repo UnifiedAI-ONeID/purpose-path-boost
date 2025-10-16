@@ -44,9 +44,18 @@ export default function Home() {
       </section>
 
       <section className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          {lang === 'zh-CN' ? '客户评价' : lang === 'zh-TW' ? '客戶評價' : 'What Our Clients Say'}
-        </h2>
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-3 text-foreground">
+            {lang === 'zh-CN' ? '客户评价' : lang === 'zh-TW' ? '客戶評價' : 'What Our Clients Say'}
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            {lang === 'zh-CN' 
+              ? '听听那些通过我们的辅导实现了转变的专业人士的真实故事' 
+              : lang === 'zh-TW' 
+              ? '聽聽那些通過我們的輔導實現了轉變的專業人士的真實故事' 
+              : 'Hear from professionals who have transformed their careers and lives through our coaching'}
+          </p>
+        </div>
         <Testimonials />
       </section>
     </SiteShell>

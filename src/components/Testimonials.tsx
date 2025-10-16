@@ -15,8 +15,19 @@ export default function Testimonials() {
     (async () => {
       try {
         const response = await fetch('/api/testimonials/list');
+        
+        if (!response.ok) {
+          console.error('Testimonials API error:', response.status, response.statusText);
+          return;
+        }
+        
         const json = await response.json();
-        setRows(json.rows || []);
+        
+        if (json.ok && Array.isArray(json.rows)) {
+          setRows(json.rows);
+        } else {
+          console.error('Invalid testimonials response:', json);
+        }
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
       }
@@ -26,21 +37,28 @@ export default function Testimonials() {
   if (!rows.length) return null;
 
   return (
-    <div className="grid md:grid-cols-3 gap-4">
+    <div className="grid md:grid-cols-3 gap-6">
       {rows.map((t) => (
-        <div key={t.id} className="card p-6">
+        <div 
+          key={t.id} 
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow"
+        >
           <div className="flex items-center gap-3 mb-4">
-            <img
-              src={t.avatar_url || '/placeholder.svg'}
-              alt={t.name}
-              className="h-12 w-12 rounded-full border border-border object-cover"
-            />
+            {t.avatar_url && (
+              <img
+                src={t.avatar_url}
+                alt={t.name}
+                className="h-12 w-12 rounded-full border-2 border-primary/20 object-cover"
+              />
+            )}
             <div>
-              <div className="font-medium text-card-foreground">{t.name}</div>
+              <div className="font-semibold text-card-foreground">{t.name}</div>
               {t.role && <div className="text-xs text-muted-foreground">{t.role}</div>}
             </div>
           </div>
-          <p className="text-sm text-muted-foreground italic">"{t.quote}"</p>
+          <p className="text-sm text-muted-foreground italic leading-relaxed">
+            &ldquo;{t.quote}&rdquo;
+          </p>
         </div>
       ))}
     </div>
