@@ -12,11 +12,6 @@ export default function EventsList() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Use mobile version on mobile devices
-  if (isMobile) {
-    return <EventsMobile />;
-  }
-
   useEffect(() => {
     async function load() {
       const { data } = await supabase
@@ -31,6 +26,11 @@ export default function EventsList() {
     }
     load();
   }, []);
+
+  // Use mobile version on mobile devices (after all hooks)
+  if (isMobile) {
+    return <EventsMobile />;
+  }
 
   if (loading) {
     return (
