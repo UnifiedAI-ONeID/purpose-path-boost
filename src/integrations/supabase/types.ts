@@ -227,6 +227,8 @@ export type Database = {
           cal_uid: string
           created_at: string | null
           end_time: string
+          event_id: string | null
+          event_slug: string | null
           event_type_id: string
           event_type_slug: string | null
           id: string
@@ -246,6 +248,8 @@ export type Database = {
           cal_uid: string
           created_at?: string | null
           end_time: string
+          event_id?: string | null
+          event_slug?: string | null
           event_type_id: string
           event_type_slug?: string | null
           id?: string
@@ -265,6 +269,8 @@ export type Database = {
           cal_uid?: string
           created_at?: string | null
           end_time?: string
+          event_id?: string | null
+          event_slug?: string | null
           event_type_id?: string
           event_type_slug?: string | null
           id?: string
@@ -276,7 +282,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cal_bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cal_event_types: {
         Row: {
@@ -720,6 +734,9 @@ export type Database = {
       }
       events: {
         Row: {
+          cal_booking_url: string | null
+          cal_event_type_slug: string | null
+          cal_group: boolean | null
           capacity: number | null
           cover_url: string | null
           created_at: string | null
@@ -737,6 +754,9 @@ export type Database = {
           tz: string | null
         }
         Insert: {
+          cal_booking_url?: string | null
+          cal_event_type_slug?: string | null
+          cal_group?: boolean | null
           capacity?: number | null
           cover_url?: string | null
           created_at?: string | null
@@ -754,6 +774,9 @@ export type Database = {
           tz?: string | null
         }
         Update: {
+          cal_booking_url?: string | null
+          cal_event_type_slug?: string | null
+          cal_group?: boolean | null
           capacity?: number | null
           cover_url?: string | null
           created_at?: string | null
