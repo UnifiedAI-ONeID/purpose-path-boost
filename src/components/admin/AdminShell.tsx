@@ -118,6 +118,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
           <Nav href="/admin/pricing">{at(lang, 'Pricing')}</Nav>
           <Nav href="/admin/ai">{at(lang, 'AI')}</Nav>
+          <Nav href="/admin/seo">SEO Monitor</Nav>
         </nav>
       </aside>
       <main>

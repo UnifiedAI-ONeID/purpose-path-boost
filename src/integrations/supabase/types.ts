@@ -1526,6 +1526,108 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_alerts: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          message: string
+          resolution_note: string | null
+          resolved_at: string | null
+          severity: string
+          source_key: string
+          title: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          severity: string
+          source_key: string
+          title: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source_key?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      seo_notify_settings: {
+        Row: {
+          email: string | null
+          id: string
+          locale: string | null
+          slack_webhook: string | null
+        }
+        Insert: {
+          email?: string | null
+          id?: string
+          locale?: string | null
+          slack_webhook?: string | null
+        }
+        Update: {
+          email?: string | null
+          id?: string
+          locale?: string | null
+          slack_webhook?: string | null
+        }
+        Relationships: []
+      }
+      seo_site_snapshots: {
+        Row: {
+          checklist: Json
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          checklist: Json
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          checklist?: Json
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      seo_watch_sources: {
+        Row: {
+          enabled: boolean
+          extra: Json | null
+          id: string
+          key: string
+          label: string
+          last_checked_at: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          extra?: Json | null
+          id?: string
+          key: string
+          label: string
+          last_checked_at?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          extra?: Json | null
+          id?: string
+          key?: string
+          label?: string
+          last_checked_at?: string | null
+        }
+        Relationships: []
+      }
       social_accounts: {
         Row: {
           channel_name: string | null

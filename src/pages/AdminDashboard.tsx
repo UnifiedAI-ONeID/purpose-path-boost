@@ -29,6 +29,7 @@ import LeadsTable from '@/components/admin/LeadsTable';
 import FunnelTab from '@/components/admin/FunnelTab';
 import AdminSecrets from '@/components/admin/AdminSecrets';
 import AdminShell from '@/components/admin/AdminShell';
+import SeoAlertBanner from '@/components/admin/SeoAlertBanner';
 
 interface Lead {
   id: string;
@@ -247,6 +248,9 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
+          {/* SEO Alert Banner */}
+          <SeoAlertBanner />
+          
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
