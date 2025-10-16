@@ -1,3 +1,12 @@
+/**
+ * Generic discount calculation utilities
+ * Used for coaching programs, subscriptions, and other products
+ */
+
+/**
+ * Apply percentage and/or fixed amount discounts to a base price
+ * Percentage discount is applied first, then fixed amount
+ */
 export function applyDiscount({
   baseCents,
   currency,
@@ -8,7 +17,7 @@ export function applyDiscount({
   currency: string;
   percent_off?: number | null;
   amount_off_cents?: number | null;
-}) {
+}): number {
   let discounted = baseCents;
   
   // Apply percentage discount first
@@ -22,4 +31,17 @@ export function applyDiscount({
   }
   
   return discounted;
+}
+
+/**
+ * Calculate discount amount (how much was saved)
+ */
+export function calculateDiscountAmount({
+  originalCents,
+  finalCents
+}: {
+  originalCents: number;
+  finalCents: number;
+}): number {
+  return Math.max(0, originalCents - finalCents);
 }
