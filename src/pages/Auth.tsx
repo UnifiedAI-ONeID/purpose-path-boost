@@ -20,11 +20,23 @@ export default function Auth() {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [resetMode, setResetMode] = useState(false);
+  const [updatePasswordMode, setUpdatePasswordMode] = useState(false);
 
   useEffect(() => {
+    // Check if this is a password recovery callback
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    
+    if (type === 'recovery') {
+      setUpdatePasswordMode(true);
+      setCheckingAuth(false);
+      return;
+    }
+
     // Check if already authenticated
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
@@ -77,6 +89,68 @@ export default function Auth() {
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error(error.message || 'Failed to send reset email');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password.length < 6) {
+      toast.error(
+        lang === 'zh-CN' ? '密码至少需要6个字符' :
+        lang === 'zh-TW' ? '密碼至少需要6個字符' :
+        'Password must be at least 6 characters'
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error(
+        lang === 'zh-CN' ? '密码不匹配' :
+        lang === 'zh-TW' ? '密碼不匹配' :
+        'Passwords do not match'
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        lang === 'zh-CN' ? '密码已成功更新！' :
+        lang === 'zh-TW' ? '密碼已成功更新！' :
+        'Password updated successfully!'
+      );
+
+      // Redirect to appropriate dashboard after password update
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const response = await fetch('/api/admin/check-role', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const result = await response.json();
+        navigate(result.is_admin ? '/admin' : '/me');
+      } else {
+        setUpdatePasswordMode(false);
+        setMode('signin');
+      }
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      toast.error(
+        error.message || 
+        (lang === 'zh-CN' ? '密码更新失败' :
+         lang === 'zh-TW' ? '密碼更新失敗' :
+         'Failed to update password')
+      );
     } finally {
       setLoading(false);
     }
@@ -190,13 +264,17 @@ export default function Auth() {
     );
   }
 
-  const title = resetMode
+  const title = updatePasswordMode
+    ? (lang === 'zh-CN' ? '设置新密码' : lang === 'zh-TW' ? '設置新密碼' : 'Set New Password')
+    : resetMode
     ? (lang === 'zh-CN' ? '重置密码' : lang === 'zh-TW' ? '重置密碼' : 'Reset Password')
     : mode === 'signin'
     ? (lang === 'zh-CN' ? '登录' : lang === 'zh-TW' ? '登入' : 'Sign In')
     : (lang === 'zh-CN' ? '创建账户' : lang === 'zh-TW' ? '建立帳戶' : 'Create Account');
 
-  const description = resetMode
+  const description = updatePasswordMode
+    ? (lang === 'zh-CN' ? '输入您的新密码' : lang === 'zh-TW' ? '輸入您的新密碼' : 'Enter your new password')
+    : resetMode
     ? (lang === 'zh-CN' ? '输入您的邮箱以接收重置链接' : lang === 'zh-TW' ? '輸入您的郵箱以接收重置鏈接' : 'Enter your email to receive a reset link')
     : mode === 'signin'
     ? (lang === 'zh-CN' ? '登录以访问您的仪表板' : lang === 'zh-TW' ? '登入以存取您的儀表板' : 'Sign in to access your dashboard')
@@ -220,8 +298,53 @@ export default function Auth() {
               <CardDescription>{description}</CardDescription>
             </CardHeader>
             <CardContent>
-              {resetMode ? (
-                // Password Reset Form
+              {updatePasswordMode ? (
+                // Update Password Form (after clicking reset link from email)
+                <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">
+                      {lang === 'zh-CN' ? '新密码' : lang === 'zh-TW' ? '新密碼' : 'New Password'}
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      placeholder={lang === 'zh-CN' ? '输入新密码' : lang === 'zh-TW' ? '輸入新密碼' : 'Enter new password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">
+                      {lang === 'zh-CN' ? '确认密码' : lang === 'zh-TW' ? '確認密碼' : 'Confirm Password'}
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      placeholder={lang === 'zh-CN' ? '再次输入新密码' : lang === 'zh-TW' ? '再次輸入新密碼' : 'Enter new password again'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    {loading
+                      ? (lang === 'zh-CN' ? '更新中...' : lang === 'zh-TW' ? '更新中...' : 'Updating...')
+                      : (lang === 'zh-CN' ? '更新密码' : lang === 'zh-TW' ? '更新密碼' : 'Update Password')
+                    }
+                  </Button>
+                </form>
+              ) : resetMode ? (
+                // Password Reset Request Form
                 <form onSubmit={handlePasswordReset} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">
