@@ -47,8 +47,8 @@ const BlogList = () => {
       const uniqueCategories = ['All', ...new Set((data || []).map(post => post.category))];
       setCategories(uniqueCategories);
     } catch (error) {
-      console.error('Failed to load blog posts');
-      toast.error('Failed to load blog posts');
+      console.error('Failed to load blog posts:', error);
+      toast.error('Failed to load blog posts. Please refresh the page.');
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import SiteShell from '@/components/SiteShell';
 import { Calendar, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
 import EventsMobile from '@/components/mobile/EventsMobile';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
+import { toast } from 'sonner';
 
 export default function EventsList() {
   const isMobile = useIsMobile();
@@ -14,15 +16,23 @@ export default function EventsList() {
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'published')
-        .gte('end_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
-      
-      setEvents(data || []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('status', 'published')
+          .gte('end_at', new Date().toISOString())
+          .order('start_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        setEvents(data || []);
+      } catch (error) {
+        console.error('Failed to load events:', error);
+        toast.error('Failed to load events. Please refresh the page.');
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
@@ -41,7 +51,7 @@ export default function EventsList() {
   }
 
   return (
-    <main className="container max-w-6xl mx-auto px-4 py-12">
+    <SiteShell>
       <motion.header 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,6 +128,6 @@ export default function EventsList() {
           ))}
         </div>
       )}
-    </main>
+    </SiteShell>
   );
 }

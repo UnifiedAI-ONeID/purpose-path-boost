@@ -54,9 +54,14 @@ export default function BlogDetailMobile() {
         .select('*')
         .eq('slug', slug)
         .eq('published', true)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
+      if (!data) {
+        setPost(null);
+        return;
+      }
       
       setPost(data);
 

@@ -54,20 +54,22 @@ const BlogDetail = () => {
         .select('*')
         .eq('slug', slug)
         .eq('published', true)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          toast.error('Blog post not found');
-        } else {
-          throw error;
-        }
+        throw error;
+      }
+
+      if (!data) {
+        toast.error('Blog post not found');
+        setPost(null);
+        return;
       }
 
       setPost(data);
     } catch (error) {
-      console.error('Failed to load blog post');
-      toast.error('Failed to load blog post');
+      console.error('Failed to load blog post:', error);
+      toast.error('Failed to load blog post. Please try again.');
     } finally {
       setIsLoading(false);
     }
