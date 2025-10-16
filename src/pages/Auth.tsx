@@ -47,14 +47,13 @@ export default function Auth() {
           navigate(returnTo);
         } else {
           // Check admin status to route appropriately
-          const response = await fetch('/api/admin/check-role', {
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`
-            }
-          });
-          const result = await response.json();
+          const { data, error } = await supabase.functions.invoke('api-admin-check-role');
           
-          navigate(result.is_admin ? '/admin' : '/me');
+          if (!error && data?.is_admin) {
+            navigate('/admin');
+          } else {
+            navigate('/me');
+          }
         }
       }
       setCheckingAuth(false);
@@ -219,20 +218,15 @@ export default function Auth() {
           throw error;
         }
 
-        // Check admin status and route accordingly
-        const response = await fetch('/api/admin/check-role', {
-          headers: {
-            'Authorization': `Bearer ${data.session.access_token}`
-          }
-        });
+        // Check admin status and route accordingly via Edge Function
+        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
         
-        const result = await response.json();
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
         const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
         if (returnTo) {
           navigate(returnTo);
-        } else if (result.is_admin) {
+        } else if (!adminError && adminData?.is_admin) {
           navigate('/admin');
         } else {
           navigate('/me');

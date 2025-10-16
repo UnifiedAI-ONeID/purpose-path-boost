@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Testimonial {
   id: string;
@@ -14,30 +15,17 @@ export default function Testimonials() {
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch('/api/testimonials/list', {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
+        const { data, error } = await supabase.functions.invoke('api-testimonials-list');
         
-        if (!response.ok) {
-          console.error('Testimonials API error:', response.status, response.statusText);
+        if (error) {
+          console.error('Testimonials error:', error);
           return;
         }
         
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          console.error('Testimonials API returned non-JSON response');
-          return;
-        }
-        
-        const json = await response.json();
-        
-        if (json.ok && Array.isArray(json.rows)) {
-          setRows(json.rows);
+        if (data?.ok && Array.isArray(data.rows)) {
+          setRows(data.rows);
         } else {
-          console.error('Invalid testimonials response:', json);
+          console.error('Invalid testimonials response:', data);
         }
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);

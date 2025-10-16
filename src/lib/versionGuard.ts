@@ -52,8 +52,8 @@ export function bootVersionGuard({ pollMs = 90000 }: { pollMs?: number } = {}) {
 
 async function fetchVersion(): Promise<number> {
   try {
-    const response = await fetch('/api/version', { cache: 'no-store' });
-    const data = await response.json();
+    const { data, error } = await supabase.functions.invoke('api-version');
+    if (error) throw error;
     return Number(data?.v || 1);
   } catch (err) {
     console.warn('[VersionGuard] Failed to fetch version:', err);

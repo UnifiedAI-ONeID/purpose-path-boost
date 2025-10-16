@@ -10,8 +10,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  // Prevent Vite from serving /api routes as static files
-  publicDir: mode === 'production' ? 'public' : false,
+  publicDir: 'public',
   plugins: [
     react(),
     mode === "development" && componentTagger(),
@@ -92,8 +91,12 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      // Exclude API routes from build
-      external: mode === 'production' ? [] : [/^\/api\//],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+        }
+      }
     }
   }
 }));

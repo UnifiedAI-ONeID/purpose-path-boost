@@ -1,8 +1,9 @@
+import { useState, useEffect } from 'react';
 import SiteShell from '@/components/SiteShell';
-import { useI18nFetch } from '@/hooks/useI18nFetch';
 import CoachingCard from '@/components/CoachingCard';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { supabase } from '@/integrations/supabase/client';
 
 type ListResponse = {
   ok: boolean;
@@ -11,8 +12,29 @@ type ListResponse = {
 };
 
 export default function CoachingPrograms() {
-  const { data, loading, error } = useI18nFetch<ListResponse>('/api/coaching/list');
   const { lang } = usePrefs();
+  
+  // Use Edge Function instead of /api route
+  const [data, setData] = useState<ListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadCoaching = async () => {
+      try {
+        const { data: result, error: err } = await supabase.functions.invoke('api-coaching-list', {
+          body: { locale: lang }
+        });
+        if (err) throw err;
+        setData(result);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCoaching();
+  }, [lang]);
 
   return (
     <SiteShell>
@@ -35,7 +57,7 @@ export default function CoachingPrograms() {
         </p>
       </header>
 
-{loading ? (
+      {loading ? (
         <div className="grid md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="rounded-2xl border border-border p-6 animate-pulse">

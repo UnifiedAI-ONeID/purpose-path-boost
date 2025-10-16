@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useAdminAuth() {
   const [ok, setOk] = useState<boolean | null>(null);
   
   useEffect(() => {
     (async () => {
-      // Call a tiny endpoint that checks admin session/JWT
-      const r = await fetch('/api/admin/self').then(r => r.json()).catch(() => ({ ok: false }));
-      setOk(!!r.ok);
-      if (!r.ok) {
+      const { data, error } = await supabase.functions.invoke('api-admin-check-role');
+      setOk(!error && data?.ok === true);
+      if (!data?.ok) {
         location.href = '/auth?returnTo=/admin';
       }
     })();

@@ -95,3 +95,15 @@ verify_jwt = false
 
 [functions.send-password-reset]
 verify_jwt = false
+
+[functions.api-version]
+verify_jwt = false
+
+[functions.api-admin-check-role]
+verify_jwt = false
+
+[functions.api-testimonials-list]
+verify_jwt = false
+
+[functions.api-coaching-list]
+verify_jwt = false

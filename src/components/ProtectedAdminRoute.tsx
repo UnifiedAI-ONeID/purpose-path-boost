@@ -30,16 +30,10 @@ export default function ProtectedAdminRoute({ children }: Props) {
         return;
       }
 
-      // Check admin status via API
-      const response = await fetch('/api/admin/check-role', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
+      // Check admin status via Edge Function
+      const { data, error } = await supabase.functions.invoke('api-admin-check-role');
 
-      const result = await response.json();
-
-      if (!result.ok || !result.authed || !result.is_admin) {
+      if (error || !data?.ok || !data?.authed || !data?.is_admin) {
         setIsAdmin(false);
         toast.error('Admin access required');
       } else {

@@ -38,17 +38,17 @@ export default function HeaderUser() {
   }, []);
 
   async function checkAdminStatus() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const response = await fetch('/api/admin/check-role', {
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`
+    try {
+      const { data, error } = await supabase.functions.invoke('api-admin-check-role');
+      if (!error && data?.ok && data.is_admin) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
       }
-    });
-    
-    const result = await response.json();
-    setIsAdmin(result.is_admin || false);
+    } catch (err) {
+      console.error('Admin check error:', err);
+      setIsAdmin(false);
+    }
   }
 
   useEffect(() => {

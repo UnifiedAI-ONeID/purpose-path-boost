@@ -1,0 +1,80 @@
+import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * API Client for making calls to Edge Functions
+ * Replaces direct fetch('/api/*') calls with Edge Function invocations
+ */
+
+type ApiResponse<T = any> = {
+  ok: boolean;
+  data?: T;
+  error?: string;
+  [key: string]: any;
+};
+
+/**
+ * Maps legacy /api routes to Edge Function names
+ */
+const ROUTE_MAP: Record<string, string> = {
+  '/api/version': 'api-version',
+  '/api/testimonials/list': 'api-testimonials-list',
+  '/api/coaching/list': 'api-coaching-list',
+  '/api/admin/check-role': 'api-admin-check-role',
+};
+
+/**
+ * Invoke an Edge Function with automatic route mapping
+ */
+export async function invokeApi<T = any>(
+  route: string, 
+  options?: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    body?: any;
+    headers?: Record<string, string>;
+  }
+): Promise<ApiResponse<T>> {
+  try {
+    const functionName = ROUTE_MAP[route] || route.replace('/api/', 'api-');
+    
+    const { data, error } = await supabase.functions.invoke(functionName, {
+      body: options?.body,
+      headers: options?.headers,
+    });
+
+    if (error) {
+      console.error(`Edge Function ${functionName} error:`, error);
+      return { ok: false, error: error.message };
+    }
+
+    return data || { ok: true };
+  } catch (error: any) {
+    console.error('API invocation error:', error);
+    return { ok: false, error: error.message };
+  }
+}
+
+/**
+ * Legacy fetch wrapper that automatically uses Edge Functions
+ * Provides backward compatibility during migration
+ */
+export async function apiFetch(
+  url: string,
+  options?: RequestInit
+): Promise<Response> {
+  // Check if this is an /api route
+  if (url.startsWith('/api/')) {
+    const result = await invokeApi(url, {
+      body: options?.body ? JSON.parse(options.body as string) : undefined,
+      headers: options?.headers as Record<string, string>,
+    });
+
+    // Create a Response-like object for compatibility
+    return new Response(JSON.stringify(result), {
+      status: result.ok ? 200 : 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Fall back to regular fetch for non-API routes
+  return fetch(url, options);
+}
