@@ -4,15 +4,18 @@ import SEOHelmet from '@/components/SEOHelmet';
 import CoachingCTA from '@/components/CoachingCTA';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { pickLang } from '@/i18n/dict';
+import { useI18nFetch } from '@/hooks/useI18nFetch';
 
 export default function CoachingDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = usePrefs();
-  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Use i18n-aware fetch
+  const { data } = useI18nFetch<any>(slug ? `/api/coaching/get?slug=${slug}` : '', [slug]);
 
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !data) return;
 
     // Check for payment success redirect
     const params = new URLSearchParams(window.location.search);
@@ -31,17 +34,8 @@ export default function CoachingDetail() {
             window.location.href = result.url;
           }
         });
-      return;
     }
-
-    fetch(`/api/coaching/get?slug=${slug}`)
-      .then(r => r.json())
-      .then(result => {
-        setData(result);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [slug]);
+  }, [slug, data]);
 
   if (loading) {
     return (

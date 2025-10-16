@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
+import TransitionOverlay from '../motion/TransitionOverlay';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [pathname, setPathname] = useState('');
+  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     // Register admin SW
@@ -11,13 +14,44 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     
     // Apply admin theme
     document.documentElement.dataset.admin = 'true';
+    
+    // Track initial pathname
+    setPathname(window.location.pathname);
+    
     return () => {
       delete document.documentElement.dataset.admin;
     };
   }, []);
 
+  // Detect route changes
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    if (pathname && currentPath !== pathname) {
+      setAnimating(true);
+      const timer = setTimeout(() => {
+        setAnimating(false);
+        setPathname(currentPath);
+      }, 380);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
+
+  // Listen for navigation events
+  useEffect(() => {
+    const handleNavigation = () => {
+      const newPath = window.location.pathname;
+      if (newPath !== pathname) {
+        setPathname(newPath);
+      }
+    };
+
+    window.addEventListener('popstate', handleNavigation);
+    return () => window.removeEventListener('popstate', handleNavigation);
+  }, [pathname]);
+
   return (
     <div className="min-h-[100svh] bg-background text-foreground grid md:grid-cols-[240px_1fr]">
+      <TransitionOverlay show={animating} minDurationMs={350} />
       <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
         <div className="p-4 font-semibold text-primary">ZG Admin</div>
         <nav className="p-2 grid gap-1 text-sm">
