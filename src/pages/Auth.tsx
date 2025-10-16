@@ -56,15 +56,30 @@ export default function Auth() {
           'Sign up successful! Please check your email to confirm your account.'
         );
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
         if (error) throw error;
 
-        const returnTo = searchParams.get('returnTo') || '/me';
-        navigate(returnTo);
+        // Check admin status and route accordingly
+        const response = await fetch('/api/admin/check-role', {
+          headers: {
+            'Authorization': `Bearer ${data.session.access_token}`
+          }
+        });
+        
+        const result = await response.json();
+        const returnTo = searchParams.get('returnTo');
+        
+        if (returnTo) {
+          navigate(returnTo);
+        } else if (result.is_admin) {
+          navigate('/admin');
+        } else {
+          navigate('/me');
+        }
         
         toast.success(
           lang === 'zh-CN' ? '登录成功！' :

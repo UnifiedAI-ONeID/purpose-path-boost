@@ -30,19 +30,16 @@ export default function ProtectedAdminRoute({ children }: Props) {
         return;
       }
 
-      // Check if user has admin role
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Check admin status via API
+      const response = await fetch('/api/admin/check-role', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
 
-      if (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-        toast.error('Access denied');
-      } else if (!data) {
+      const result = await response.json();
+
+      if (!result.ok || !result.authed || !result.is_admin) {
         setIsAdmin(false);
         toast.error('Admin access required');
       } else {

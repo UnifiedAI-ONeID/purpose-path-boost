@@ -2110,6 +2110,24 @@ export type Database = {
         }
         Relationships: []
       }
+      zg_admins: {
+        Row: {
+          created_at: string | null
+          email: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       zg_events: {
         Row: {
           created_at: string | null
@@ -2146,6 +2164,7 @@ export type Database = {
           email: string | null
           id: string
           interests: string[] | null
+          is_admin: boolean | null
           locale: string | null
           name: string | null
           preferred_currency: string | null
@@ -2159,6 +2178,7 @@ export type Database = {
           email?: string | null
           id?: string
           interests?: string[] | null
+          is_admin?: boolean | null
           locale?: string | null
           name?: string | null
           preferred_currency?: string | null
@@ -2172,6 +2192,7 @@ export type Database = {
           email?: string | null
           id?: string
           interests?: string[] | null
+          is_admin?: boolean | null
           locale?: string | null
           name?: string | null
           preferred_currency?: string | null

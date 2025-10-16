@@ -12,21 +12,44 @@ export default function HeaderUser() {
   const { lang } = usePrefs();
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Get initial user
     supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user || null);
+      if (data?.user) {
+        checkAdminStatus();
+      }
     });
 
     // Listen to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        checkAdminStatus();
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  async function checkAdminStatus() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const response = await fetch('/api/admin/check-role', {
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`
+      }
+    });
+    
+    const result = await response.json();
+    setIsAdmin(result.is_admin || false);
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -79,11 +102,14 @@ export default function HeaderUser() {
             className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg p-1 z-50"
           >
             <a
-              href="/me"
+              href={isAdmin ? '/admin' : '/me'}
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"
             >
               <UserIcon className="h-4 w-4" />
-              {lang === 'zh-CN' ? '仪表板' : lang === 'zh-TW' ? '儀表板' : 'Dashboard'}
+              {isAdmin 
+                ? (lang === 'zh-CN' ? '管理员' : lang === 'zh-TW' ? '管理員' : 'Admin')
+                : (lang === 'zh-CN' ? '仪表板' : lang === 'zh-TW' ? '儀表板' : 'Dashboard')
+              }
             </a>
             <button
               onClick={logout}
