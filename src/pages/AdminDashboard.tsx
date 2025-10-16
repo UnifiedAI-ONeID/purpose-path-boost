@@ -73,7 +73,7 @@ const AdminDashboard = () => {
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
   const [sharingPost, setSharingPost] = useState<BlogPost | null>(null);
-  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics' | 'secrets'>('blog');
+  const [activeTab, setActiveTab] = useState<'leads' | 'blog' | 'analytics' | 'social' | 'metrics'>('blog');
   const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
   useEffect(() => {
@@ -309,7 +309,7 @@ const AdminDashboard = () => {
               }`}
               onClick={() => setActiveTab('social')}
             >
-              Social Media
+              Social & Secrets
             </button>
             <button
               className={`pb-2 px-4 font-medium transition-colors ${
@@ -320,16 +320,6 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('metrics')}
             >
               Metrics
-            </button>
-            <button
-              className={`pb-2 px-4 font-medium transition-colors ${
-                activeTab === 'secrets'
-                  ? 'border-b-2 border-brand-accent text-brand-accent'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => setActiveTab('secrets')}
-            >
-              Secrets
             </button>
           </div>
 
@@ -419,7 +409,27 @@ const AdminDashboard = () => {
               </div>
             </>
           ) : activeTab === 'social' ? (
-            <SocialConfigManager />
+            <div className="space-y-8">
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-serif font-bold">Social Media</h2>
+                  <p className="text-muted-foreground">
+                    Configure social media platforms and posting
+                  </p>
+                </div>
+                <SocialConfigManager />
+              </div>
+              
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-serif font-bold">Secrets Management</h2>
+                  <p className="text-muted-foreground">
+                    Securely manage encrypted API keys and tokens
+                  </p>
+                </div>
+                <AdminSecrets />
+              </div>
+            </div>
           ) : activeTab === 'metrics' ? (
             <div>
               <div className="mb-6">
@@ -429,16 +439,6 @@ const AdminDashboard = () => {
                 </p>
               </div>
               <MetricsSummary />
-            </div>
-          ) : activeTab === 'secrets' ? (
-            <div>
-              <div className="mb-6">
-                <h2 className="text-2xl font-serif font-bold">Secrets Management</h2>
-                <p className="text-muted-foreground">
-                  Securely manage encrypted API keys and tokens
-                </p>
-              </div>
-              <AdminSecrets />
             </div>
           ) : (
             <>
