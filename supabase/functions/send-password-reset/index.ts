@@ -152,13 +152,20 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error('Error sending password reset email:', error);
     
+    // Check if it's a Resend domain verification error
+    const errorMessage = error.message || 'Failed to send password reset email';
+    const isResendDomainError = errorMessage.includes('verify a domain') || errorMessage.includes('testing emails');
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Failed to send password reset email' 
+        error: isResendDomainError 
+          ? 'Email service configuration required. Please verify your domain in Resend to send password reset emails.'
+          : errorMessage,
+        needsDomainVerification: isResendDomainError
       }),
       {
-        status: 500,
+        status: isResendDomainError ? 503 : 500,
         headers: { 
           'Content-Type': 'application/json', 
           ...corsHeaders 

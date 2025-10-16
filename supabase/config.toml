@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.pwa-me-analytics]
 verify_jwt = false
+
+[functions.send-password-reset]
+verify_jwt = false
