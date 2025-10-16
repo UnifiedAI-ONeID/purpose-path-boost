@@ -10,7 +10,7 @@ import { PrefsProvider } from './prefs/PrefsProvider';
 import RouteAnimHook from './components/RouteAnimHook';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import Startup from './components/Startup';
 import InstallPrompt from './components/InstallPrompt';
 import { GlobalHead } from './components/GlobalHead';
@@ -26,7 +26,6 @@ import Contact from "./pages/Contact";
 import MobileMe from "./pages/MobileMe";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
-import { lazy, Suspense } from 'react';
 
 // Lazy load China-specific components
 const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
@@ -53,11 +52,6 @@ import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
-
-// PWA screens
-import PWAHome from "./pwa/screens/Home";
-import PWAQuiz from "./pwa/screens/Quiz";
-import PWADashboard from "./pwa/screens/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -107,11 +101,6 @@ function AppRoutes() {
         <Route path="/admin/ai" element={<AdminAI />} />
         <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/admin/coaching" element={<AdminCoaching />} />
-        
-        {/* PWA routes (standalone) */}
-        <Route path="/pwa/home" element={<PWAHome />} />
-        <Route path="/pwa/quiz" element={<PWAQuiz />} />
-        <Route path="/pwa/dashboard" element={<PWADashboard />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
