@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SEOHelmet from '@/components/SEOHelmet';
-import BookCTA from '@/components/BookCTA';
+import CoachingCTA from '@/components/CoachingCTA';
 import { useTranslation } from 'react-i18next';
 
 export default function CoachingDetail() {
@@ -12,6 +12,26 @@ export default function CoachingDetail() {
 
   useEffect(() => {
     if (!slug) return;
+
+    // Check for payment success redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('paid') === '1') {
+      const name = params.get('name') || '';
+      const email = params.get('email') || '';
+      
+      fetch('/api/coaching/book-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, name, email })
+      })
+        .then(r => r.json())
+        .then(result => {
+          if (result.ok && result.url) {
+            window.location.href = result.url;
+          }
+        });
+      return;
+    }
 
     fetch(`/api/coaching/get?slug=${slug}`)
       .then(r => r.json())
@@ -67,7 +87,7 @@ export default function CoachingDetail() {
       <header className="rounded-2xl p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
         <h1 className="text-3xl font-bold mb-2">{title}</h1>
         {summary && <p className="text-lg text-muted-foreground mb-4">{summary}</p>}
-        <BookCTA slug={offer.slug} campaign={`coaching-${offer.slug}`} />
+        <CoachingCTA slug={offer.slug} />
       </header>
 
       {page?.hero_image && (

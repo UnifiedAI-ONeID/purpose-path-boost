@@ -340,6 +340,9 @@ export type Database = {
       coaching_offers: {
         Row: {
           active: boolean | null
+          base_currency: string | null
+          base_price_cents: number | null
+          billing_type: string | null
           cal_event_type_slug: string
           created_at: string | null
           id: string
@@ -355,6 +358,9 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          base_currency?: string | null
+          base_price_cents?: number | null
+          billing_type?: string | null
           cal_event_type_slug: string
           created_at?: string | null
           id?: string
@@ -370,6 +376,9 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          base_currency?: string | null
+          base_price_cents?: number | null
+          billing_type?: string | null
           cal_event_type_slug?: string
           created_at?: string | null
           id?: string
@@ -421,6 +430,41 @@ export type Database = {
             foreignKeyName: "coaching_pages_offer_slug_fkey"
             columns: ["offer_slug"]
             isOneToOne: true
+            referencedRelation: "coaching_offers"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      coaching_price_overrides: {
+        Row: {
+          created_at: string | null
+          currency: string
+          id: string
+          offer_slug: string | null
+          price_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency: string
+          id?: string
+          offer_slug?: string | null
+          price_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          id?: string
+          offer_slug?: string | null
+          price_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_price_overrides_offer_slug_fkey"
+            columns: ["offer_slug"]
+            isOneToOne: false
             referencedRelation: "coaching_offers"
             referencedColumns: ["slug"]
           },

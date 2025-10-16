@@ -8,7 +8,7 @@ import { Calendar, Video, MessageCircle, Loader2 } from 'lucide-react';
 import { track } from '@/analytics/events';
 import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
-import BookCTA from '@/components/BookCTA';
+import CoachingCTA from '@/components/CoachingCTA';
 import Robots from '@/components/Robots';
 
 const Book = () => {
@@ -331,13 +331,13 @@ const Book = () => {
                       <p className="text-muted mb-4">{offer.summary_en}</p>
                     )}
                     <div className="flex gap-3">
-                      <a
-                        href={`/coaching/${offer.slug}`}
-                        className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors"
-                      >
-                        Learn more
-                      </a>
-                      <BookCTA slug={offer.slug} campaign="book-index" />
+                    <a
+                      href={`/coaching/${offer.slug}`}
+                      className="px-4 py-2 rounded-lg border border-border hover:bg-accent transition-colors"
+                    >
+                      Learn more
+                    </a>
+                    <CoachingCTA slug={offer.slug} />
                     </div>
                   </CardContent>
                 </Card>
