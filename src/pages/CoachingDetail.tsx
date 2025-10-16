@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SEOHelmet from '@/components/SEOHelmet';
 import CoachingCTA from '@/components/CoachingCTA';
-import { useTranslation } from 'react-i18next';
+import { usePrefs } from '@/prefs/PrefsProvider';
+import { pickLang } from '@/i18n/dict';
 
 export default function CoachingDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { i18n } = useTranslation();
+  const { lang } = usePrefs();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,19 +63,7 @@ export default function CoachingDetail() {
   }
 
   const { offer, page } = data;
-  const lang = i18n.language as 'en' | 'zh-CN' | 'zh-TW';
-
-  const title = lang === 'zh-CN' ? (offer.title_zh_cn || offer.title_en) :
-                lang === 'zh-TW' ? (offer.title_zh_tw || offer.title_en) : 
-                offer.title_en;
-
-  const summary = lang === 'zh-CN' ? (offer.summary_zh_cn || offer.summary_en) :
-                  lang === 'zh-TW' ? (offer.summary_zh_tw || offer.summary_en) :
-                  offer.summary_en;
-
-  const bodyHtml = lang === 'zh-CN' ? page?.body_html_zh_cn :
-                   lang === 'zh-TW' ? page?.body_html_zh_tw :
-                   page?.body_html_en;
+  const { title, summary, body: bodyHtml } = pickLang({ ...offer, ...page }, lang);
 
   return (
     <main className="container mx-auto px-4 py-12">

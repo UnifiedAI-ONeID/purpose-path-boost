@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nextProvider } from 'react-i18next';
 import { HelmetProvider } from 'react-helmet-async';
 import i18n from './i18n';
+import { PrefsProvider } from './prefs/PrefsProvider';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
 import { useEffect, useState } from 'react';
@@ -135,15 +136,17 @@ function AppRoutes() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <I18nextProvider i18n={i18n}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </I18nextProvider>
+      <PrefsProvider>
+        <I18nextProvider i18n={i18n}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </I18nextProvider>
+      </PrefsProvider>
     </HelmetProvider>
   </QueryClientProvider>
 );

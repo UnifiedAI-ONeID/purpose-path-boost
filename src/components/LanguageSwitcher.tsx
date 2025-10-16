@@ -1,43 +1,35 @@
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { usePrefs } from '@/prefs/PrefsProvider';
 import { Globe } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 const languages = [
-  { code: 'en', label: 'English' },
-  { code: 'zh-TW', label: '繁體中文' },
-  { code: 'zh-CN', label: '简体中文' },
+  { code: 'en' as const, label: 'English', flag: '🇬🇧' },
+  { code: 'zh-TW' as const, label: '繁體中文', flag: '🇹🇼' },
+  { code: 'zh-CN' as const, label: '简体中文', flag: '🇨🇳' },
 ];
 
 export const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
+  const { lang, setLang } = usePrefs();
 
-  const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentLang = languages.find(l => l.code === lang) || languages[0];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
-          <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline">{currentLang.label}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {languages.map((lang) => (
-          <DropdownMenuItem
-            key={lang.code}
-            onClick={() => i18n.changeLanguage(lang.code)}
-            className={i18n.language === lang.code ? 'bg-accent' : ''}
-          >
-            {lang.label}
-          </DropdownMenuItem>
+    <div className="inline-flex items-center gap-2">
+      <label className="text-sm text-muted-foreground hidden sm:inline">
+        <Globe className="h-4 w-4 inline mr-1" />
+        Language
+      </label>
+      <select 
+        className="h-9 rounded-lg px-3 py-1 bg-surface text-foreground border border-border hover:bg-accent transition-colors text-sm"
+        value={lang} 
+        onChange={e=>setLang(e.target.value as 'en'|'zh-CN'|'zh-TW')}
+        aria-label="Select language"
+      >
+        {languages.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.flag} {l.label}
+          </option>
         ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </select>
+    </div>
   );
 };

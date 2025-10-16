@@ -3,6 +3,8 @@ import { useAvailability } from '@/hooks/useAvailability';
 import { Loader2 } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
+import { usePrefs } from '@/prefs/PrefsProvider';
+import { t } from '@/i18n/dict';
 
 interface CoachingCTAProps {
   slug: string;
@@ -20,6 +22,7 @@ interface PricingMeta {
 }
 
 export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' }: CoachingCTAProps) {
+  const { lang } = usePrefs();
   const [meta, setMeta] = useState<PricingMeta | null>(null);
   const [currency, setCurrency] = useState('USD');
   const [coupon, setCoupon] = useState('');
@@ -113,6 +116,10 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
 
   const isPaid = meta?.billing === 'paid';
   const discount = meta?.price?.discount || 0;
+  const fmt = new Intl.NumberFormat(lang, { 
+    style:'currency', 
+    currency: meta?.price?.cur || currency 
+  });
 
   return (
     <div className="rounded-2xl border border-border p-4 bg-card">
@@ -120,10 +127,10 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex-1">
           <div className="font-semibold text-card-foreground">
-            {isPaid ? 'Priority Session' : 'Free Discovery Call'}
+            {isPaid ? t(lang, 'priority') : t(lang, 'freeCall')}
           </div>
           <div className="text-xs text-muted-foreground">
-            {loading ? 'Checking availability…' : 'Next available slots from Cal.com'}
+            {loading ? t(lang, 'checking') : t(lang, 'nextSlots')}
           </div>
         </div>
 
@@ -132,7 +139,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
           <div className="flex items-center gap-2 flex-wrap">
             <Input
               className="h-10 w-32"
-              placeholder="Coupon"
+              placeholder={t(lang, 'coupon')}
               value={coupon}
               onChange={e => setCoupon(e.target.value.toUpperCase())}
             />
@@ -154,18 +161,18 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
               {busy ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing…
+                  {t(lang, 'processing')}
                 </>
               ) : discount > 0 ? (
-                `Pay ${((meta?.price?.cents || 0) / 100).toFixed(2)} ${meta?.price?.cur} (−${(discount / 100).toFixed(2)})`
+                `${t(lang,'pay')} ${fmt.format((meta?.price?.cents || 0) / 100)} (−${fmt.format(discount / 100)})`
               ) : (
-                `Pay ${((meta?.price?.cents || 0) / 100).toFixed(2)} ${meta?.price?.cur}`
+                `${t(lang,'pay')} ${fmt.format((meta?.price?.cents || 0) / 100)}`
               )}
             </Button>
           </div>
         ) : (
           <Button variant="cta" onClick={openBooking} className="h-10">
-            See more times
+            {t(lang, 'seeTimes')}
           </Button>
         )}
       </div>
