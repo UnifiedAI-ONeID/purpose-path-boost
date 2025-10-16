@@ -22,7 +22,7 @@ export default {
   			sans: 'var(--font-sans)',
   			serif: 'var(--font-serif)'
   		},
-  		colors: {
+      colors: {
         // Semantic tokens - NO hsl() wrapper, vars already contain hex values
   			bg: 'var(--bg)',
   			fg: 'var(--text)',
@@ -33,6 +33,7 @@ export default {
   			border: 'var(--border)',
   			cta: 'var(--cta)',
   			accent: 'var(--accent)',
+        brand: 'var(--brand-600)',
         
         // Jade palette
         jade: {
