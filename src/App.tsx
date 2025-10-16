@@ -54,6 +54,7 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminSEO from "./pages/AdminSEO";
+import Dashboard from "./pages/Dashboard";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 // Lazy load PWA screens and layout
@@ -147,6 +148,7 @@ function AppRoutes() {
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
         <Route path="/quiz" element={<Quiz />} />

@@ -16,6 +16,7 @@ export const Header = () => {
     { path: '/', label: t('nav.home') },
     { path: '/about', label: t('nav.about') },
     { path: '/coaching', label: t('nav.coaching') },
+    { path: '/dashboard', label: t('nav.dashboard') },
     { path: '/blog', label: t('nav.blog') },
     { path: '/contact', label: t('nav.contact') },
   ];

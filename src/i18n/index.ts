@@ -12,9 +12,11 @@ import quizEN from './en/quiz.json';
 
 // Chinese Simplified
 import aboutCN from './zh-CN/about.json';
+import commonCN from './zh-CN/common.json';
 
 // Chinese Traditional
 import aboutTW from './zh-TW/about.json';
+import commonTW from './zh-TW/common.json';
 
 const TRANSLATE_API = import.meta.env.VITE_TRANSLATE_API || 'https://libretranslate.com';
 
@@ -65,9 +67,11 @@ i18n
         quiz: quizEN,
       },
       'zh-CN': {
+        common: commonCN,
         about: aboutCN,
       },
       'zh-TW': {
+        common: commonTW,
         about: aboutTW,
       },
     },

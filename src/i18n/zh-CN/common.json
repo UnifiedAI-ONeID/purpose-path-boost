@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "home": "首页",
+    "about": "关于",
+    "coaching": "教练服务",
+    "dashboard": "仪表板",
+    "speaking": "演讲",
+    "blog": "博客",
+    "contact": "联系"
+  },
+  "cta": {
+    "book": "预约咨询",
+    "quiz": "参加测评",
+    "learn_more": "了解更多",
+    "get_started": "开始使用"
+  },
+  "footer": {
+    "rights": "© 2025 ZhenGrowth. 版权所有。",
+    "privacy": "隐私政策",
+    "terms": "服务条款",
+    "connect": "联系我",
+    "wechat": "微信",
+    "email": "邮箱"
+  }
+}
