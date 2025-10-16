@@ -26,45 +26,88 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get profile
+    console.log('Fetching summary for device:', device);
+
+    // Get or create profile
     const { data: profile } = await supabase
       .from('zg_profiles')
       .select('id, email, name')
       .eq('device_id', device)
       .maybeSingle();
 
-    if (!profile) {
-      return new Response(
-        JSON.stringify({ error: 'Profile not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let profileId = profile?.id;
+
+    if (!profileId) {
+      // Create profile for new device
+      const { data: newProfile, error: createError } = await supabase
+        .from('zg_profiles')
+        .insert([{ device_id: device }])
+        .select('id')
+        .single();
+
+      if (createError) {
+        console.error('Profile creation error:', createError);
+        return new Response(
+          JSON.stringify({ ok: true, profile: null, next: null, goals: [], receipts: [], streak: 0, ref_url: null }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      profileId = newProfile.id;
     }
 
-    // Get next upcoming session (mock for now - connect to bookings later)
-    const next = null;
+    const now = new Date().toISOString();
 
-    // Calculate streak percentage (based on recent activity)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Fetch all data in parallel
+    const [sessionsResult, goalsResult, receiptsResult, refResult] = await Promise.all([
+      supabase
+        .from('me_sessions')
+        .select('*')
+        .eq('profile_id', profileId)
+        .gte('start_at', now)
+        .order('start_at', { ascending: true })
+        .limit(1),
+      supabase
+        .from('me_goals')
+        .select('*')
+        .eq('profile_id', profileId)
+        .order('updated_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('me_receipts')
+        .select('*')
+        .eq('profile_id', profileId)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase
+        .from('zg_referrals')
+        .select('*')
+        .eq('profile_id', profileId)
+        .maybeSingle()
+    ]);
 
-    const { count: eventCount } = await supabase
-      .from('zg_events')
-      .select('*', { count: 'exact', head: true })
-      .eq('device_id', device)
-      .gte('created_at', thirtyDaysAgo.toISOString());
+    // Calculate streak
+    const { data: streakData } = await supabase
+      .rpc('get_user_streak', { p_profile_id: profileId })
+      .maybeSingle();
 
-    // Rough streak calculation: 1 event per day = 100%
-    const streak_pct = Math.min(100, Math.round((eventCount || 0) / 30 * 100));
-
-    // Generate referral URL
-    const baseUrl = req.headers.get('origin') || 'https://zhengrowth.com';
-    const ref_url = `${baseUrl}/pwa/home?ref=${device.slice(0, 8)}`;
+    const nextSession = sessionsResult.data?.[0] || null;
+    const ref_url = refResult.data?.ref_code 
+      ? `https://zhengrowth.com/?ref=${encodeURIComponent(refResult.data.ref_code)}` 
+      : null;
 
     return new Response(
       JSON.stringify({
         ok: true,
-        next,
-        streak_pct,
+        profile: profile ? { 
+          id: profile.id, 
+          name: profile.name, 
+          email: profile.email 
+        } : null,
+        next: nextSession,
+        goals: goalsResult.data || [],
+        receipts: receiptsResult.data || [],
+        streak: streakData || 0,
         ref_url
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

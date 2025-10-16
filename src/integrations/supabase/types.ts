@@ -1287,6 +1287,171 @@ export type Database = {
         }
         Relationships: []
       }
+      me_goals: {
+        Row: {
+          created_at: string | null
+          due_date: string | null
+          id: string
+          profile_id: string | null
+          progress: number
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          profile_id?: string | null
+          progress?: number
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          profile_id?: string | null
+          progress?: number
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "me_goals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      me_notes: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          id: string
+          profile_id: string | null
+          session_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          profile_id?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          profile_id?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "me_notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "me_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "me_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      me_receipts: {
+        Row: {
+          amount_cents: number | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          order_id: string | null
+          profile_id: string | null
+          raw: Json | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          profile_id?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          order_id?: string | null
+          profile_id?: string | null
+          raw?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "me_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      me_sessions: {
+        Row: {
+          cal_event_id: string | null
+          created_at: string | null
+          end_at: string | null
+          id: string
+          join_url: string | null
+          notes: string | null
+          profile_id: string | null
+          start_at: string | null
+          title: string | null
+        }
+        Insert: {
+          cal_event_id?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          join_url?: string | null
+          notes?: string | null
+          profile_id?: string | null
+          start_at?: string | null
+          title?: string | null
+        }
+        Update: {
+          cal_event_id?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          id?: string
+          join_url?: string | null
+          notes?: string | null
+          profile_id?: string | null
+          start_at?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "me_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           body_html: string
@@ -2159,6 +2324,10 @@ export type Database = {
       decrement_ticket_qty: {
         Args: { p_amount?: number; p_ticket_id: string }
         Returns: Json
+      }
+      get_user_streak: {
+        Args: { p_profile_id: string }
+        Returns: number
       }
       increment_coupon_uses: {
         Args: { coupon_uuid: string }
