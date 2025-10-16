@@ -240,7 +240,7 @@ export default function BlogDetailMobile() {
         {/* CTA Buttons */}
         <div className="grid gap-3 mb-8">
           <a 
-            href="/book" 
+            href="/coaching" 
             className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition inline-flex items-center justify-center"
           >
             Book a Free Discovery Call

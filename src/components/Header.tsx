@@ -46,7 +46,7 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
           <Button asChild variant="default" size="sm" className="hidden sm:flex">
-            <Link to="/book">{t('cta.book')}</Link>
+            <Link to="/coaching">{t('cta.book')}</Link>
           </Button>
 
           {/* Mobile menu button */}
@@ -84,7 +84,7 @@ export const Header = () => {
                 </Link>
               ))}
               <Button asChild variant="default" size="sm" className="w-full">
-                <Link to="/book" onClick={() => setMobileMenuOpen(false)}>
+                <Link to="/coaching" onClick={() => setMobileMenuOpen(false)}>
                   {t('cta.book')}
                 </Link>
               </Button>

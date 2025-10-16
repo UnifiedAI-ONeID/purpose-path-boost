@@ -98,7 +98,7 @@ export function ProgramSheet({ open, onClose, program }: ProgramSheetProps) {
 
         {/* Sticky CTA */}
         <div className="border-t border-border p-4 bg-surface">
-          <Link to={`/book?program=${program.id}`}>
+          <Link to={`/coaching?program=${program.id}`}>
             <Button className="w-full h-12 bg-brand text-white hover:bg-brand/90 rounded-xl">
               Book this program
             </Button>

@@ -176,7 +176,7 @@ const BlogDetail = () => {
             size="lg"
             onClick={() => track('cta_click', { button: 'Blog Detail CTA Book Session', location: 'blog_detail_footer' })}
           >
-            <Link to="/book">Book a Free Session</Link>
+            <Link to="/coaching">Book a Free Session</Link>
           </Button>
           </div>
         </motion.div>

@@ -11,7 +11,7 @@ export default function AppShell() {
         <ul className="grid grid-cols-5 h-full text-xs">
           <Tab to="/" icon={<Home size={22}/>} label="Home" />
           <Tab to="/coaching" icon={<Layers size={22}/>} label="Programs" />
-          <Tab to="/book" icon={<Calendar size={22}/>} label="Book" />
+          <Tab to="/coaching" icon={<Calendar size={22}/>} label="Book" />
           <Tab to="/blog" icon={<BookOpen size={22}/>} label="Resources" />
           <Tab to="/about" icon={<User size={22}/>} label="Me" />
         </ul>

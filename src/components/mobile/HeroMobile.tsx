@@ -16,7 +16,7 @@ export default function HeroMobile() {
         <VideoTeaser />
         
         <a 
-          href="/book" 
+          href="/coaching" 
           className="mt-4 w-full h-12 rounded-xl text-[15px] font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition inline-flex items-center justify-center"
         >
           Book a Free Call

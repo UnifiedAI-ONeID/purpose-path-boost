@@ -65,7 +65,7 @@ export default function MobileShell({ children }: { children: React.ReactNode })
           <NavItem href="/home" label="Home" icon="🏠" />
           <NavItem href="/events" label="Events" icon="📅" />
           <NavItem href="/blog" label="Blog" icon="📖" />
-          <NavItem href="/book" label="Book" icon="💬" />
+          <NavItem href="/coaching" label="Book" icon="💬" />
         </div>
       </nav>
     </div>

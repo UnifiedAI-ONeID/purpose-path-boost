@@ -167,7 +167,7 @@ export default function MobileHome() {
             </div>
           </MobileCard>
 
-          <MobileCard href="/book">
+          <MobileCard href="/coaching">
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚡</span>
               <div>
@@ -188,7 +188,7 @@ export default function MobileHome() {
       </Section>
 
       <Section title="Ready to Start?">
-        <MobileCTA href="/book">Book Your Free Call</MobileCTA>
+        <MobileCTA href="/coaching">Book Your Free Call</MobileCTA>
       </Section>
 
       <ProgramSheet 

@@ -105,7 +105,7 @@ const Home = () => {
                   className="bg-brand text-white hover:bg-brand/90"
                   onClick={() => track("cta_click", { button: "Hero Book Session", location: "hero" })}
                 >
-                  <Link to="/book">{t("common:cta.book")}</Link>
+                  <Link to="/coaching">{t("common:cta.book")}</Link>
                 </Button>
                 <Button 
                   asChild 

@@ -33,7 +33,7 @@ export default function About(){
           <p className="text-lg font-medium text-fg">{t('mission')}</p>
 
           <Link
-            to="/book" 
+            to="/coaching" 
             className="inline-flex mt-4 items-center gap-2 px-5 py-3 rounded-xl bg-cta text-white shadow-soft hover:opacity-90 transition-opacity"
             onClick={() => track('cta_click', { button: 'Book Free Call', location: 'about_page' })}
           >

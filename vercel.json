@@ -22,6 +22,18 @@
       "destination": "/api/sitemap-events.ts"
     }
   ],
+  "redirects": [
+    {
+      "source": "/book",
+      "destination": "/coaching",
+      "permanent": true
+    },
+    {
+      "source": "/book/:path*",
+      "destination": "/coaching",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
