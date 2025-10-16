@@ -66,6 +66,15 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/ai/logs': 'api-ai-logs',
   '/api/admin/seo/sources': 'api-admin-seo-sources',
   '/api/pricing/assign': 'api-pricing-assign',
+  '/api/lessons/continue': 'api-lessons-continue',
+  '/api/lessons/get': 'api-lessons-get',
+  '/api/coaching/checkout': 'api-coaching-checkout',
+  '/api/coaching/recommend': 'api-coaching-recommend',
+  '/api/coaching/redeem': 'api-coaching-redeem',
+  '/api/events/register': 'api-events-register',
+  '/api/events/offer-accept': 'api-events-offer-accept',
+  '/api/me/summary': 'api-me-summary',
+  '/api/churn/intent': 'api-churn-intent',
 };
 
 /**

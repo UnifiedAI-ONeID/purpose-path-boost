@@ -43,7 +43,18 @@ This document tracks the migration from Vercel serverless functions (`/api`) to 
 - [ ] Remove `vercel.json` (optional)
 - [ ] Remove `@vercel/node` dependency (optional)
 
-## Progress: ✅ MIGRATION COMPLETE - ~60 of 60+ API routes migrated
+### Phase 5: Final Routes ✅
+- [x] `/api/lessons/continue` → Edge Function ✅
+- [x] `/api/lessons/get` → Edge Function ✅
+- [x] `/api/coaching/checkout` → Edge Function ✅
+- [x] `/api/coaching/recommend` → Edge Function ✅
+- [x] `/api/coaching/redeem` → Edge Function ✅
+- [x] `/api/events/register` → Edge Function ✅
+- [x] `/api/events/offer-accept` → Edge Function ✅
+- [x] `/api/me/summary` → Edge Function ✅
+- [x] `/api/churn/intent` → Edge Function ✅
+
+## Progress: ✅ MIGRATION COMPLETE - ~69 of 70+ API routes migrated
 
 All critical user-facing and admin routes are now on Lovable Cloud Edge Functions!
 

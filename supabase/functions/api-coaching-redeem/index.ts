@@ -1,0 +1,110 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ ok: false, error: 'Method not allowed' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
+    );
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const { slug, email, coupon, amount_cents } = await req.json();
+
+    if (!slug || !email || !coupon) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Missing required fields' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const code = String(coupon).toUpperCase();
+
+    // Get coupon details
+    const { data: couponData } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code)
+      .maybeSingle();
+
+    if (!couponData) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Coupon not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Check per-user limit
+    if (couponData.per_user_limit) {
+      const { count } = await supabase
+        .from('coupon_redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('coupon_code', code)
+        .eq('email', email);
+
+      if ((count || 0) >= couponData.per_user_limit) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Coupon per-user limit reached' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    // Check max redemptions
+    if (couponData.max_redemptions) {
+      const { count } = await supabase
+        .from('coupon_redemptions')
+        .select('id', { count: 'exact', head: true })
+        .eq('coupon_code', code);
+
+      if ((count || 0) >= couponData.max_redemptions) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Coupon fully redeemed' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    // Record redemption
+    const { error } = await supabase
+      .from('coupon_redemptions')
+      .insert([{
+        coupon_code: code,
+        offer_slug: slug,
+        email,
+        amount_cents: amount_cents ?? 0
+      }]);
+
+    if (error) {
+      return new Response(
+        JSON.stringify({ ok: false, error: error.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ ok: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error: any) {
+    console.error('Redemption error:', error);
+    return new Response(
+      JSON.stringify({ ok: false, error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    );
+  }
+});
