@@ -7,10 +7,7 @@
     <meta name="description" content="Transform your career and life with personalized coaching. Expert guidance for professionals seeking clarity, confidence, and sustainable growth." />
     <meta name="author" content="ZhenGrowth" />
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Fonts: using system fonts / self-hosted -->
     
     <!-- Cal.com Integration -->
     <script type="text/javascript">
@@ -59,8 +56,7 @@
     <!-- Preload critical assets -->
     <link rel="preload" as="image" href="/assets/images/hero.jpg" />
     
-    <!-- Umami Analytics -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="YOUR_UMAMI_WEBSITE_ID"></script>
+    <!-- Umami disabled here; handled via app analytics loaders -->
     
     <!-- Hreflang Tags for International SEO -->
     <link rel="alternate" hreflang="en" href="https://zhengrowth.com/?lang=en" />
@@ -82,19 +78,6 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Register Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('[SW] Registered:', registration);
-            })
-            .catch(error => {
-              console.log('[SW] Registration failed:', error);
-            });
-        });
-      }
-    </script>
+    <!-- SW registered via src/pwa/registerSW.ts -->
   </body>
 </html>

@@ -26,9 +26,22 @@ class MetricsTracker {
   private readonly MAX_QUEUE_SIZE = 50;
 
   constructor() {
-    // Get or create session ID
-    this.sessionId = sessionStorage.getItem('metrics_session_id') || crypto.randomUUID();
-    sessionStorage.setItem('metrics_session_id', this.sessionId);
+    // Get or create session ID (safe for privacy modes)
+    let sid = '';
+    try {
+      sid = sessionStorage.getItem('metrics_session_id') || '';
+    } catch {}
+    if (!sid) {
+      try {
+        sid = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      } catch {
+        sid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+      try { sessionStorage.setItem('metrics_session_id', sid); } catch {}
+    }
+    this.sessionId = sid;
 
     // Flush on page unload
     if (typeof window !== 'undefined') {
