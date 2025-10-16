@@ -50,3 +50,15 @@ verify_jwt = false
 
 [functions.cal-event-types]
 verify_jwt = false
+
+[functions.booking-create]
+verify_jwt = false
+
+[functions.booking-schedule]
+verify_jwt = false
+
+[functions.booking-status]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false

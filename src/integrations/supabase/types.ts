@@ -137,6 +137,87 @@ export type Database = {
         }
         Relationships: []
       }
+      bookings: {
+        Row: {
+          amount_cents: number
+          booking_metadata: Json | null
+          booking_notes: string | null
+          booking_token: string
+          cal_booking_id: string | null
+          cal_event_type_id: string
+          cal_uid: string | null
+          created_at: string
+          currency: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          expires_at: string | null
+          id: string
+          meeting_url: string | null
+          package_id: string
+          paid_at: string | null
+          payment_id: string | null
+          payment_provider: string | null
+          payment_status: string
+          scheduled_end: string | null
+          scheduled_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          booking_metadata?: Json | null
+          booking_notes?: string | null
+          booking_token: string
+          cal_booking_id?: string | null
+          cal_event_type_id: string
+          cal_uid?: string | null
+          created_at?: string
+          currency?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          expires_at?: string | null
+          id?: string
+          meeting_url?: string | null
+          package_id: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
+          payment_status?: string
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          booking_metadata?: Json | null
+          booking_notes?: string | null
+          booking_token?: string
+          cal_booking_id?: string | null
+          cal_event_type_id?: string
+          cal_uid?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          expires_at?: string | null
+          id?: string
+          meeting_url?: string | null
+          package_id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          payment_provider?: string | null
+          payment_status?: string
+          scheduled_end?: string | null
+          scheduled_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cal_bookings: {
         Row: {
           attendee_email: string
@@ -1437,6 +1518,10 @@ export type Database = {
       admin_metrics_summary: {
         Args: { p_from: string; p_to: string }
         Returns: Json
+      }
+      cleanup_expired_bookings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       decrement_ticket_qty: {
         Args: { p_amount?: number; p_ticket_id: string }
