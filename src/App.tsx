@@ -163,7 +163,6 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/auth" element={<Auth />} />
           <Route path="/me" element={<RequireAuth><MeDashboard /></RequireAuth>} />
         <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
