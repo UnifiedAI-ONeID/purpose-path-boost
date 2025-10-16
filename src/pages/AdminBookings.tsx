@@ -1,5 +1,6 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function AdminBookings() {
   const [rows, setRows] = useState<any[]>([]);
@@ -11,10 +12,19 @@ export default function AdminBookings() {
 
   async function loadBookings() {
     setLoading(true);
-    const r = await fetch('/api/admin/bookings')
-      .then(r => r.json())
-      .catch(() => ({ rows: [] }));
-    setRows(r.rows || []);
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const r = await fetch('/api/admin/bookings', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json());
+      
+      setRows(r.rows || []);
+    } catch (err) {
+      console.error('Failed to load bookings:', err);
+      setRows([]);
+    }
     setLoading(false);
   }
 

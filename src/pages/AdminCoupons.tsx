@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function AdminCoupons() {
   const [rows, setRows] = useState<any[]>([]);
@@ -25,19 +27,44 @@ export default function AdminCoupons() {
   }, []);
 
   async function load() {
-    const res = await fetch('/api/admin/coupons/list').then(r => r.json());
-    setRows(res.rows || []);
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/admin/coupons/list', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json());
+      
+      setRows(res.rows || []);
+    } catch (err) {
+      console.error('Failed to load coupons:', err);
+      toast.error('Failed to load coupons');
+      setRows([]);
+    }
   }
 
   async function save(row: any) {
     setBusy(true);
-    await fetch('/api/admin/coupons/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(row)
-    });
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      await fetch('/api/admin/coupons/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(row)
+      });
+      
+      toast.success('Coupon saved successfully');
+      load();
+    } catch (err) {
+      console.error('Failed to save coupon:', err);
+      toast.error('Failed to save coupon');
+    }
     setBusy(false);
-    load();
   }
 
   async function addNew() {

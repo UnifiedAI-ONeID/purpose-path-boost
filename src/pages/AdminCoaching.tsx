@@ -1,6 +1,7 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type Offer = {
   slug: string;
@@ -24,27 +25,49 @@ export default function AdminCoaching() {
 
   async function reload() {
     setLoading(true);
-    const r = await fetch('/api/admin/coaching/list').then(r => r.json());
-    setRows(r.rows || []);
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const r = await fetch('/api/admin/coaching/list', {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json());
+      
+      setRows(r.rows || []);
+    } catch (err) {
+      console.error('Failed to load coaching offers:', err);
+      toast.error('Failed to load coaching offers');
+      setRows([]);
+    }
     setLoading(false);
   }
 
   async function save(row: Offer) {
     setBusy(true);
-    const r = await fetch('/api/admin/coaching/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(row)
-    }).then(r => r.json());
-    
-    setBusy(false);
-    
-    if (r.ok) {
-      toast.success('Saved successfully');
-      reload();
-    } else {
-      toast.error(r.error || 'Failed to save');
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const r = await fetch('/api/admin/coaching/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(row)
+      }).then(r => r.json());
+      
+      if (r.ok) {
+        toast.success('Saved successfully');
+        reload();
+      } else {
+        toast.error(r.error || 'Failed to save');
+      }
+    } catch (err) {
+      console.error('Failed to save:', err);
+      toast.error('Failed to save');
     }
+    setBusy(false);
   }
 
   return (
