@@ -68,13 +68,19 @@ async function checkAndRefresh(force: boolean) {
   console.log('[VersionGuard] Version check:', { local, remote, force });
 
   if (force || remote > local) {
-    console.log('[VersionGuard] Version mismatch - will reload');
+    console.log('[VersionGuard] Version mismatch - purging caches and reloading');
     localStorage.setItem(LS_KEY, String(remote));
-    
-    // Simple reload without aggressive cache clearing to avoid module import errors
+
+    try {
+      await nukeCaches();
+    } catch (e) {
+      console.warn('[VersionGuard] Cache purge failed, proceeding to reload', e);
+    }
+
     setTimeout(() => {
+      // Reload the page to ensure all modules are from the same build
       window.location.reload();
-    }, 500);
+    }, 300);
   }
 }
 

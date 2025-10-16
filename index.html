@@ -93,6 +93,21 @@
     
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // One-time SW cache purge to prevent mixed-build errors (avoids hook crashes)
+      (function(){
+        try {
+          if (!localStorage.getItem('zg.purge.once.v2') && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then((reg) => {
+              if (reg.active) {
+                reg.active.postMessage('ZG_PURGE_ALL');
+                localStorage.setItem('zg.purge.once.v2', String(Date.now()));
+              }
+            });
+          }
+        } catch(e) { }
+      })();
+    </script>
     
     <!-- SW registered via src/pwa/registerSW.ts -->
   </body>
