@@ -4,12 +4,22 @@ const STATIC = `static-${VERSION}`;
 const PAGES = `pages-${VERSION}`;
 const API = `api-${VERSION}`;
 
-const PRECACHE = ['/', '/coaching', '/offline.html', '/app-icon.png'];
+const PRECACHE = ['/', '/coaching'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const c = await caches.open(STATIC);
-    await c.addAll(PRECACHE);
+    // Add files one by one to handle 404s gracefully
+    for (const url of PRECACHE) {
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          await c.put(url, response);
+        }
+      } catch (err) {
+        console.log(`[SW] Failed to cache ${url}:`, err);
+      }
+    }
     await self.skipWaiting();
   })());
 });
