@@ -8,6 +8,7 @@ import { Calendar, Video, MessageCircle, Loader2, ArrowLeft } from 'lucide-react
 import { track } from '@/analytics/events';
 import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
+import { invokeApi } from '@/lib/api-client';
 
 export default function MobileBook() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,10 +181,9 @@ export default function MobileBook() {
         amount: packageData.price,
       });
 
-      const response = await fetch('/api/create-payment-link', {
+      const result = await invokeApi('/api/create-payment-link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           packageId: selectedSession.packageId,
           customerEmail,
           customerName,
@@ -192,22 +192,19 @@ export default function MobileBook() {
             sessionType: selectedSession.eventType,
             calLink: selectedSession.calLink,
           },
-        }),
+        },
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Payment failed');
+      if (!result.ok) {
+        throw new Error(result.error || 'Payment failed');
       }
-
-      const paymentLink = await response.json();
 
       sessionStorage.setItem('booking_customer_name', customerName);
       sessionStorage.setItem('booking_customer_email', customerEmail);
       sessionStorage.setItem('booking_cal_link', selectedSession.calLink);
 
       track('payment_redirect', { session_type: selectedSession.eventType });
-      window.location.href = paymentLink.url;
+      window.location.href = result.url;
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed. Please try again.');

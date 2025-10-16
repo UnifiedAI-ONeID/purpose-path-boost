@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokeApi } from '@/lib/api-client';
 
 type Lang = 'en'|'zh-CN'|'zh-TW';
 
@@ -225,11 +226,12 @@ export default function ContactPage(){
       body: { name, email, language: langPref, notes, currency: cur, offer_slug:'priority-30' }
     });
     
-    if (r.ok && r.url) {
-      window.location.href = r.url;
+    if (res.ok && res.url) {
+      window.location.href = res.url;
     } else {
-      alert(r.error || 'Unable to start payment.');
+      toast.error(res.error || 'Unable to start payment.');
     }
+    setExpressBusy(false);
   }
 
   return (

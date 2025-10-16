@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 interface Event {
   id: string;
