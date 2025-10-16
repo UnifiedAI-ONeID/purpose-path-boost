@@ -48,6 +48,12 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/admin/pricing/adopt-winner': 'api-admin-pricing-adopt-winner',
   '/api/admin/seo/resolve': 'api-admin-seo-resolve',
   '/api/admin/tickets/overrides': 'api-admin-tickets-overrides',
+  '/api/events/get': 'api-events-get',
+  '/api/events/price-preview': 'api-events-price-preview',
+  '/api/express/create': 'api-express-create',
+  '/api/express/webhook': 'api-express-webhook',
+  '/api/paywall/can-watch': 'api-paywall-can-watch',
+  '/api/paywall/mark-watch': 'api-paywall-mark-watch',
 };
 
 /**

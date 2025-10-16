@@ -191,3 +191,21 @@ verify_jwt = true
 
 [functions.api-admin-tickets-overrides]
 verify_jwt = true
+
+[functions.api-events-get]
+verify_jwt = false
+
+[functions.api-events-price-preview]
+verify_jwt = false
+
+[functions.api-express-create]
+verify_jwt = false
+
+[functions.api-express-webhook]
+verify_jwt = false
+
+[functions.api-paywall-can-watch]
+verify_jwt = false
+
+[functions.api-paywall-mark-watch]
+verify_jwt = false
