@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { generatePasswordResetEmail, generatePasswordResetText } from './email-template.ts';
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 // Resend types and client
 interface ResendEmailRequest {
@@ -43,10 +44,6 @@ class Resend {
   }
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 interface PasswordResetRequest {
   email: string;
@@ -65,7 +62,10 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Password reset email request for:', email);
 
     if (!email) {
-      throw new Error('Email is required');
+      return jsonResponse({ 
+        success: false, 
+        error: 'Email is required' 
+      }, 200);
     }
 
     // Initialize Supabase Admin client to generate proper recovery link
@@ -74,7 +74,10 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Supabase credentials not configured');
-      throw new Error('Service not configured');
+      return jsonResponse({ 
+        success: false, 
+        error: 'Service not configured properly' 
+      }, 200);
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
@@ -92,11 +95,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (linkError) {
       console.error('Error generating recovery link:', linkError);
-      throw new Error('Failed to generate recovery link');
+      return jsonResponse({ 
+        success: false, 
+        error: 'Failed to generate recovery link. Please try again.' 
+      }, 200);
     }
 
     if (!linkData?.properties?.action_link) {
-      throw new Error('No recovery link generated');
+      return jsonResponse({ 
+        success: false, 
+        error: 'Unable to generate recovery link. Please contact support.' 
+      }, 200);
     }
 
     const resetLink = linkData.properties.action_link;
@@ -106,7 +115,10 @@ const handler = async (req: Request): Promise<Response> => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) {
       console.error('RESEND_API_KEY not configured');
-      throw new Error('Email service not configured');
+      return jsonResponse({ 
+        success: false, 
+        error: 'Email service not configured. Please contact support.' 
+      }, 200);
     }
 
     const resend = new Resend(resendApiKey);
@@ -135,20 +147,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Password reset email sent successfully:', emailResponse);
 
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Password reset email sent successfully',
-        id: emailResponse.id 
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
-      }
-    );
+    return jsonResponse({ 
+      success: true, 
+      message: 'Password reset email sent successfully',
+      id: emailResponse.id 
+    }, 200);
   } catch (error: any) {
     console.error('Error sending password reset email:', error);
     
@@ -156,22 +159,14 @@ const handler = async (req: Request): Promise<Response> => {
     const errorMessage = error.message || 'Failed to send password reset email';
     const isResendDomainError = errorMessage.includes('verify a domain') || errorMessage.includes('testing emails');
     
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: isResendDomainError 
-          ? 'Email service configuration required. Please verify your domain in Resend to send password reset emails.'
-          : errorMessage,
-        needsDomainVerification: isResendDomainError
-      }),
-      {
-        status: isResendDomainError ? 503 : 500,
-        headers: { 
-          'Content-Type': 'application/json', 
-          ...corsHeaders 
-        },
-      }
-    );
+    // Return 200 with error payload so client can handle it gracefully
+    return jsonResponse({ 
+      success: false, 
+      error: isResendDomainError 
+        ? 'Email service requires domain verification. Please contact support to enable password reset emails.'
+        : 'Unable to send password reset email. Please try again or contact support.',
+      needsDomainVerification: isResendDomainError
+    }, 200);
   }
 };
 

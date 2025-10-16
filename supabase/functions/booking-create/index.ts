@@ -1,10 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 // Validation schema
 const bookingSchema = z.object({
@@ -77,10 +73,7 @@ Deno.serve(async (req) => {
 
     const pkg = PACKAGES[validated.packageId];
     if (!pkg) {
-      return new Response(JSON.stringify({ error: 'Invalid package' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Invalid package' }, 200);
     }
 
     // Generate secure booking token
@@ -111,25 +104,20 @@ Deno.serve(async (req) => {
 
     if (bookingError) {
       console.error('Error creating booking:', bookingError);
-      return new Response(JSON.stringify({ error: 'Failed to create booking' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Failed to create booking' }, 200);
     }
 
     console.log('[Booking Create] Created booking:', booking.id);
 
     // For free sessions, return booking token immediately
     if (pkg.price === 0) {
-      return new Response(JSON.stringify({
+      return jsonResponse({
+        ok: true,
         bookingToken,
         bookingId: booking.id,
         requiresPayment: false,
         message: 'Free session booking created. Proceed to schedule.',
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     // For paid sessions, create payment link
@@ -138,16 +126,14 @@ Deno.serve(async (req) => {
 
     if (!AIRWALLEX_API_KEY || !AIRWALLEX_CLIENT_ID) {
       console.log('[Booking Create] Airwallex not configured, returning mock');
-      return new Response(JSON.stringify({
+      return jsonResponse({
+        ok: true,
         bookingToken,
         bookingId: booking.id,
         requiresPayment: true,
         paymentUrl: `https://checkout-mock.airwallex.com?amount=${pkg.price}&token=${bookingToken}`,
         message: 'Development mode: Mock payment link',
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     // Authenticate with Airwallex
@@ -161,7 +147,7 @@ Deno.serve(async (req) => {
     });
 
     if (!authResponse.ok) {
-      throw new Error('Airwallex authentication failed');
+      return jsonResponse({ ok: false, error: 'Payment service authentication failed' }, 200);
     }
 
     const { token } = await authResponse.json();
@@ -199,7 +185,7 @@ Deno.serve(async (req) => {
     if (!paymentLinkResponse.ok) {
       const error = await paymentLinkResponse.json();
       console.error('Payment link creation failed:', error);
-      throw new Error('Failed to create payment link');
+      return jsonResponse({ ok: false, error: 'Failed to create payment link' }, 200);
     }
 
     const paymentLink = await paymentLinkResponse.json();
@@ -212,35 +198,29 @@ Deno.serve(async (req) => {
 
     console.log('[Booking Create] Payment link created:', paymentLink.id);
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
+      ok: true,
       bookingToken,
       bookingId: booking.id,
       requiresPayment: true,
       paymentUrl: paymentLink.url,
       expiresAt: expiresAt.toISOString(),
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
 
   } catch (error) {
     console.error('[Booking Create] Error:', error);
     
     if (error instanceof z.ZodError) {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
+        ok: false,
         error: 'Invalid input', 
         details: error.errors 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
+      ok: false,
       error: error instanceof Error ? error.message : 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
   }
 });

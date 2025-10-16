@@ -1,10 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 const scheduleSchema = z.object({
   bookingToken: z.string().min(1),
@@ -40,45 +36,36 @@ Deno.serve(async (req) => {
 
     if (fetchError || !booking) {
       console.error('[Booking Schedule] Booking not found:', fetchError);
-      return new Response(JSON.stringify({ error: 'Booking not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Booking not found' }, 200);
     }
 
     // Verify booking is paid (or free)
     if (booking.payment_status !== 'paid') {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
+        ok: false,
         error: 'Payment required', 
         paymentStatus: booking.payment_status 
-      }), {
-        status: 402,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     // Check if already scheduled
     if (booking.cal_booking_id) {
-      return new Response(JSON.stringify({
+      return jsonResponse({
+        ok: false,
         error: 'Already scheduled',
         calBookingId: booking.cal_booking_id,
         meetingUrl: booking.meeting_url,
-      }), {
-        status: 409,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     // Create Cal.com booking via API
     const CAL_API_KEY = Deno.env.get('CAL_COM_API_KEY');
     if (!CAL_API_KEY) {
       console.error('[Booking Schedule] Cal.com API key not configured');
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
+        ok: false,
         error: 'Scheduling service not configured' 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     // Call Cal.com API to create booking
@@ -110,13 +97,11 @@ Deno.serve(async (req) => {
     if (!calResponse.ok) {
       const error = await calResponse.text();
       console.error('[Booking Schedule] Cal.com API error:', error);
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
+        ok: false,
         error: 'Failed to create booking', 
         details: error 
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
     const calBooking = await calResponse.json();
@@ -140,37 +125,30 @@ Deno.serve(async (req) => {
       // Cal.com booking created but our DB update failed - log for manual resolution
     }
 
-    return new Response(JSON.stringify({
-      success: true,
+    return jsonResponse({
+      ok: true,
       calBookingId: calBooking.id,
       calUid: calBooking.uid,
       meetingUrl: calBooking.metadata?.videoCallUrl || null,
       scheduledStart: validated.startTime,
       scheduledEnd: validated.endTime,
       message: 'Booking scheduled successfully',
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
 
   } catch (error) {
     console.error('[Booking Schedule] Error:', error);
 
     if (error instanceof z.ZodError) {
-      return new Response(JSON.stringify({ 
+      return jsonResponse({ 
+        ok: false,
         error: 'Invalid input', 
         details: error.errors 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      }, 200);
     }
 
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
+      ok: false,
       error: error instanceof Error ? error.message : 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
   }
 });

@@ -1,7 +1,4 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,10 +8,7 @@ Deno.serve(async (req) => {
   try {
     const CAL_API_KEY = Deno.env.get('CAL_COM_API_KEY');
     if (!CAL_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Cal.com API key not configured' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Cal.com API key not configured' }, 200);
     }
 
     const url = new URL(req.url);
@@ -23,10 +17,7 @@ Deno.serve(async (req) => {
     const dateTo = url.searchParams.get('dateTo');
 
     if (!eventTypeId) {
-      return new Response(JSON.stringify({ error: 'eventTypeId is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'eventTypeId is required' }, 200);
     }
 
     // Build availability query
@@ -46,23 +37,14 @@ Deno.serve(async (req) => {
     if (!calResponse.ok) {
       const error = await calResponse.text();
       console.error('Cal.com API error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to fetch availability' }), {
-        status: calResponse.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Failed to fetch availability' }, 200);
     }
 
     const availability = await calResponse.json();
 
-    return new Response(JSON.stringify(availability), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ ok: true, ...availability }, 200);
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ ok: false, error: error instanceof Error ? error.message : 'Unknown error' }, 200);
   }
 });

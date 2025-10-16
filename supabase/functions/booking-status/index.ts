@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,10 +11,7 @@ Deno.serve(async (req) => {
     const bookingToken = url.searchParams.get('token');
 
     if (!bookingToken) {
-      return new Response(JSON.stringify({ error: 'Booking token required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Booking token required' }, 200);
     }
 
     const supabase = createClient(
@@ -33,14 +26,12 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (error || !booking) {
-      return new Response(JSON.stringify({ error: 'Booking not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return jsonResponse({ ok: false, error: 'Booking not found' }, 200);
     }
 
     // Return booking status (excluding sensitive payment details)
-    return new Response(JSON.stringify({
+    return jsonResponse({
+      ok: true,
       id: booking.id,
       status: booking.status,
       paymentStatus: booking.payment_status,
@@ -55,18 +46,13 @@ Deno.serve(async (req) => {
       calBookingId: booking.cal_booking_id,
       expiresAt: booking.expires_at,
       createdAt: booking.created_at,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
 
   } catch (error) {
     console.error('[Booking Status] Error:', error);
-    return new Response(JSON.stringify({ 
+    return jsonResponse({ 
+      ok: false,
       error: error instanceof Error ? error.message : 'Internal server error' 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 200);
   }
 });
