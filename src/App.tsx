@@ -11,6 +11,7 @@ import AppShell from './layouts/AppShell';
 import { useEffect, useState } from 'react';
 import Startup from './components/Startup';
 import InstallPrompt from './components/InstallPrompt';
+import { GlobalHead } from './components/GlobalHead';
 import Home from "./pages/Home";
 import MobileHome from "./pages/MobileHome";
 import About from "./pages/About";
@@ -79,6 +80,7 @@ function AppRoutes() {
 
   return (
     <>
+      <GlobalHead />
       <Routes>
         {/* Startup splash screen */}
         <Route path="/" element={<Startup />} />

@@ -20,6 +20,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
   readonly VITE_REGION?: 'global' | 'china';
+  readonly VITE_SEO_INDEX?: string;
 }
 
 interface ImportMeta {
