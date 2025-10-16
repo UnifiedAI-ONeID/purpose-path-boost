@@ -1,5 +1,5 @@
 import { useAvailability } from '@/hooks/useAvailability';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 import { toast } from 'sonner';
 
 interface BookCTAProps {
@@ -16,7 +16,7 @@ export default function BookCTA({ slug, campaign = 'site', prefill }: BookCTAPro
 
   async function handleBook() {
     try {
-      const { data, error } = await supabase.functions.invoke('api-cal-book-url', {
+      const data = await invokeApi('/api/cal/book-url', {
         body: {
           slug,
           campaign,
@@ -25,10 +25,10 @@ export default function BookCTA({ slug, campaign = 'site', prefill }: BookCTAPro
         }
       });
 
-      if (!error && data?.ok && data.url) {
+      if (data?.ok && data.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer');
       } else {
-        console.error('Booking error:', error || data?.error);
+        console.error('Booking error:', data?.error);
         toast.error('Unable to open booking');
       }
     } catch (error) {

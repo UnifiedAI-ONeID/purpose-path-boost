@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 interface Nudge {
   id: string;
@@ -17,7 +17,7 @@ export default function Nudges({ profileId }: { profileId: string }) {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase.functions.invoke('api-nudge-pull', {
+        const data = await invokeApi('/api/nudge/pull', {
           body: { profile_id: profileId }
         });
         setRows(data?.rows || []);
@@ -124,7 +124,7 @@ function Modal({ n, onDismiss }: { n: Nudge; onDismiss: () => void }) {
 
 async function dismiss(id: string, setRows: React.Dispatch<React.SetStateAction<Nudge[]>>) {
   try {
-    await supabase.functions.invoke('api-nudge-mark', {
+    await invokeApi('/api/nudge/mark', {
       body: { id }
     });
     setRows((prev) => prev.filter((n) => n.id !== id));

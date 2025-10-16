@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CoachingCTA from './CoachingCTA';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 type Offer = {
   slug: string;
@@ -24,11 +24,11 @@ export default function CoachingCard({ offer }: { offer: Offer }) {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.functions.invoke('api-coaching-price', {
+      const data = await invokeApi('/api/coaching/price', {
         body: { slug: offer.slug, currency }
       });
       
-      if (!error && data?.ok) {
+      if (data?.ok) {
         setPrice({
           amount_cents: data.amount_cents,
           currency: data.currency,
@@ -44,11 +44,11 @@ export default function CoachingCard({ offer }: { offer: Offer }) {
     (async () => {
       setLoadingSlots(true);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const { data, error } = await supabase.functions.invoke('api-coaching-availability', {
+      const data = await invokeApi('/api/coaching/availability', {
         body: { slug: offer.slug, tz }
       });
       
-      setSlots(!error && data?.ok ? (data.slots || []).slice(0, 3) : []);
+      setSlots(data?.ok ? (data.slots || []).slice(0, 3) : []);
       setLoadingSlots(false);
     })();
   }, [offer.slug]);

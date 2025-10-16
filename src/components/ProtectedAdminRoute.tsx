@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokeApi } from '@/lib/api-client';
 
 type Props = {
   children: React.ReactNode;
@@ -31,9 +32,9 @@ export default function ProtectedAdminRoute({ children }: Props) {
       }
 
       // Check admin status via Edge Function
-      const { data, error } = await supabase.functions.invoke('api-admin-check-role');
+      const data = await invokeApi('/api/admin/check-role');
 
-      if (error || !data?.ok || !data?.authed || !data?.is_admin) {
+      if (!data?.ok || !data?.authed || !data?.is_admin) {
         setIsAdmin(false);
         toast.error('Admin access required');
       } else {

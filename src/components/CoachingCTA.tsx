@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { t } from '@/i18n/dict';
 import { triggerHomeAnim } from '@/anim/animator';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 import { toast } from 'sonner';
 
 interface CoachingCTAProps {
@@ -35,7 +35,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.functions.invoke('api-coaching-price-with-discount', {
+      const data = await invokeApi('/api/coaching/price-with-discount', {
         body: {
           slug,
           currency,
@@ -44,7 +44,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         }
       });
 
-      if (!error && data?.ok && data.amount_cents > 0) {
+      if (data?.ok && data.amount_cents > 0) {
         setMeta({
           billing: 'paid',
           price: {
@@ -64,7 +64,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     setBusy(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('api-coaching-book-url', {
+      const data = await invokeApi('/api/coaching/book-url', {
         body: {
           slug,
           name: defaultName,
@@ -73,7 +73,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         }
       });
 
-      if (!error && data?.ok && data.url) {
+      if (data?.ok && data.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer');
       } else {
         toast.error('Failed to open booking');
@@ -88,7 +88,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     setBusy(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('api-coaching-checkout', {
+      const data = await invokeApi('/api/coaching/checkout', {
         body: {
           slug,
           name: defaultName || 'Client',
@@ -99,13 +99,13 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         }
       });
 
-      if (!error && data?.ok && data.url) {
+      if (data?.ok && data.url) {
         window.location.href = data.url;
-      } else if (!error && data?.ok && data.free) {
+      } else if (data?.ok && data.free) {
         // Free after discount - go straight to booking
         await openBooking();
       } else {
-        toast.error(data?.error || error?.message || 'Unable to start checkout');
+        toast.error(data?.error || 'Unable to start checkout');
       }
     } catch (error: any) {
       toast.error(error.message || 'Payment error. Please try again.');

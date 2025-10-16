@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { LogOut, User as UserIcon } from 'lucide-react';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { motion, AnimatePresence } from 'framer-motion';
+import { invokeApi } from '@/lib/api-client';
 
 export default function HeaderUser() {
   const { lang } = usePrefs();
@@ -39,8 +40,8 @@ export default function HeaderUser() {
 
   async function checkAdminStatus() {
     try {
-      const { data, error } = await supabase.functions.invoke('api-admin-check-role');
-      if (!error && data?.ok && data.is_admin) {
+      const data = await invokeApi('/api/admin/check-role');
+      if (data?.ok && data.is_admin) {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);

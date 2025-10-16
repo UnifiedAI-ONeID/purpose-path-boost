@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeApi } from "@/lib/api-client";
 import BottomSheet from "./BottomSheet";
 import { toast } from "sonner";
 
@@ -40,11 +40,9 @@ export default function ExpressPaySheet({
 
   async function refreshPrice() {
     try {
-      const { data, error } = await supabase.functions.invoke('express/price', {
+      const data = await invokeApi('/api/express/price', {
         body: { currency }
       });
-
-      if (error) throw error;
       
       if (data?.ok) {
         setPrice({ amount: data.amount_cents, cur: data.currency });
@@ -84,7 +82,7 @@ export default function ExpressPaySheet({
     setBusy(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('express/create', {
+      const data = await invokeApi('/api/express/create', {
         body: {
           name: validation.data.name,
           email: validation.data.email,
@@ -94,8 +92,6 @@ export default function ExpressPaySheet({
           offer_slug: 'priority-30'
         }
       });
-
-      if (error) throw error;
 
       if (data?.ok && data?.url) {
         // Redirect to payment

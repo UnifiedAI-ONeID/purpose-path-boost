@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 interface Testimonial {
   id: string;
@@ -15,12 +15,7 @@ export default function Testimonials() {
   useEffect(() => {
     (async () => {
       try {
-        const { data, error } = await supabase.functions.invoke('api-testimonials-list');
-        
-        if (error) {
-          console.warn('Testimonials: API error (non-critical)', error.message);
-          return;
-        }
+        const data = await invokeApi('/api/testimonials/list');
         
         if (data?.ok && Array.isArray(data.rows)) {
           setRows(data.rows);

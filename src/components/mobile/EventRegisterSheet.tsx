@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import BottomSheet from "./BottomSheet";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeApi } from "@/lib/api-client";
 
 type Props = {
   open: boolean;
@@ -36,11 +36,10 @@ export default function EventRegisterSheet({
 
   async function previewPrice() {
     try {
-      const { data, error } = await supabase.functions.invoke('events/price-preview', {
+      const data = await invokeApi('/api/events/price-preview', {
         body: { ticket_id: ticketId, currency }
       });
       
-      if (error) throw error;
       if (data?.ok) {
         setPrice({ amount: data.display_cents, cur: data.currency });
       }
@@ -56,11 +55,9 @@ export default function EventRegisterSheet({
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('events/coupon-preview', {
+      const data = await invokeApi('/api/events/coupon-preview', {
         body: { event_id: eventId, ticket_id: ticketId, email, code: coupon }
       });
-
-      if (error) throw error;
       
       if (data?.ok) {
         setPrice({ amount: data.total_cents, cur: data.currency || currency });
@@ -83,7 +80,7 @@ export default function EventRegisterSheet({
     setMsg('');
 
     try {
-      const { data, error } = await supabase.functions.invoke('events/register', {
+      const data = await invokeApi('/api/events/register', {
         body: {
           event_id: eventId,
           ticket_id: ticketId,
@@ -94,8 +91,6 @@ export default function EventRegisterSheet({
           coupon_code: coupon || undefined
         }
       });
-
-      if (error) throw error;
 
       if (data?.ok && data?.url) {
         // Redirect to payment
