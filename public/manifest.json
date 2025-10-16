@@ -1,13 +1,53 @@
 {
   "name": "ZhenGrowth",
   "short_name": "ZhenGrowth",
-  "start_url": "/?source=webapp",
+  "description": "Life & career coaching for Chinese-speaking professionals worldwide",
+  "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b1f1f",
   "theme_color": "#0b1f1f",
   "icons": [
-    { "src": "/app-icon.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+    { 
+      "src": "/app-icon.png", 
+      "sizes": "192x192", 
+      "type": "image/png",
+      "purpose": "any"
+    },
+    { 
+      "src": "/app-icon.png", 
+      "sizes": "192x192", 
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    { 
+      "src": "/icon-512.png", 
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "any"
+    },
+    { 
+      "src": "/icon-512.png", 
+      "sizes": "512x512", 
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["lifestyle", "education", "health"],
+  "shortcuts": [
+    {
+      "name": "Take Quiz",
+      "short_name": "Quiz",
+      "description": "60-second self-assessment",
+      "url": "/pwa/quiz",
+      "icons": [{ "src": "/app-icon.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Book Coaching",
+      "short_name": "Book",
+      "description": "Schedule a session",
+      "url": "/pwa/coaching",
+      "icons": [{ "src": "/app-icon.png", "sizes": "192x192" }]
+    }
   ]
 }
