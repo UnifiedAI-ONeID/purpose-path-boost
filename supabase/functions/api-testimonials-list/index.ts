@@ -19,8 +19,9 @@ Deno.serve(async (req) => {
     const { data, error } = await supabase
       .from('testimonials')
       .select('*')
-      .eq('featured', true)
-      .order('created_at', { ascending: false });
+      .order('featured', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(9);
 
     if (error) {
       console.error('Testimonials fetch error:', error);
