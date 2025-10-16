@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
 
 type Lang = 'en'|'zh-CN'|'zh-TW';
 
@@ -125,12 +127,14 @@ function CurrencySelect({ value, onChange }:{ value:string; onChange:(v:string)=
 }
 
 export default function ContactPage(){
+  const isMobile = useIsMobile();
   const [lang,setLang]=useState<Lang>('en');
   const [sent,setSent]=useState<'idle'|'ok'|'err'>('idle');
   const [busy,setBusy]=useState(false);
   const [cur,setCur]=useState('USD');
   const [expressBusy,setExpressBusy]=useState(false);
   const [expressPrice,setExpressPrice]=useState<{amount_cents:number,currency:string}|null>(null);
+  const [showExpressSheet, setShowExpressSheet] = useState(false);
 
   const t = translations[lang];
 
@@ -211,6 +215,7 @@ export default function ContactPage(){
   }
 
   return (
+    <>
     <main className="container mx-auto px-4 py-12 space-y-8 max-w-6xl">
         {/* Lang switcher */}
         <div className="flex justify-end">
@@ -248,13 +253,22 @@ export default function ContactPage(){
             <div className="text-3xl font-bold">
               {expressPrice ? `${expressPrice.currency} ${(expressPrice.amount_cents/100).toFixed(2)}` : '—'}
             </div>
-            <button 
-              className="btn bg-accent text-accent-foreground hover:bg-accent/90" 
-              disabled={expressBusy} 
-              onClick={handleExpress}
-            >
-              {expressBusy ? 'Processing...' : t.priorityBtn}
-            </button>
+            {isMobile ? (
+              <button 
+                className="btn bg-accent text-accent-foreground hover:bg-accent/90" 
+                onClick={() => setShowExpressSheet(true)}
+              >
+                {t.priorityBtn}
+              </button>
+            ) : (
+              <button 
+                className="btn bg-accent text-accent-foreground hover:bg-accent/90" 
+                disabled={expressBusy} 
+                onClick={handleExpress}
+              >
+                {expressBusy ? 'Processing...' : t.priorityBtn}
+              </button>
+            )}
           </div>
 
           <ul className="text-xs text-muted list-disc pl-5 space-y-1">
@@ -336,5 +350,16 @@ export default function ContactPage(){
           }
         })}}/>
       </main>
+
+      {/* Mobile Express Pay Sheet */}
+      {isMobile && (
+        <ExpressPaySheet
+          open={showExpressSheet}
+          onClose={() => setShowExpressSheet(false)}
+          defaultName={(document.getElementById('name') as HTMLInputElement)?.value || ''}
+          defaultEmail={(document.getElementById('email') as HTMLInputElement)?.value || ''}
+        />
+      )}
+    </>
   );
 }

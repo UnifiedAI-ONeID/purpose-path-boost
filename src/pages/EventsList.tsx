@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Calendar, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
+import EventsMobile from '@/components/mobile/EventsMobile';
 
 export default function EventsList() {
+  const isMobile = useIsMobile();
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Use mobile version on mobile devices
+  if (isMobile) {
+    return <EventsMobile />;
+  }
 
   useEffect(() => {
     async function load() {
