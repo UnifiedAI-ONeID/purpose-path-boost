@@ -52,6 +52,7 @@ import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 // Lazy load PWA screens and layout
 const PWALayout = lazy(() => import("./pwa/PWALayout"));
@@ -98,16 +99,18 @@ function AppRoutes() {
         {/* Standalone routes (no layout) */}
         <Route path="/install" element={<Install />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/events" element={<AdminEvents />} />
-        <Route path="/admin/events/:slug" element={<AdminEventEdit />} />
-        <Route path="/admin/calendar" element={<AdminCalendar />} />
-        <Route path="/admin/cal-bookings" element={<AdminCalBookings />} />
-        <Route path="/admin/pricing" element={<AdminPricing />} />
-        <Route path="/admin/express" element={<AdminExpress />} />
-        <Route path="/admin/ai" element={<AdminAI />} />
-        <Route path="/admin/bookings" element={<AdminBookings />} />
-        <Route path="/admin/coaching" element={<AdminCoaching />} />
+        
+        {/* Protected Admin Routes - Require authentication & admin role */}
+        <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+        <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
+        <Route path="/admin/events/:slug" element={<ProtectedAdminRoute><AdminEventEdit /></ProtectedAdminRoute>} />
+        <Route path="/admin/calendar" element={<ProtectedAdminRoute><AdminCalendar /></ProtectedAdminRoute>} />
+        <Route path="/admin/cal-bookings" element={<ProtectedAdminRoute><AdminCalBookings /></ProtectedAdminRoute>} />
+        <Route path="/admin/pricing" element={<ProtectedAdminRoute><AdminPricing /></ProtectedAdminRoute>} />
+        <Route path="/admin/express" element={<ProtectedAdminRoute><AdminExpress /></ProtectedAdminRoute>} />
+        <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminAI /></ProtectedAdminRoute>} />
+        <Route path="/admin/bookings" element={<ProtectedAdminRoute><AdminBookings /></ProtectedAdminRoute>} />
+        <Route path="/admin/coaching" element={<ProtectedAdminRoute><AdminCoaching /></ProtectedAdminRoute>} />
         
         {/* PWA routes with shared layout */}
         <Route path="/pwa" element={
