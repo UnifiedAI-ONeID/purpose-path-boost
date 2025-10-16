@@ -569,8 +569,8 @@ const AdminDashboard = () => {
                   variant="outline"
                   onClick={async () => {
                     try {
-                      const resp = await fetch('/api/social/dispatch', { method: 'POST' });
-                      const result = await resp.json();
+                      const { invokeApi } = await import('@/lib/api-client');
+                      const result = await invokeApi('/api/social/dispatch', { method: 'POST' });
                       if (result.ok) {
                         toast.success(`Dispatched ${result.dispatched} due posts`);
                       } else {

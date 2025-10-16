@@ -5,6 +5,7 @@ import CoachingCTA from '@/components/CoachingCTA';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { pickLang } from '@/i18n/dict';
 import { useI18nFetch } from '@/hooks/useI18nFetch';
+import { invokeApi } from '@/lib/api-client';
 
 export default function CoachingDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -22,12 +23,10 @@ export default function CoachingDetail() {
       const name = params.get('name') || '';
       const email = params.get('email') || '';
       
-      fetch('/api/coaching/book-url', {
+      invokeApi('/api/coaching/book-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, name, email })
+        body: { slug, name, email }
       })
-        .then(r => r.json())
         .then(result => {
           if (result.ok && result.url) {
             window.location.href = result.url;

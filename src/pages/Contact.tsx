@@ -220,13 +220,10 @@ export default function ContactPage(){
       return; 
     }
     
-    const r = await fetch('/api/express/create',{
-      method:'POST', 
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ name, email, language: langPref, notes, currency: cur, offer_slug:'priority-30' })
-    }).then(r=>r.json()).catch(()=>({ok:false}));
-    
-    setExpressBusy(false);
+    const res = await invokeApi('/api/express/create', {
+      method: 'POST',
+      body: { name, email, language: langPref, notes, currency: cur, offer_slug:'priority-30' }
+    });
     
     if (r.ok && r.url) {
       window.location.href = r.url;

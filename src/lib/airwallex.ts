@@ -18,20 +18,17 @@ export const createPaymentLink = async (
   data: PaymentLinkRequest
 ): Promise<PaymentLinkResponse> => {
   try {
-    const response = await fetch('/api/create-payment-link', {
+    const { invokeApi } = await import('@/lib/api-client');
+    const result = await invokeApi('/api/create-payment-link', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+      body: data
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create payment link');
+    if (!result.ok || !result.url || !result.id) {
+      throw new Error(result.error || 'Failed to create payment link');
     }
 
-    return await response.json();
+    return { url: result.url, id: result.id };
   } catch (error) {
     console.error('Payment link creation error:', error);
     throw error;

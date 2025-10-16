@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import SiteShell from '@/components/SiteShell';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { invokeApi } from '@/lib/api-client';
 
 export default function AccountCancel() {
   const [reason, setReason] = useState('');
@@ -13,15 +14,14 @@ export default function AccountCancel() {
     setLoading(true);
     try {
       const code = 'STAY15';
-      await fetch('/api/admin/coupons/save', {
+      await invokeApi('/api/admin/coupons/save', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           code,
           percent_off: 15,
           expires_at: new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
           applies_to: ['starter', 'growth', 'pro'],
-        }),
+        }
       });
       navigate(`/pricing?coupon=${code}`);
     } catch (error) {
@@ -35,10 +35,9 @@ export default function AccountCancel() {
     setLoading(true);
     try {
       const profile_id = localStorage.getItem('zg.profile') || '';
-      await fetch('/api/churn/intent', {
+      await invokeApi('/api/churn/intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason, profile_id }),
+        body: { reason, profile_id }
       });
       navigate('/account/cancel/confirm');
     } catch (error) {

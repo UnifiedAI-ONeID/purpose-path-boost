@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -25,16 +26,14 @@ export default function DashboardRedirect() {
         }
 
         // Check admin status
-        const response = await fetch('/api/admin/check-role', {
+        const data = await invokeApi('/api/admin/check-role', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
           }
         });
         
-        const result = await response.json();
-        
         // Route based on role
-        if (result.is_admin) {
+        if (data.is_admin) {
           navigate('/admin', { replace: true });
         } else {
           navigate('/me', { replace: true });

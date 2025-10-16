@@ -4,6 +4,7 @@ import SmartLink from '@/components/SmartLink';
 import SEOHelmet from '@/components/SEOHelmet';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokeApi } from '@/lib/api-client';
 
 const TIERS = [
   { 
@@ -63,17 +64,14 @@ export default function Pricing() {
         return;
       }
 
-      const response = await fetch('/api/billing/create-agreement', {
+      const data = await invokeApi('/api/billing/create-agreement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           profile_id: profile.id,
           plan_slug: slug,
           interval: cycle === 'm' ? 'month' : 'year'
-        })
+        }
       });
-
-      const data = await response.json();
       
       if (data.redirect_url) {
         window.location.href = data.redirect_url;
@@ -93,16 +91,14 @@ export default function Pricing() {
     if (!code) return;
     
     // Validate and apply coupon
-    fetch('/api/coaching/price-with-discount', {
+    invokeApi('/api/coaching/price-with-discount', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: { 
         offer_slug: slug, 
         coupon: code,
         currency: 'USD' 
-      })
+      }
     })
-      .then(res => res.json())
       .then(data => {
         if (data.ok) {
           toast.success(`Coupon applied! ${data.discount_pct}% off`);
@@ -137,18 +133,15 @@ export default function Pricing() {
         return;
       }
 
-      const response = await fetch('/api/billing/create-agreement', {
+      const data = await invokeApi('/api/billing/create-agreement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           profile_id: profile.id,
           plan_slug: slug,
           interval: cycle === 'm' ? 'month' : 'year',
           coupon
-        })
+        }
       });
-
-      const data = await response.json();
       
       if (data.redirect_url) {
         window.location.href = data.redirect_url;

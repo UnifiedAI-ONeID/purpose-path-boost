@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { invokeApi } from '@/lib/api-client';
 
 interface AvailabilityOptions {
   tz?: string;
@@ -22,12 +23,10 @@ export function useAvailability(slug: string, opts?: AvailabilityOptions) {
     const timezone = opts?.tz || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const days = opts?.days || 14;
 
-    fetch('/api/cal/availability', {
+    invokeApi('/api/cal/availability', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, tz: timezone, days })
+      body: { slug, tz: timezone, days }
     })
-      .then(r => r.json())
       .then(data => {
         if (!isActive) return;
         if (data.ok) {

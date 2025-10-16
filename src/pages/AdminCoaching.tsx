@@ -2,6 +2,7 @@ import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 type Offer = {
   slug: string;
@@ -29,9 +30,9 @@ export default function AdminCoaching() {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      const r = await fetch('/api/admin/coaching/list', {
+      const r = await invokeApi('/api/admin/coaching/list', {
         headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json());
+      });
       
       setRows(r.rows || []);
     } catch (err) {
@@ -48,14 +49,11 @@ export default function AdminCoaching() {
       const token = (await supabase.auth.getSession()).data.session?.access_token;
       if (!token) throw new Error('Not authenticated');
 
-      const r = await fetch('/api/admin/coaching/save', {
+      const r = await invokeApi('/api/admin/coaching/save', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(row)
-      }).then(r => r.json());
+        headers: { Authorization: `Bearer ${token}` },
+        body: row
+      });
       
       if (r.ok) {
         toast.success('Saved successfully');

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 type Alert = {
   id: string;
@@ -40,13 +41,12 @@ export default function SeoAlertBanner() {
 
   async function dismissAlert(id: string) {
     try {
-      const response = await fetch('/api/admin/seo/resolve', {
+      const result = await invokeApi('/api/admin/seo/resolve', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: { id }
       });
 
-      if (response.ok) {
+      if (result.ok) {
         setAlerts(alerts.filter(a => a.id !== id));
         toast.success('Alert dismissed');
       }

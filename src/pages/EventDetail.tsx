@@ -101,11 +101,10 @@ export default function EventDetail() {
       
       try {
         // First, try to get A/B test assignment
-        const assignResult = await fetch('/api/pricing/assign', {
+        const assignResult = await invokeApi('/api/pricing/assign', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticket_id: selectedTicket, country: userCountry })
-        }).then(r => r.json());
+          body: { ticket_id: selectedTicket, country: userCountry }
+        });
 
         if (assignResult.ok) {
           // Use A/B test assigned price
@@ -164,11 +163,10 @@ export default function EventDetail() {
         coupon_code: couponCode || undefined
       };
 
-      const result = await fetch('/api/events/register', {
+      const result = await invokeApi('/api/events/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      }).then(r => r.json());
+        body
+      });
 
       if (result.ok) {
         if (result.url) {

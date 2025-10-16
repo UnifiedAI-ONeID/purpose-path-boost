@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Rocket, Sparkles } from 'lucide-react';
+import { invokeApi } from '@/lib/api-client';
 
 interface OneClickPlanProps {
   post: {
@@ -20,10 +21,9 @@ export default function OneClickPlan({ post, onHeadline }: OneClickPlanProps) {
   async function run() {
     setBusy(true);
     try {
-      const r = await fetch('/api/social/plan', {
+      const data = await invokeApi('/api/social/plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           slug: post.slug,
           title: post.title,
           excerpt: post.excerpt || '',
@@ -31,10 +31,8 @@ export default function OneClickPlan({ post, onHeadline }: OneClickPlanProps) {
           platforms: ['linkedin', 'facebook', 'instagram', 'x'],
           lang: 'en',
           theme: 'light'
-        })
+        }
       });
-
-      const data = await r.json();
       
       if (data.ok) {
         setResult(data);

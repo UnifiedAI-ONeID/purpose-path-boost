@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-reac
 import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 type ItemType = 'event' | 'post' | 'social';
 
@@ -81,18 +82,17 @@ export default function AdminCalendar() {
         ? new Date(date.getTime() + (new Date(item.end).getTime() - new Date(item.start).getTime())).toISOString()
         : newStart;
 
-      const response = await fetch('/api/calendar/update', {
+      const result = await invokeApi('/api/calendar/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: {
           type: itemType,
           id: itemId,
           start: newStart,
           end: newEnd
-        })
+        }
       });
 
-      if (!response.ok) throw new Error('Update failed');
+      if (!result.ok) throw new Error('Update failed');
 
       toast.success('Date updated successfully');
       await loadCalendar();

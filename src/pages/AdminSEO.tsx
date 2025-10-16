@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { AlertCircle, AlertTriangle, Info, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 type Alert = {
   id: string;
@@ -40,16 +41,13 @@ export default function AdminSEO() {
   async function loadData() {
     setLoading(true);
     try {
-      const [alertsRes, sourcesRes] = await Promise.all([
-        fetch('/api/admin/seo/alerts?all=1'),
-        fetch('/api/admin/seo/sources')
+      const [alertsData, sourcesData] = await Promise.all([
+        invokeApi('/api/admin/seo/alerts?all=1'),
+        invokeApi('/api/admin/seo/sources')
       ]);
 
-      const alertsData = await alertsRes.json();
-      const sourcesData = await sourcesRes.json();
-
-      setAlerts(alertsData || []);
-      setSources(sourcesData || []);
+      setAlerts(alertsData.rows || []);
+      setSources(sourcesData.rows || []);
     } catch (error) {
       console.error('Failed to load SEO data:', error);
       toast.error('Failed to load SEO data');
@@ -100,13 +98,12 @@ export default function AdminSEO() {
 
   async function toggleSource(id: string, enabled: boolean) {
     try {
-      const response = await fetch('/api/admin/seo/sources', {
+      const result = await invokeApi('/api/admin/seo/sources', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, enabled })
+        body: { id, enabled }
       });
 
-      if (!response.ok) {
+      if (!result.ok) {
         throw new Error('Failed to update source');
       }
 
