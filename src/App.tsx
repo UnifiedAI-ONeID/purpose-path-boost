@@ -54,6 +54,11 @@ import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
 
+// PWA screens
+import PWAHome from "./pwa/screens/Home";
+import PWAQuiz from "./pwa/screens/Quiz";
+import PWADashboard from "./pwa/screens/Dashboard";
+
 const queryClient = new QueryClient();
 
 // Hook to detect mobile device
@@ -102,6 +107,11 @@ function AppRoutes() {
         <Route path="/admin/ai" element={<AdminAI />} />
         <Route path="/admin/bookings" element={<AdminBookings />} />
         <Route path="/admin/coaching" element={<AdminCoaching />} />
+        
+        {/* PWA routes (standalone) */}
+        <Route path="/pwa/home" element={<PWAHome />} />
+        <Route path="/pwa/quiz" element={<PWAQuiz />} />
+        <Route path="/pwa/dashboard" element={<PWADashboard />} />
         
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>

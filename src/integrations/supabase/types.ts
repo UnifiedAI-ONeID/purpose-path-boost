@@ -351,6 +351,7 @@ export type Database = {
           summary_en: string | null
           summary_zh_cn: string | null
           summary_zh_tw: string | null
+          tags: string[] | null
           title_en: string
           title_zh_cn: string | null
           title_zh_tw: string | null
@@ -369,6 +370,7 @@ export type Database = {
           summary_en?: string | null
           summary_zh_cn?: string | null
           summary_zh_tw?: string | null
+          tags?: string[] | null
           title_en: string
           title_zh_cn?: string | null
           title_zh_tw?: string | null
@@ -387,6 +389,7 @@ export type Database = {
           summary_en?: string | null
           summary_zh_cn?: string | null
           summary_zh_tw?: string | null
+          tags?: string[] | null
           title_en?: string
           title_zh_cn?: string | null
           title_zh_tw?: string | null
@@ -1191,6 +1194,39 @@ export type Database = {
         }
         Relationships: []
       }
+      i18n_translations: {
+        Row: {
+          id: string
+          scope: string
+          source_hash: string
+          source_lang: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          scope: string
+          source_hash: string
+          source_lang: string
+          source_text: string
+          target_lang: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          scope?: string
+          source_hash?: string
+          source_lang?: string
+          source_text?: string
+          target_lang?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           booking_challenge: string | null
@@ -1758,6 +1794,198 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      zg_events: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          event: string | null
+          id: string
+          payload: Json | null
+          profile_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          event?: string | null
+          id?: string
+          payload?: Json | null
+          profile_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          event?: string | null
+          id?: string
+          payload?: Json | null
+          profile_id?: string | null
+        }
+        Relationships: []
+      }
+      zg_profiles: {
+        Row: {
+          created_at: string | null
+          device_id: string | null
+          email: string | null
+          id: string
+          locale: string | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          locale?: string | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          locale?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
+      zg_quiz_answers: {
+        Row: {
+          choice_value: string | null
+          created_at: string | null
+          device_id: string | null
+          id: string
+          profile_id: string | null
+          question_key: string | null
+        }
+        Insert: {
+          choice_value?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          profile_id?: string | null
+          question_key?: string | null
+        }
+        Update: {
+          choice_value?: string | null
+          created_at?: string | null
+          device_id?: string | null
+          id?: string
+          profile_id?: string | null
+          question_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zg_quiz_answers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zg_quiz_choices: {
+        Row: {
+          id: string
+          label_en: string | null
+          label_zh_cn: string | null
+          label_zh_tw: string | null
+          question_key: string | null
+          tag: string | null
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          label_en?: string | null
+          label_zh_cn?: string | null
+          label_zh_tw?: string | null
+          question_key?: string | null
+          tag?: string | null
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          label_en?: string | null
+          label_zh_cn?: string | null
+          label_zh_tw?: string | null
+          question_key?: string | null
+          tag?: string | null
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zg_quiz_choices_question_key_fkey"
+            columns: ["question_key"]
+            isOneToOne: false
+            referencedRelation: "zg_quiz_questions"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      zg_quiz_questions: {
+        Row: {
+          active: boolean | null
+          id: string
+          key: string | null
+          order_no: number | null
+          title_en: string | null
+          title_zh_cn: string | null
+          title_zh_tw: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          id?: string
+          key?: string | null
+          order_no?: number | null
+          title_en?: string | null
+          title_zh_cn?: string | null
+          title_zh_tw?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          id?: string
+          key?: string | null
+          order_no?: number | null
+          title_en?: string | null
+          title_zh_cn?: string | null
+          title_zh_tw?: string | null
+        }
+        Relationships: []
+      }
+      zg_referrals: {
+        Row: {
+          clicks: number | null
+          conversions: number | null
+          created_at: string | null
+          id: string
+          profile_id: string | null
+          ref_code: string | null
+        }
+        Insert: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          profile_id?: string | null
+          ref_code?: string | null
+        }
+        Update: {
+          clicks?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          id?: string
+          profile_id?: string | null
+          ref_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zg_referrals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
