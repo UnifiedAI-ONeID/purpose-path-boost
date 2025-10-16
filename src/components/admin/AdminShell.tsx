@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
-import JadeGoldOverlay from '../motion/JadeGoldOverlay';
+import { triggerHomeAnim } from '@/anim/animator';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { at } from '@/i18n/admin';
 
@@ -9,7 +9,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const { lang } = usePrefs();
   const [open, setOpen] = useState(false);
   const [pathname, setPathname] = useState('');
-  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     // Register admin SW
@@ -30,12 +29,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const currentPath = window.location.pathname;
     if (pathname && currentPath !== pathname) {
-      setAnimating(true);
-      const timer = setTimeout(() => {
-        setAnimating(false);
-        setPathname(currentPath);
-      }, 380);
-      return () => clearTimeout(timer);
+      triggerHomeAnim(600);
+      setPathname(currentPath);
     }
   }, [pathname]);
 
@@ -54,7 +49,6 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="min-h-[100svh] bg-background text-foreground grid md:grid-cols-[240px_1fr]">
-      <JadeGoldOverlay show={animating} minDurationMs={380} />
       <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
         <div className="p-4 font-semibold text-primary">ZG Admin</div>
         <nav className="p-2 grid gap-1 text-sm">

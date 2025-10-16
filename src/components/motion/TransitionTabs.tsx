@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import JadeGoldOverlay from './JadeGoldOverlay';
+import { triggerHomeAnim } from '@/anim/animator';
 
 type Tab = {
   id: string;
@@ -29,16 +29,12 @@ type Props = {
  */
 export default function TransitionTabs({ tabs, initial = 0 }: Props) {
   const [activeIndex, setActiveIndex] = useState(initial);
-  const [animating, setAnimating] = useState(false);
 
   function switchTab(newIndex: number) {
-    if (newIndex === activeIndex || animating) return;
+    if (newIndex === activeIndex) return;
     
-    setAnimating(true);
-    setTimeout(() => {
-      setActiveIndex(newIndex);
-      setAnimating(false);
-    }, 460);
+    triggerHomeAnim(600);
+    setActiveIndex(newIndex);
   }
 
   return (
@@ -54,7 +50,6 @@ export default function TransitionTabs({ tabs, initial = 0 }: Props) {
                 : 'text-muted-foreground hover:bg-muted/50'
             }`}
             onClick={() => switchTab(idx)}
-            disabled={animating}
           >
             {tab.label}
           </button>
@@ -65,9 +60,6 @@ export default function TransitionTabs({ tabs, initial = 0 }: Props) {
       <div className="mt-4">
         {tabs[activeIndex].content}
       </div>
-
-      {/* Transition overlay */}
-      <JadeGoldOverlay show={animating} minDurationMs={420} />
     </div>
   );
 }

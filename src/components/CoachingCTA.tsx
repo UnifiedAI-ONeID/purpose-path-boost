@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { t } from '@/i18n/dict';
-import JadeGoldOverlay from './motion/JadeGoldOverlay';
+import { triggerHomeAnim } from '@/anim/animator';
 
 interface CoachingCTAProps {
   slug: string;
@@ -29,7 +29,6 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   const [coupon, setCoupon] = useState('');
   const [promo] = useState(new URLSearchParams(window.location.search).get('promo') || '');
   const [busy, setBusy] = useState(false);
-  const [overlay, setOverlay] = useState(false);
   const { slots, loading } = useAvailability(slug, { days: 14 });
 
   useEffect(() => {
@@ -64,7 +63,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   }, [slug, currency, coupon, promo]);
 
   async function openBooking() {
-    setOverlay(true);
+    triggerHomeAnim(600);
     setBusy(true);
     
     try {
@@ -85,15 +84,12 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         window.open(data.url, '_blank', 'noopener,noreferrer');
       }
     } finally {
-      setTimeout(() => {
-        setOverlay(false);
-        setBusy(false);
-      }, 700);
+      setTimeout(() => setBusy(false), 700);
     }
   }
 
   async function handlePayment() {
-    setOverlay(true);
+    triggerHomeAnim(600);
     setBusy(true);
     
     try {
@@ -119,11 +115,9 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         await openBooking();
       } else {
         alert(data.error || 'Unable to start checkout');
-        setOverlay(false);
       }
     } catch (error) {
       alert('Payment error. Please try again.');
-      setOverlay(false);
     } finally {
       setTimeout(() => setBusy(false), 900);
     }
@@ -225,9 +219,6 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
           ))}
         </div>
       )}
-      
-      {/* Transition overlay */}
-      <JadeGoldOverlay show={overlay} />
     </div>
   );
 }

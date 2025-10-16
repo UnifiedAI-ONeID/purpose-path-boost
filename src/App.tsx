@@ -7,7 +7,7 @@ import { I18nextProvider } from 'react-i18next';
 import { HelmetProvider } from 'react-helmet-async';
 import i18n from './i18n';
 import { PrefsProvider } from './prefs/PrefsProvider';
-import RouteTransitions from './components/motion/RouteTransitions';
+import RouteAnimHook from './components/RouteAnimHook';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
 import { useEffect, useState } from 'react';
@@ -143,9 +143,10 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <RouteTransitions />
+              <RouteAnimHook />
               <AppRoutes />
             </BrowserRouter>
+            <div id="zg-homeclick-layer" aria-hidden="true" />
           </TooltipProvider>
         </I18nextProvider>
       </PrefsProvider>

@@ -1,4 +1,5 @@
 import { usePrefs } from '@/prefs/PrefsProvider';
+import { triggerHomeAnim } from '@/anim/animator';
 
 type Props = {
   href: string;
@@ -29,12 +30,20 @@ export default function SmartLink({ href, children, className, target, rel, ...r
     }
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Trigger animation on internal navigation
+    if (!target || target === '_self') {
+      triggerHomeAnim(600);
+    }
+  };
+
   return (
     <a 
       href={getHref()} 
       className={className}
       target={target}
       rel={rel}
+      onClick={handleClick}
       {...rest}
     >
       {children}
