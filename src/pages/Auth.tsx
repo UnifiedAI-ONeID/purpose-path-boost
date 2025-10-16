@@ -74,11 +74,31 @@ export default function Auth() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // Generate password reset token via Supabase
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth`
       });
 
-      if (error) throw error;
+      if (resetError) throw resetError;
+
+      // Send custom branded email via our edge function
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-password-reset', {
+          body: {
+            email,
+            resetLink: `${window.location.origin}/auth#type=recovery`,
+            language: lang
+          }
+        });
+
+        if (emailError) {
+          console.error('Custom email error:', emailError);
+          // Continue anyway - Supabase will send default email as fallback
+        }
+      } catch (emailError) {
+        console.error('Email function error:', emailError);
+        // Continue anyway - user will get default Supabase email
+      }
 
       toast.success(
         lang === 'zh-CN' ? '密码重置链接已发送到您的邮箱' :
