@@ -7,11 +7,22 @@ import { Calendar, Target, TrendingUp, Share2, Plus, Loader2 } from 'lucide-reac
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import AvatarUploader from '@/components/AvatarUploader';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SuggestedNextStep from '@/components/SuggestedNextStep';
 
 type Summary = {
   ok: boolean;
-  profile: { id: string; name?: string | null; email?: string | null } | null;
+  profile: { 
+    id: string; 
+    name?: string | null; 
+    email?: string | null;
+    avatar_url?: string | null;
+    tz?: string | null;
+    preferred_currency?: string | null;
+  } | null;
   next: { id: string; title: string; start_at: string; end_at: string; join_url: string } | null;
   goals: any[];
   receipts: any[];
@@ -297,6 +308,7 @@ export default function MeDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
+              className="mb-6"
             >
               <h2 className="text-xl font-semibold mb-4">
                 {lang === 'zh-CN' ? '最近付款' : lang === 'zh-TW' ? '最近付款' : 'Recent Payments'}
@@ -325,6 +337,133 @@ export default function MeDashboard() {
               </div>
             </motion.section>
           )}
+
+          {/* Account Settings */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {lang === 'zh-CN' ? '账户设置' : lang === 'zh-TW' ? '帳戶設定' : 'Account Settings'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <AvatarUploader
+                  profileId={data.profile.id}
+                  initialUrl={data.profile.avatar_url}
+                  onUpdate={(url) => {
+                    setData(prev => prev ? {
+                      ...prev,
+                      profile: { ...prev.profile, avatar_url: url }
+                    } : null);
+                  }}
+                />
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">
+                      {lang === 'zh-CN' ? '名称' : lang === 'zh-TW' ? '名稱' : 'Name'}
+                    </Label>
+                    <Input
+                      id="name"
+                      defaultValue={data.profile.name || ''}
+                      onBlur={async (e) => {
+                        try {
+                          await supabase.functions.invoke('pwa-me-update', {
+                            body: { name: e.target.value }
+                          });
+                          toast.success(
+                            lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
+                          );
+                        } catch (error) {
+                          toast.error(
+                            lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
+                          );
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>
+                        {lang === 'zh-CN' ? '时区' : lang === 'zh-TW' ? '時區' : 'Timezone'}
+                      </Label>
+                      <Select
+                        defaultValue={data.profile.tz || 'UTC'}
+                        onValueChange={async (value) => {
+                          try {
+                            await supabase.functions.invoke('pwa-me-update', {
+                              body: { tz: value }
+                            });
+                            toast.success(
+                              lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
+                            );
+                          } catch (error) {
+                            toast.error(
+                              lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
+                            );
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UTC">UTC</SelectItem>
+                          <SelectItem value="America/New_York">New York</SelectItem>
+                          <SelectItem value="America/Los_Angeles">Los Angeles</SelectItem>
+                          <SelectItem value="Europe/London">London</SelectItem>
+                          <SelectItem value="Asia/Shanghai">Shanghai</SelectItem>
+                          <SelectItem value="Asia/Hong_Kong">Hong Kong</SelectItem>
+                          <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label>
+                        {lang === 'zh-CN' ? '货币' : lang === 'zh-TW' ? '貨幣' : 'Currency'}
+                      </Label>
+                      <Select
+                        defaultValue={data.profile.preferred_currency || 'USD'}
+                        onValueChange={async (value) => {
+                          try {
+                            await supabase.functions.invoke('pwa-me-update', {
+                              body: { preferred_currency: value }
+                            });
+                            toast.success(
+                              lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
+                            );
+                          } catch (error) {
+                            toast.error(
+                              lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
+                            );
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USD">USD</SelectItem>
+                          <SelectItem value="CAD">CAD</SelectItem>
+                          <SelectItem value="EUR">EUR</SelectItem>
+                          <SelectItem value="GBP">GBP</SelectItem>
+                          <SelectItem value="HKD">HKD</SelectItem>
+                          <SelectItem value="SGD">SGD</SelectItem>
+                          <SelectItem value="CNY">CNY</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.section>
         </div>
       </div>
     </>

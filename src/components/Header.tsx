@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import HeaderUser from './HeaderUser';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '@/assets/images/logo.png';
@@ -48,6 +49,7 @@ export const Header = () => {
 
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
+          <HeaderUser />
           <Button asChild variant="default" size="sm" className="hidden sm:flex">
             <Link to="/coaching">{t('cta.book')}</Link>
           </Button>
