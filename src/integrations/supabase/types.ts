@@ -113,6 +113,27 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          code: string
+          description: string
+          icon: string | null
+          title: string
+        }
+        Insert: {
+          code: string
+          description: string
+          icon?: string | null
+          title: string
+        }
+        Update: {
+          code?: string
+          description?: string
+          icon?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author: string
@@ -367,6 +388,36 @@ export type Database = {
         }
         Relationships: []
       }
+      churn_intents: {
+        Row: {
+          created_at: string | null
+          id: string
+          plan_slug: string | null
+          profile_id: string
+          reason: string | null
+          resolved_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          plan_slug?: string | null
+          profile_id: string
+          reason?: string | null
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          plan_slug?: string | null
+          profile_id?: string
+          reason?: string | null
+          resolved_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       coaching_offers: {
         Row: {
           active: boolean | null
@@ -543,6 +594,7 @@ export type Database = {
           max_redemptions: number | null
           per_user_limit: number | null
           percent_off: number | null
+          redeemed: number | null
           valid_from: string | null
           valid_to: string | null
         }
@@ -558,6 +610,7 @@ export type Database = {
           max_redemptions?: number | null
           per_user_limit?: number | null
           percent_off?: number | null
+          redeemed?: number | null
           valid_from?: string | null
           valid_to?: string | null
         }
@@ -573,6 +626,7 @@ export type Database = {
           max_redemptions?: number | null
           per_user_limit?: number | null
           percent_off?: number | null
+          redeemed?: number | null
           valid_from?: string | null
           valid_to?: string | null
         }
@@ -1090,6 +1144,53 @@ export type Database = {
           utm_medium?: string | null
           utm_source?: string | null
           utm_term?: string | null
+        }
+        Relationships: []
+      }
+      experiment_assignments: {
+        Row: {
+          assigned_at: string | null
+          exp_key: string
+          profile_id: string
+          variant: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          exp_key: string
+          profile_id: string
+          variant: string
+        }
+        Update: {
+          assigned_at?: string | null
+          exp_key?: string
+          profile_id?: string
+          variant?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_assignments_exp_key_fkey"
+            columns: ["exp_key"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          enabled: boolean | null
+          key: string
+          variants: string[]
+        }
+        Insert: {
+          enabled?: boolean | null
+          key: string
+          variants: string[]
+        }
+        Update: {
+          enabled?: boolean | null
+          key?: string
+          variants?: string[]
         }
         Relationships: []
       }
@@ -1633,6 +1734,45 @@ export type Database = {
           },
         ]
       }
+      nudge_inbox: {
+        Row: {
+          body: string
+          created_at: string | null
+          cta_href: string | null
+          cta_label: string | null
+          expire_at: string
+          id: string
+          kind: string
+          profile_id: string
+          seen: boolean | null
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          cta_href?: string | null
+          cta_label?: string | null
+          expire_at: string
+          id?: string
+          kind: string
+          profile_id: string
+          seen?: boolean | null
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          cta_href?: string | null
+          cta_label?: string | null
+          expire_at?: string
+          id?: string
+          kind?: string
+          profile_id?: string
+          seen?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           body_html: string
@@ -1710,6 +1850,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      profile_badges: {
+        Row: {
+          badge_code: string
+          earned_at: string | null
+          profile_id: string
+        }
+        Insert: {
+          badge_code: string
+          earned_at?: string | null
+          profile_id: string
+        }
+        Update: {
+          badge_code?: string
+          earned_at?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_badges_badge_code_fkey"
+            columns: ["badge_code"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -2240,6 +2406,63 @@ export type Database = {
         }
         Relationships: []
       }
+      telemetry_events: {
+        Row: {
+          event: string
+          id: number
+          profile_id: string | null
+          props: Json | null
+          ts: string
+        }
+        Insert: {
+          event: string
+          id?: never
+          profile_id?: string | null
+          props?: Json | null
+          ts?: string
+        }
+        Update: {
+          event?: string
+          id?: never
+          profile_id?: string | null
+          props?: Json | null
+          ts?: string
+        }
+        Relationships: []
+      }
+      testimonials: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          featured: boolean | null
+          id: string
+          locale: string | null
+          name: string
+          quote: string
+          role: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          featured?: boolean | null
+          id?: string
+          locale?: string | null
+          name: string
+          quote: string
+          role?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          featured?: boolean | null
+          id?: string
+          locale?: string | null
+          name?: string
+          quote?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -2593,6 +2816,10 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never> | { _user_id: string }
         Returns: boolean
+      }
+      redeem_coupon_once: {
+        Args: { p_code: string }
+        Returns: undefined
       }
       rollup_delete_day: {
         Args: { p_day: string }

@@ -56,6 +56,8 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminSEO from "./pages/AdminSEO";
+import PricingSuccess from "./pages/PricingSuccess";
+import AccountCancel from "./pages/AccountCancel";
 import Dashboard from "./pages/Dashboard";
 import MeDashboard from "./pages/MeDashboard";
 import RequireAuth from "./components/RequireAuth";
@@ -107,6 +109,8 @@ function AppRoutes() {
         {/* Standalone routes (no layout) */}
         <Route path="/install" element={<Install />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/pricing/success" element={<PricingSuccess />} />
+        <Route path="/account/cancel" element={<AccountCancel />} />
         
         {/* Protected Admin Routes - Require authentication & admin role */}
         <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
