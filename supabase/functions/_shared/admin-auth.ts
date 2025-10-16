@@ -21,14 +21,17 @@ export async function requireAdmin(authHeader: string | null) {
     return { isAdmin: false, user: null };
   }
 
-  const { data: roleData } = await supabase
-    .from('user_roles')
-    .select('role')
+  const { data: adminRow, error: adminErr } = await supabase
+    .from('zg_admins')
+    .select('user_id')
     .eq('user_id', user.id)
-    .eq('role', 'admin')
     .maybeSingle();
 
-  return { isAdmin: !!roleData, user };
+  if (adminErr) {
+    console.error('[requireAdmin] Admin query error:', adminErr);
+  }
+
+  return { isAdmin: !!adminRow, user };
 }
 
 export const corsHeaders = {

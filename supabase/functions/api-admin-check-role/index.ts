@@ -35,19 +35,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check admin role
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('role')
+    // Check admin role against zg_admins (single source of truth for policies)
+    const { data: adminRow, error: adminErr } = await supabase
+      .from('zg_admins')
+      .select('user_id')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
       .maybeSingle();
+
+    if (adminErr) {
+      console.error('[api-admin-check-role] Admin query error:', adminErr);
+    }
+
 
     return new Response(
       JSON.stringify({ 
         ok: true, 
         authed: true, 
-        is_admin: !!roleData,
+        is_admin: !!adminRow,
         user: { id: user.id, email: user.email }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
