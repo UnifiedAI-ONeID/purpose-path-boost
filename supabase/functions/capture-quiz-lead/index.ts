@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 // Validation schema
 const QuizLeadSchema = z.object({
@@ -84,10 +85,6 @@ class Resend {
   }
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -112,10 +109,10 @@ serve(async (req) => {
     // Check rate limit
     if (!checkRateLimit(email)) {
       console.log('Rate limit exceeded for submission');
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-        { status: 429, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonResponse({ 
+        ok: false,
+        error: 'Rate limit exceeded. Please try again later.' 
+      }, 200);
     }
 
     // Check for duplicate submissions in last 24 hours
@@ -128,10 +125,10 @@ serve(async (req) => {
 
     if (recentSubmissions && recentSubmissions.length > 0) {
       console.log('Duplicate submission detected');
-      return new Response(
-        JSON.stringify({ error: 'You have already submitted the quiz recently. Please check your email.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonResponse({ 
+        ok: false,
+        error: 'You have already submitted the quiz recently. Please check your email.' 
+      }, 200);
     }
 
     // Save lead to database
@@ -147,7 +144,10 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError.message);
-      throw new Error(`Failed to save lead: ${dbError.message}`);
+      return jsonResponse({ 
+        ok: false,
+        error: 'Failed to save lead. Please try again.' 
+      }, 200);
     }
 
     console.log('Lead saved successfully');
@@ -156,7 +156,10 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) {
       console.error('RESEND_API_KEY not configured');
-      throw new Error('Email service not configured');
+      return jsonResponse({ 
+        ok: false,
+        error: 'Email service not configured. Please contact support.' 
+      }, 200);
     }
     
     const resend = new Resend(resendApiKey);
@@ -179,36 +182,29 @@ serve(async (req) => {
       console.log('Email sent successfully');
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: 'Lead captured and email sent' }),
-      { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return jsonResponse({ 
+      ok: true, 
+      success: true, 
+      message: 'Lead captured and email sent' 
+    }, 200);
 
   } catch (error) {
     // Handle validation errors
     if (error instanceof z.ZodError) {
       console.error('Validation error:', error.errors);
-      return new Response(
-        JSON.stringify({ error: 'Invalid input', details: error.errors }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonResponse({ 
+        ok: false,
+        error: 'Invalid input', 
+        details: error.errors 
+      }, 200);
     }
     
-    console.error('Error in capture-quiz-lead function:', error instanceof Error ? error.message : 'Unknown error');
-    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-    return new Response(
-      JSON.stringify({ 
-        error: errorMessage,
-        success: false 
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    console.error('Error in capture-quiz-lead:', error instanceof Error ? error.message : 'Unknown error');
+    return jsonResponse({ 
+      ok: false,
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
+      success: false 
+    }, 200);
   }
 });
 

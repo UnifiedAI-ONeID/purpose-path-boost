@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,7 +11,11 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing Supabase credentials');
+      return jsonResponse({ 
+        ok: false, 
+        error: 'Missing Supabase credentials',
+        rows: [] 
+      }, 200);
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -32,50 +32,32 @@ Deno.serve(async (req) => {
       .limit(9);
 
     if (dbError) {
-      console.error('[Testimonials v2] Database query failed:', JSON.stringify(dbError));
-      return new Response(
-        JSON.stringify({ 
-          ok: false, 
-          error: dbError.message || 'Database query failed',
-          code: dbError.code,
-          rows: [] 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-          status: 400 
-        }
-      );
+      console.error('Testimonials fetch error:', dbError);
+      return jsonResponse({ 
+        ok: false, 
+        error: dbError.message || 'Database query failed',
+        code: dbError.code,
+        rows: [] 
+      }, 200);
     }
 
     const rowCount = testimonials?.length ?? 0;
-    console.log(`[Testimonials v2] Successfully retrieved ${rowCount} testimonial(s)`);
+    console.log(`[Testimonials] Retrieved ${rowCount} testimonial(s)`);
 
-    return new Response(
-      JSON.stringify({ 
-        ok: true, 
-        rows: testimonials ?? [],
-        count: rowCount
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200
-      }
-    );
+    return jsonResponse({ 
+      ok: true, 
+      rows: testimonials ?? [],
+      count: rowCount
+    }, 200);
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    console.error('[Testimonials v2] Unexpected error:', errorMessage);
+    console.error('[Testimonials] Error:', errorMessage);
     
-    return new Response(
-      JSON.stringify({ 
-        ok: false, 
-        error: errorMessage,
-        rows: [] 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
-        status: 500 
-      }
-    );
+    return jsonResponse({ 
+      ok: false, 
+      error: errorMessage,
+      rows: [] 
+    }, 200);
   }
 });
