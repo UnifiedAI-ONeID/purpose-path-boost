@@ -123,26 +123,21 @@ export default function Auth() {
 
       if (error) throw error;
 
+      // Sign out the user after password update
+      await supabase.auth.signOut();
+
       toast.success(
-        lang === 'zh-CN' ? '密码已成功更新！' :
-        lang === 'zh-TW' ? '密碼已成功更新！' :
-        'Password updated successfully!'
+        lang === 'zh-CN' ? '密码已成功更新！请使用新密码登录。' :
+        lang === 'zh-TW' ? '密碼已成功更新！請使用新密碼登入。' :
+        'Password updated successfully! Please sign in with your new password.'
       );
 
-      // Redirect to appropriate dashboard after password update
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const response = await fetch('/api/admin/check-role', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
-        const result = await response.json();
-        navigate(result.is_admin ? '/admin' : '/me');
-      } else {
-        setUpdatePasswordMode(false);
-        setMode('signin');
-      }
+      // Clear hash and redirect to login screen
+      window.history.replaceState(null, '', '/auth');
+      setUpdatePasswordMode(false);
+      setPassword('');
+      setConfirmPassword('');
+      setMode('signin');
     } catch (error: any) {
       console.error('Password update error:', error);
       toast.error(
