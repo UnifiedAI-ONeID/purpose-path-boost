@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import SmartLink from './SmartLink';
-import { LessonPlayerLite } from './LessonPlayerLite';
+import { LessonPlayerYT } from './LessonPlayerYT';
 
 interface Lesson {
   slug: string;
@@ -112,7 +112,7 @@ export function LessonStrip({ profileId, tags = [] }: LessonStripProps) {
             className="bg-card border border-border rounded-2xl w-full max-w-4xl overflow-hidden" 
             onClick={e => e.stopPropagation()}
           >
-            <LessonPlayerLite 
+            <LessonPlayerYT 
               profileId={profileId} 
               slug={open} 
               onClose={() => setOpen(null)} 

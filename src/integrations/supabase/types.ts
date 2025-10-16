@@ -1417,6 +1417,7 @@ export type Database = {
       lessons: {
         Row: {
           captions_vtt_url: string | null
+          chapters: Json | null
           cn_alt_url: string | null
           created_at: string | null
           duration_sec: number | null
@@ -1433,6 +1434,7 @@ export type Database = {
         }
         Insert: {
           captions_vtt_url?: string | null
+          chapters?: Json | null
           cn_alt_url?: string | null
           created_at?: string | null
           duration_sec?: number | null
@@ -1449,6 +1451,7 @@ export type Database = {
         }
         Update: {
           captions_vtt_url?: string | null
+          chapters?: Json | null
           cn_alt_url?: string | null
           created_at?: string | null
           duration_sec?: number | null

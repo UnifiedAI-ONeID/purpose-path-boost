@@ -1,0 +1,342 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from './ui/button';
+import { X } from 'lucide-react';
+import { loadYouTubeAPI } from '@/lib/youtubeApi';
+
+interface Lesson {
+  slug: string;
+  title_en: string;
+  summary_en?: string;
+  yt_id?: string;
+  duration_sec?: number;
+  poster_url?: string;
+  cn_alt_url?: string;
+  captions_vtt_url?: string;
+  chapters?: { t: number; label: string }[];
+}
+
+interface LessonPlayerYTProps {
+  profileId: string;
+  slug: string;
+  onClose: () => void;
+}
+
+function detectCN(): boolean {
+  try {
+    const lang = (navigator.language || '').toLowerCase();
+    return /zh-cn|zh-hans/.test(lang) && !/tw|hk/.test(lang);
+  } catch {
+    return false;
+  }
+}
+
+export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps) {
+  const ytRef = useRef<HTMLDivElement | null>(null);
+  const ytPlayer = useRef<any>(null);
+  const vidRef = useRef<HTMLVideoElement | null>(null);
+
+  const [data, setData] = useState<{ lesson: Lesson; progress?: any } | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [milestones, setMilestones] = useState<{ [key: string]: boolean }>({});
+  const isCN = detectCN();
+
+  // Fetch lesson data
+  useEffect(() => {
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/lessons/get?slug=${encodeURIComponent(slug)}&profile_id=${encodeURIComponent(profileId)}`,
+          { cache: 'no-store' }
+        );
+        const json = await response.json();
+        setData({ lesson: json.lesson, progress: json.progress });
+        setDuration(json.lesson.duration_sec || 0);
+      } catch (error) {
+        console.error('Failed to fetch lesson:', error);
+      }
+    })();
+  }, [slug, profileId]);
+
+  // Initialize YouTube player
+  useEffect(() => {
+    if (!data?.lesson) return;
+    if (isCN || !data.lesson.yt_id) return;
+
+    (async () => {
+      try {
+        await loadYouTubeAPI();
+        if (!ytRef.current) return;
+
+        const startTime = Math.max(0, Number(data.progress?.last_position_sec || 0));
+
+        ytPlayer.current = new (window as any).YT.Player(ytRef.current, {
+          width: '100%',
+          height: '100%',
+          videoId: data.lesson.yt_id,
+          playerVars: {
+            modestbranding: 1,
+            rel: 0,
+            playsinline: 1,
+            origin: window.location.origin,
+            start: Math.floor(startTime),
+          },
+          events: {
+            onReady: (e: any) => {
+              try {
+                e.target.playVideo?.();
+              } catch {}
+
+              // Poll for current time
+              setInterval(() => {
+                try {
+                  const ct = Number(e.target.getCurrentTime?.() || 0);
+                  const d = Number(e.target.getDuration?.() || data.lesson.duration_sec || 0);
+                  setCurrentTime(ct);
+                  if (d > 0) setDuration(d);
+                } catch {}
+              }, 1000);
+            },
+            onStateChange: (e: any) => {
+              // 0 = ended, 1 = playing, 2 = paused
+              if (e.data === 0) {
+                // Video ended
+                markComplete();
+              } else if (e.data === 2 || e.data === 0) {
+                // Paused or ended
+                saveProgress(e.data === 0);
+              }
+            },
+          },
+        });
+      } catch (error) {
+        console.error('YouTube player initialization failed:', error);
+      }
+    })();
+
+    return () => {
+      if (ytPlayer.current?.destroy) {
+        try {
+          ytPlayer.current.destroy();
+        } catch {}
+      }
+    };
+  }, [data?.lesson?.yt_id, isCN]);
+
+  // Fallback video player tracking
+  useEffect(() => {
+    if (!isCN || !data?.lesson?.cn_alt_url) return;
+    const video = vidRef.current;
+    if (!video) return;
+
+    const resumePosition = Number(data?.progress?.last_position_sec || 0);
+    video.currentTime = resumePosition;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+      setDuration(video.duration || duration);
+    };
+
+    const handlePauseOrEnd = () => {
+      saveProgress(video.ended);
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('pause', handlePauseOrEnd);
+    video.addEventListener('ended', handlePauseOrEnd);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('pause', handlePauseOrEnd);
+      video.removeEventListener('ended', handlePauseOrEnd);
+    };
+  }, [isCN, data?.lesson?.cn_alt_url, data?.progress?.last_position_sec]);
+
+  // Milestone tracking (25%, 50%, 75%)
+  useEffect(() => {
+    if (!duration) return;
+
+    const pct = currentTime / duration;
+    const marks: [number, string][] = [
+      [0.25, '25%'],
+      [0.5, '50%'],
+      [0.75, '75%'],
+    ];
+
+    marks.forEach(([threshold, label]) => {
+      if (pct >= threshold && !milestones[label]) {
+        setMilestones(m => ({ ...m, [label]: true }));
+        trackEvent(label);
+      }
+    });
+  }, [currentTime, duration, milestones]);
+
+  const saveProgress = async (completed = false) => {
+    await fetch('/api/lessons/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile_id: profileId,
+        lesson_slug: slug,
+        at_sec: Math.round(currentTime),
+        duration_sec: Math.round(duration || data?.lesson?.duration_sec || 0),
+        completed,
+      }),
+    });
+  };
+
+  const markComplete = async () => {
+    await saveProgress(true);
+    trackEvent('complete');
+  };
+
+  const trackEvent = (ev: string) => {
+    fetch('/api/lessons/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile_id: profileId,
+        lesson_slug: slug,
+        ev,
+        at_sec: Math.round(currentTime),
+      }),
+    });
+  };
+
+  const chapters = useMemo(
+    () => (data?.lesson?.chapters || []) as { t: number; label: string }[],
+    [data?.lesson?.chapters]
+  );
+
+  const seekTo = (seconds: number) => {
+    if (!isCN && ytPlayer.current?.seekTo) {
+      ytPlayer.current.seekTo(seconds, true);
+    }
+    if (isCN && vidRef.current) {
+      vidRef.current.currentTime = seconds;
+    }
+    setCurrentTime(seconds);
+    trackEvent('chapter_click');
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
+  if (!data?.lesson) {
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-accent mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading lesson...</p>
+      </div>
+    );
+  }
+
+  const ytSrc = `https://www.youtube-nocookie.com/embed/${data.lesson.yt_id}`;
+  const poster =
+    data.lesson.poster_url ||
+    (data.lesson.yt_id ? `https://i.ytimg.com/vi/${data.lesson.yt_id}/hqdefault.jpg` : '');
+
+  return (
+    <div>
+      {/* Video container */}
+      <div className="relative aspect-video w-full bg-black">
+        {!isCN && data.lesson.yt_id ? (
+          <div ref={ytRef} className="w-full h-full" />
+        ) : data.lesson.cn_alt_url ? (
+          <video
+            ref={vidRef}
+            controls
+            playsInline
+            autoPlay
+            className="w-full h-full"
+            poster={poster}
+          >
+            <source src={data.lesson.cn_alt_url} type="video/mp4" />
+            {data.lesson.captions_vtt_url && (
+              <track
+                src={data.lesson.captions_vtt_url}
+                kind="subtitles"
+                srcLang="zh"
+                label="中文"
+                default
+              />
+            )}
+          </video>
+        ) : (
+          <div className="flex items-center justify-center h-full text-white/80 p-6 text-center">
+            <div>No video source available in your region.</div>
+          </div>
+        )}
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 h-10 w-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Title and summary */}
+      <div className="p-6">
+        <h2 className="text-xl font-semibold mb-2">{data.lesson.title_en}</h2>
+        {data.lesson.summary_en && (
+          <p className="text-muted-foreground mb-4">{data.lesson.summary_en}</p>
+        )}
+
+        {/* Chapters */}
+        {chapters.length > 0 && (
+          <div className="mb-6">
+            <div className="text-sm font-medium text-muted-foreground mb-2">Chapters</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {chapters.map((chapter, index) => (
+                <button
+                  key={index}
+                  onClick={() => seekTo(chapter.t)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border hover:bg-accent transition-colors text-left"
+                >
+                  <span className="font-mono text-xs text-muted-foreground min-w-[50px]">
+                    {formatTime(chapter.t)}
+                  </span>
+                  <span className="text-sm">{chapter.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={async () => {
+              trackEvent('cta_book');
+              await saveProgress();
+              window.location.href = '/coaching';
+            }}
+          >
+            Book a session
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await saveProgress();
+              onClose();
+            }}
+          >
+            Save progress & close
+          </Button>
+
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

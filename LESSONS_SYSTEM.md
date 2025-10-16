@@ -4,7 +4,43 @@
 
 ZhenGrowth now includes a comprehensive video lessons system that allows you to deliver educational content to users with progress tracking, analytics, and smart recommendations based on their goals and quiz results.
 
-## Architecture
+## Features
+
+### Video Player Enhancements
+
+#### 1. **YouTube IFrame API Integration**
+- Precise time tracking using YouTube's official API
+- Accurate resume functionality
+- Real-time progress updates
+- Automatic milestone detection (25%, 50%, 75%)
+
+#### 2. **Chapter Navigation**
+Store chapter markers in the database:
+
+```sql
+UPDATE lessons 
+SET chapters = '[
+  {"t": 0, "label": "Introduction"},
+  {"t": 62, "label": "Core Framework"},
+  {"t": 180, "label": "Real-World Examples"},
+  {"t": 320, "label": "Action Steps"}
+]'::jsonb
+WHERE slug = 'clarity-basics-01';
+```
+
+Users can click chapter markers to jump to specific sections.
+
+#### 3. **Continue Watching**
+Automatically surfaces the most recently watched incomplete lesson:
+- Shows progress bar
+- One-click resume
+- Syncs across devices
+- Smart prioritization
+
+#### 4. **Dual Video Sources**
+- **Global**: YouTube embed with full API support
+- **China**: Alternative video sources (Bilibili, self-hosted, Cloudflare Stream)
+- Automatic region detection and switching
 
 ### Database Tables
 
@@ -24,6 +60,7 @@ The main catalog of video lessons.
 - `poster_url` - Custom thumbnail (optional)
 - `cn_alt_url` - China-safe alternative (Bilibili, self-hosted, etc.)
 - `captions_vtt_url` - Subtitles file URL
+- `chapters` - JSONB array of chapter markers: `[{"t": 0, "label": "Intro"}, ...]`
 
 #### 2. `lesson_assignments`
 Links lessons to coaching offers or user tags.
@@ -87,10 +124,11 @@ Fetches lessons for a specific user with progress.
 ```
 
 ### `/api/lessons/get`
-Fetches a single lesson by slug.
+Fetches a single lesson by slug with optional progress data.
 
 **Query Parameters**:
 - `slug` (required) - Lesson slug
+- `profile_id` (optional) - User profile ID for progress
 
 **Response**:
 ```json
@@ -99,7 +137,36 @@ Fetches a single lesson by slug.
   "lesson": {
     "slug": "clarity-basics-01",
     "title_en": "Finding Your Direction",
+    "chapters": [
+      {"t": 0, "label": "Introduction"},
+      {"t": 62, "label": "Framework"}
+    ]
     // ... full lesson data
+  },
+  "progress": {
+    "last_position_sec": 120,
+    "completed": false,
+    "watched_seconds": 180
+  }
+}
+```
+
+### `/api/lessons/continue`
+Fetches the most recently watched incomplete lesson for resume.
+
+**Query Parameters**:
+- `profile_id` (required) - User profile ID
+
+**Response**:
+```json
+{
+  "ok": true,
+  "item": {
+    "slug": "clarity-basics-01",
+    "title_en": "Finding Your Direction",
+    "poster_url": "...",
+    "duration_sec": 420,
+    "last_position_sec": 120
   }
 }
 ```
@@ -137,6 +204,33 @@ Logs viewing analytics events.
 
 ## React Components
 
+### `<ContinueWatchingBar>`
+Displays a prominent "continue watching" prompt for incomplete lessons.
+
+**Props**:
+```typescript
+interface ContinueWatchingBarProps {
+  profileId: string;
+  onOpenLesson: (slug: string) => void;
+}
+```
+
+**Features**:
+- Auto-fetches most recent incomplete lesson
+- Shows thumbnail with progress overlay
+- One-click resume button
+- Collapses when no lessons in progress
+
+**Usage**:
+```tsx
+import { ContinueWatchingBar } from '@/components/ContinueWatchingBar';
+
+<ContinueWatchingBar 
+  profileId={user.profile_id}
+  onOpenLesson={(slug) => setOpenLessonSlug(slug)}
+/>
+```
+
 ### `<LessonStrip>`
 Displays a curated strip of lessons with featured "next up" lesson.
 
@@ -164,12 +258,12 @@ import { LessonStrip } from '@/components/LessonStrip';
 />
 ```
 
-### `<LessonPlayerLite>`
-Lightweight video player with progress tracking.
+### `<LessonPlayerYT>`
+Advanced video player with YouTube IFrame API integration.
 
 **Props**:
 ```typescript
-interface LessonPlayerLiteProps {
+interface LessonPlayerYTProps {
   profileId: string;
   slug: string;
   onClose: () => void;
@@ -177,12 +271,45 @@ interface LessonPlayerLiteProps {
 ```
 
 **Features**:
-- YouTube embed (global)
-- Alternative video source (China)
-- Automatic progress tracking
-- Milestone event logging (25%, 50%, 75%, complete)
-- CTAs for booking sessions
-- Resume functionality
+- **Precise time tracking** using YouTube IFrame API
+- **Chapter navigation** with clickable timestamps
+- **Automatic progress saving** on pause/end
+- **Milestone tracking** (25%, 50%, 75%, complete)
+- **China support** with fallback video player
+- **Resume functionality** from last position
+- **Event analytics** for all interactions
+
+**Usage**:
+```tsx
+import { LessonPlayerYT } from '@/components/LessonPlayerYT';
+
+<LessonPlayerYT
+  profileId={user.profile_id}
+  slug="clarity-basics-01"
+  onClose={() => setOpen(false)}
+/>
+```
+
+### Global Lesson Events
+
+Trigger lesson player from anywhere using custom events:
+
+```tsx
+// Open lesson from any component
+document.dispatchEvent(new CustomEvent('zg:openLesson', {
+  detail: { slug: 'clarity-basics-01' }
+}));
+
+// Listen for events in dashboard
+useEffect(() => {
+  function handleOpenLesson(e: any) {
+    setOpenLessonSlug(e.detail?.slug);
+  }
+  
+  document.addEventListener('zg:openLesson', handleOpenLesson);
+  return () => document.removeEventListener('zg:openLesson', handleOpenLesson);
+}, []);
+```
 
 ## Integration Guide
 
@@ -220,35 +347,83 @@ VALUES ('career-clarity', 'clarity-basics-01', 1);
 
 ### 3. Adding to Dashboard
 
-In your user dashboard component:
+Display continue watching and lesson library:
 
 ```tsx
+import { ContinueWatchingBar } from '@/components/ContinueWatchingBar';
 import { LessonStrip } from '@/components/LessonStrip';
+import { LessonPlayerYT } from '@/components/LessonPlayerYT';
 
 function Dashboard({ user }) {
+  const [openLessonSlug, setOpenLessonSlug] = useState<string | null>(null);
+  
+  // Listen for global lesson open events
+  useEffect(() => {
+    function handleOpenLesson(e: any) {
+      setOpenLessonSlug(e.detail?.slug);
+    }
+    
+    document.addEventListener('zg:openLesson', handleOpenLesson);
+    return () => document.removeEventListener('zg:openLesson', handleOpenLesson);
+  }, []);
+  
   return (
     <div>
-      {/* ... other dashboard content */}
+      {/* Continue watching bar */}
+      <ContinueWatchingBar 
+        profileId={user.profile_id}
+        onOpenLesson={setOpenLessonSlug}
+      />
       
+      {/* Lesson library */}
       <section className="mt-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Video Lessons</h2>
-          <SmartLink to="/resources?type=lessons">
-            <Button variant="ghost">View all</Button>
-          </SmartLink>
-        </div>
-        
+        <h2 className="text-2xl font-semibold mb-4">Video Lessons</h2>
         <LessonStrip 
           profileId={user.profile_id} 
           tags={user.tags || []} 
         />
       </section>
+      
+      {/* Shared lesson player modal */}
+      {openLessonSlug && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center p-4"
+          onClick={() => setOpenLessonSlug(null)}
+        >
+          <div 
+            className="bg-card rounded-2xl w-full max-w-4xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <LessonPlayerYT
+              profileId={user.profile_id}
+              slug={openLessonSlug}
+              onClose={() => setOpenLessonSlug(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 ```
 
-### 4. China Support
+### 4. Adding Chapters
+
+Add chapter markers to enable navigation:
+
+```sql
+UPDATE lessons 
+SET chapters = '[
+  {"t": 0, "label": "Introduction"},
+  {"t": 45, "label": "Understanding Clarity"},
+  {"t": 120, "label": "Core Framework"},
+  {"t": 240, "label": "Practical Examples"},
+  {"t": 360, "label": "Next Steps"}
+]'::jsonb
+WHERE slug = 'clarity-basics-01';
+```
+
+Chapters appear as clickable buttons in the player UI.
 
 For China users, provide alternative video sources:
 
