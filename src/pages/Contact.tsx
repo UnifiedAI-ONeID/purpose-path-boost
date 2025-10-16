@@ -153,12 +153,13 @@ export default function ContactPage(){
   },[]);
 
   async function loadExpressPrice(currency:string){
-    const r = await fetch('/api/express/price',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ currency })
-    }).then(r=>r.json()).catch(()=>null);
-    if(r?.ok) setExpressPrice({ amount_cents: r.amount_cents, currency: r.currency });
+    const { data, error } = await supabase.functions.invoke('api-express-price', {
+      body: { currency }
+    });
+    
+    if (!error && data?.ok) {
+      setExpressPrice({ amount_cents: data.amount_cents, currency: data.currency });
+    }
   }
 
   const topics = useMemo(()=>topicOptions.map(o=>({ key:o.key, label: lang==='en'?o.en:o.cn })),[lang]);

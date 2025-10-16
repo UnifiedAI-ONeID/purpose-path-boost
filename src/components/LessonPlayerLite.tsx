@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Lesson {
   slug: string;
@@ -74,56 +75,48 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
     marks.forEach(([threshold, label]) => {
       if (pct >= threshold && !milestones[label]) {
         setMilestones(m => ({ ...m, [label]: true }));
-        fetch('/api/lessons/event', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        supabase.functions.invoke('api-lessons-event', {
+          body: {
             profile_id: profileId,
             lesson_slug: slug,
             ev: label,
             at_sec: currentTime,
-          }),
-        });
+          }
+        }).catch(console.error);
       }
     });
   }, [currentTime, data?.duration_sec, milestones, profileId, slug]);
 
   const markComplete = async () => {
-    await fetch('/api/lessons/progress', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await supabase.functions.invoke('api-lessons-progress', {
+      body: {
         profile_id: profileId,
         lesson_slug: slug,
-        at_sec: currentTime,
-        duration_sec: data?.duration_sec,
+        last_position_sec: currentTime,
+        watched_seconds: data?.duration_sec || 0,
         completed: true,
-      }),
+      }
     });
 
-    await fetch('/api/lessons/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await supabase.functions.invoke('api-lessons-event', {
+      body: {
         profile_id: profileId,
         lesson_slug: slug,
         ev: 'cta_book',
         at_sec: currentTime,
-      }),
+      }
     });
   };
 
   const saveProgress = async () => {
-    await fetch('/api/lessons/progress', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await supabase.functions.invoke('api-lessons-progress', {
+      body: {
         profile_id: profileId,
         lesson_slug: slug,
-        at_sec: currentTime,
-        duration_sec: data?.duration_sec,
-      }),
-    });
+        last_position_sec: currentTime,
+        watched_seconds: data?.duration_sec || 0,
+      }
+    }).catch(console.error);
   };
 
   if (!data) {

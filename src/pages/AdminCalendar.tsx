@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
+import { supabase } from '@/integrations/supabase/client';
 
 type ItemType = 'event' | 'post' | 'social';
 
@@ -33,9 +34,10 @@ export default function AdminCalendar() {
 
   async function loadCalendar() {
     try {
-      const response = await fetch('/api/calendar/feed');
-      const data = await response.json();
-      setItems(data.items || []);
+      const { data, error } = await supabase.functions.invoke('api-admin-calendar-feed');
+      
+      if (error) throw error;
+      setItems(data?.bookings || []);
     } catch (e) {
       toast.error('Failed to load calendar');
     } finally {

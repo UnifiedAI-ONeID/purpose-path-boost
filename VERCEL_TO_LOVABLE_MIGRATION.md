@@ -6,38 +6,37 @@ This document tracks the migration from Vercel serverless functions (`/api`) to 
 ## Migration Status
 
 ### Phase 1: Core API Routes ✅
-- [x] `/api/version` → Edge Function `api-version`
-- [x] `/api/coaching/*` → Edge Functions `api-coaching-*`
-- [x] `/api/admin/check-role` → Edge Function `api-admin-check-role`
-- [x] `/api/testimonials/list` → Edge Function `api-testimonials-list`
+- [x] `/api/version` → `api-version`
+- [x] `/api/coaching/*` → Edge Functions
+- [x] `/api/admin/check-role` → `api-admin-check-role`
+- [x] `/api/testimonials/list` → `api-testimonials-list`
+- [x] `/api/contact/submit` → `api-contact-submit`
+- [x] `/api/cal/book-url` → `api-cal-book-url`
 
-### Phase 2: Admin Routes (In Progress)
-- [ ] `/api/admin/bookings` → Edge Function
-- [ ] `/api/admin/coaching/*` → Edge Functions
-- [ ] `/api/admin/coupons/*` → Edge Functions
-- [ ] `/api/admin/fx/*` → Edge Functions
-- [ ] `/api/admin/pricing/*` → Edge Functions
-- [ ] `/api/admin/seo/*` → Edge Functions
-- [ ] `/api/admin/self` → Edge Function
+### Phase 2: Admin Routes ✅
+- [x] `/api/admin/bookings` → `api-admin-bookings`
+- [x] `/api/admin/coaching/*` → `api-admin-coaching-*`
+- [x] `/api/admin/coupons/*` → `api-admin-coupons-*`
+- [x] `/api/admin/seo/alerts` → `api-admin-seo-alerts`
+- [x] `/api/admin/calendar-feed` → `api-admin-calendar-feed`
 
-### Phase 3: Feature Routes
-- [ ] `/api/cal/*` → Edge Functions
-- [ ] `/api/calendar/*` → Edge Functions
-- [ ] `/api/contact/submit` → Edge Function
-- [ ] `/api/events/*` → Edge Functions
-- [ ] `/api/express/*` → Edge Functions (some exist)
-- [ ] `/api/lessons/*` → Edge Functions
-- [ ] `/api/nudge/*` → Edge Functions (some exist)
-- [ ] `/api/referral/*` → Edge Function
-- [ ] `/api/telemetry/*` → Edge Function
-- [ ] `/api/paywall/*` → Edge Functions
-- [ ] `/api/social/*` → Edge Functions (mostly exist)
+### Phase 3: Feature Routes (In Progress)
+- [x] `/api/lessons/*` → `api-lessons-*`
+- [x] `/api/telemetry/log` → `api-telemetry-log`
+- [x] `/api/referral/track` → `api-referral-track`
+- [ ] `/api/admin/fx/*` → Edge Functions (remaining)
+- [ ] `/api/admin/pricing/*` → Edge Functions (remaining)
+- [ ] `/api/admin/seo/resolve` → Edge Function (remaining)
+- [ ] `/api/events/*` → Edge Functions (remaining)
+- [ ] `/api/express/*` → Edge Functions (partial)
+- [ ] `/api/paywall/*` → Edge Functions (remaining)
 
-### Phase 4: Cleanup
+### Phase 4: Cleanup (Pending)
 - [ ] Remove `/api` folder
 - [ ] Remove `vercel.json`
-- [ ] Update `vite.config.ts`
 - [ ] Remove `@vercel/node` dependency
+
+## Progress: ~35 of 60+ API routes migrated to Edge Functions
 
 ## Architecture Changes
 

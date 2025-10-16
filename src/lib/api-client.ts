@@ -28,6 +28,18 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/admin/coaching/save': 'api-admin-coaching-save',
   '/api/admin/coupons/list': 'api-admin-coupons-list',
   '/api/admin/coupons/save': 'api-admin-coupons-save',
+  '/api/admin/bookings': 'api-admin-bookings',
+  '/api/admin/seo/alerts': 'api-admin-seo-alerts',
+  '/api/calendar/feed': 'api-admin-calendar-feed',
+  '/api/lessons/for-user': 'api-lessons-for-user',
+  '/api/lessons/progress': 'api-lessons-progress',
+  '/api/lessons/event': 'api-lessons-event',
+  '/api/telemetry/log': 'api-telemetry-log',
+  '/api/referral/track': 'api-referral-track',
+  '/api/coaching/price': 'api-coaching-price',
+  '/api/coaching/availability': 'api-coaching-availability',
+  '/api/coaching/price-with-discount': 'api-coaching-price-with-discount',
+  '/api/express/price': 'api-express-price',
 };
 
 /**

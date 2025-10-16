@@ -1,9 +1,9 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export async function log(event: string, props: any = {}) {
   try {
-    await fetch('/api/telemetry/log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, props, ts: Date.now() }),
+    await supabase.functions.invoke('api-telemetry-log', {
+      body: { event, props, ts: Date.now() }
     });
   } catch (error) {
     // Silently fail

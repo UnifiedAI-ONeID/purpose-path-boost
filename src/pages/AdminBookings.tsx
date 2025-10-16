@@ -13,14 +13,10 @@ export default function AdminBookings() {
   async function loadBookings() {
     setLoading(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      const r = await fetch('/api/admin/bookings', {
-        headers: { Authorization: `Bearer ${token}` }
-      }).then(r => r.json());
+      const { data, error } = await supabase.functions.invoke('api-admin-bookings');
       
-      setRows(r.rows || []);
+      if (error) throw error;
+      setRows(data?.rows || []);
     } catch (err) {
       console.error('Failed to load bookings:', err);
       setRows([]);

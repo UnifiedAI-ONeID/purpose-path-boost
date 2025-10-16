@@ -6,6 +6,8 @@ import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { t } from '@/i18n/dict';
 import { triggerHomeAnim } from '@/anim/animator';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface CoachingCTAProps {
   slug: string;
@@ -32,34 +34,29 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   const { slots, loading } = useAvailability(slug, { days: 14 });
 
   useEffect(() => {
-    const body = {
-      slug,
-      currency,
-      coupon: coupon || undefined,
-      promo: promo || undefined
-    };
-
-    fetch('/api/coaching/price-with-discount', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.ok && data.amount_cents > 0) {
-          setMeta({
-            billing: 'paid',
-            price: {
-              cur: data.currency,
-              cents: data.amount_cents,
-              discount: data.discount_cents || 0
-            }
-          });
-        } else {
-          setMeta({ billing: 'free' });
+    (async () => {
+      const { data, error } = await supabase.functions.invoke('api-coaching-price-with-discount', {
+        body: {
+          slug,
+          currency,
+          coupon: coupon || undefined,
+          promo: promo || undefined
         }
-      })
-      .catch(() => setMeta({ billing: 'free' }));
+      });
+
+      if (!error && data?.ok && data.amount_cents > 0) {
+        setMeta({
+          billing: 'paid',
+          price: {
+            cur: data.currency,
+            cents: data.amount_cents,
+            discount: data.discount_cents || 0
+          }
+        });
+      } else {
+        setMeta({ billing: 'free' });
+      }
+    })();
   }, [slug, currency, coupon, promo]);
 
   async function openBooking() {
@@ -67,21 +64,19 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     setBusy(true);
     
     try {
-      const response = await fetch('/api/coaching/book-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('api-coaching-book-url', {
+        body: {
           slug,
           name: defaultName,
           email: defaultEmail,
-          coupon: coupon || undefined,
-          promo: promo || undefined
-        })
+          campaign: 'coaching-cta'
+        }
       });
-      
-      const data = await response.json();
-      if (data.ok && data.url) {
+
+      if (!error && data?.ok && data.url) {
         window.open(data.url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('Failed to open booking');
       }
     } finally {
       setTimeout(() => setBusy(false), 700);

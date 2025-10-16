@@ -3,14 +3,14 @@
  * Handles ref_code tracking for conversions and clicks
  */
 
+import { supabase } from '@/integrations/supabase/client';
+
 export async function trackReferral(ref_code: string, type: 'click' | 'conversion' = 'click') {
   if (!ref_code) return;
   
   try {
-    await fetch('/api/referral/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref_code, type })
+    await supabase.functions.invoke('api-referral-track', {
+      body: { ref_code, type }
     });
   } catch (e) {
     console.error('Failed to track referral:', e);

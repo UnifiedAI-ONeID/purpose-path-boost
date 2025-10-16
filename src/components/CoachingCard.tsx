@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CoachingCTA from './CoachingCTA';
 import { usePrefs } from '@/prefs/PrefsProvider';
+import { supabase } from '@/integrations/supabase/client';
 
 type Offer = {
   slug: string;
@@ -23,17 +24,15 @@ export default function CoachingCard({ offer }: { offer: Offer }) {
 
   useEffect(() => {
     (async () => {
-      const response = await fetch('/api/coaching/price', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: offer.slug, currency })
-      }).then(r => r.json()).catch(() => null);
+      const { data, error } = await supabase.functions.invoke('api-coaching-price', {
+        body: { slug: offer.slug, currency }
+      });
       
-      if (response?.ok) {
+      if (!error && data?.ok) {
         setPrice({
-          amount_cents: response.amount_cents,
-          currency: response.currency,
-          discount_cents: response.discount_cents
+          amount_cents: data.amount_cents,
+          currency: data.currency,
+          discount_cents: data.discount_cents
         });
       } else {
         setPrice(null);
@@ -45,13 +44,11 @@ export default function CoachingCard({ offer }: { offer: Offer }) {
     (async () => {
       setLoadingSlots(true);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const response = await fetch('/api/coaching/availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: offer.slug, tz })
-      }).then(r => r.json()).catch(() => null);
+      const { data, error } = await supabase.functions.invoke('api-coaching-availability', {
+        body: { slug: offer.slug, tz }
+      });
       
-      setSlots(response?.ok ? (response.slots || []).slice(0, 3) : []);
+      setSlots(!error && data?.ok ? (data.slots || []).slice(0, 3) : []);
       setLoadingSlots(false);
     })();
   }, [offer.slug]);

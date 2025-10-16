@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Lesson {
   slug: string;
@@ -201,17 +202,15 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   }, [currentTime, duration, milestones]);
 
   const saveProgress = async (completed = false) => {
-    await fetch('/api/lessons/progress', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await supabase.functions.invoke('api-lessons-progress', {
+      body: {
         profile_id: profileId,
         lesson_slug: slug,
-        at_sec: Math.round(currentTime),
-        duration_sec: Math.round(duration || data?.lesson?.duration_sec || 0),
+        last_position_sec: Math.round(currentTime),
+        watched_seconds: Math.round(duration || data?.lesson?.duration_sec || 0),
         completed,
-      }),
-    });
+      }
+    }).catch(console.error);
   };
 
   const markComplete = async () => {
@@ -220,16 +219,14 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   };
 
   const trackEvent = (ev: string) => {
-    fetch('/api/lessons/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    supabase.functions.invoke('api-lessons-event', {
+      body: {
         profile_id: profileId,
         lesson_slug: slug,
         ev,
         at_sec: Math.round(currentTime),
-      }),
-    });
+      }
+    }).catch(console.error);
   };
 
   const chapters = useMemo(

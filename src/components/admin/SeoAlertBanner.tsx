@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { X, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type Alert = {
   id: string;
@@ -17,8 +18,11 @@ export default function SeoAlertBanner() {
   useEffect(() => {
     async function loadAlerts() {
       try {
-        const response = await fetch('/api/admin/seo/alerts?open=1');
-        const data = await response.json();
+        const { data, error } = await supabase.functions.invoke('api-admin-seo-alerts', {
+          body: { open: 1 }
+        });
+        
+        if (error) throw error;
         setAlerts(data || []);
       } catch (error) {
         console.error('Failed to load SEO alerts:', error);

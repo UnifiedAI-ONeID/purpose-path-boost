@@ -131,3 +131,39 @@ verify_jwt = true
 
 [functions.api-admin-coupons-save]
 verify_jwt = true
+
+[functions.api-admin-bookings]
+verify_jwt = true
+
+[functions.api-lessons-for-user]
+verify_jwt = false
+
+[functions.api-lessons-progress]
+verify_jwt = false
+
+[functions.api-lessons-event]
+verify_jwt = false
+
+[functions.api-telemetry-log]
+verify_jwt = false
+
+[functions.api-referral-track]
+verify_jwt = false
+
+[functions.api-admin-calendar-feed]
+verify_jwt = true
+
+[functions.api-admin-seo-alerts]
+verify_jwt = true
+
+[functions.api-coaching-price]
+verify_jwt = false
+
+[functions.api-coaching-availability]
+verify_jwt = false
+
+[functions.api-express-price]
+verify_jwt = false
+
+[functions.api-coaching-price-with-discount]
+verify_jwt = false
