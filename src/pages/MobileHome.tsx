@@ -3,6 +3,8 @@ import { track } from '@/analytics/events';
 import { Link } from 'react-router-dom';
 import { ProgramSheet } from '@/components/ProgramSheet';
 import { A2HSPrompt } from '@/components/A2HSPrompt';
+import MobileShell, { Section, MobileCard, MobileCTA, StatRow } from '@/components/mobile/MobileShell';
+import HeroMobile from '@/components/mobile/HeroMobile';
 
 export default function MobileHome() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
@@ -123,53 +125,71 @@ export default function MobileHome() {
   ];
 
   return (
-    <>
-      <div className="min-h-screen bg-bg pb-24">
-        {/* Compact Hero */}
-        <header className="p-6 pt-8 glass rounded-b-3xl mx-4 border-x border-b border-fg/20 shadow-xl">
-          <h1 className="text-2xl font-serif font-bold text-fg mb-3 leading-tight">
-            Grow with Clarity, Confidence, and Purpose
-          </h1>
-          <p className="text-sm text-fg/75 mb-5">
-            Transform your career and life with personalized coaching designed for ambitious professionals
-          </p>
-          <Link 
-            to="/book" 
-            className="inline-flex items-center justify-center w-full h-12 rounded-xl bg-brand text-white hover:bg-brand/90 transition-all shadow-lg font-medium animate-fade-in"
-          >
-            Book a clarity session
-          </Link>
-        </header>
+    <MobileShell>
+      <HeroMobile />
 
-        {/* Horizontal Carousel */}
-        <section className="mt-8 px-4">
-          <h2 className="font-semibold text-fg mb-4 px-2">Popular programs</h2>
-          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
-            {programs.map((program, index) => (
-              <button
-                key={program.id}
-                onClick={() => setSelectedProgram(program)}
-                className="min-w-[85%] snap-start shrink-0 p-5 rounded-2xl border border-border bg-surface hover:shadow-lg transition-all animate-fade-in text-left"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <h3 className="font-semibold text-fg text-lg mb-2">{program.title}</h3>
-                <p className="text-sm text-muted mb-3">{program.description}</p>
-                <p className="text-xs text-muted/80">{program.duration}</p>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* Sticky Bottom CTA */}
-        <div className="fixed bottom-20 left-0 right-0 mx-auto max-w-md px-6 pointer-events-none z-10">
-          <Link 
-            to="/book" 
-            className="block w-full h-14 rounded-2xl bg-brand text-white flex items-center justify-center shadow-2xl hover:bg-brand/90 transition-all pointer-events-auto font-semibold text-base hover-scale"
-          >
-            Book now
-          </Link>
+      <Section title="Popular Programs" subtitle="Choose the right path for your growth">
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
+          {programs.map((program, index) => (
+            <button
+              key={program.id}
+              onClick={() => setSelectedProgram(program)}
+              className="min-w-[85%] snap-start shrink-0 p-5 rounded-2xl border border-border bg-card hover:shadow-lg transition-all text-left"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <h3 className="font-semibold text-lg mb-2">{program.title}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{program.description}</p>
+              <p className="text-xs text-muted-foreground/80">{program.duration}</p>
+            </button>
+          ))}
         </div>
-      </div>
+      </Section>
+
+      <Section title="Quick Wins" subtitle="Start your journey today">
+        <div className="grid gap-3">
+          <MobileCard href="/quiz">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <div className="font-medium">3-min Clarity Quiz</div>
+                <div className="text-sm text-muted-foreground">Get your personalized 90-day plan</div>
+              </div>
+            </div>
+          </MobileCard>
+
+          <MobileCard href="/events">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📅</span>
+              <div>
+                <div className="font-medium">Live Workshops</div>
+                <div className="text-sm text-muted-foreground">Join bilingual sessions</div>
+              </div>
+            </div>
+          </MobileCard>
+
+          <MobileCard href="/book">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚡</span>
+              <div>
+                <div className="font-medium">Free Clarity Call</div>
+                <div className="text-sm text-muted-foreground">30-min discovery session</div>
+              </div>
+            </div>
+          </MobileCard>
+        </div>
+      </Section>
+
+      <Section title="Results at a Glance">
+        <StatRow items={[
+          { label: 'Lead→Client', value: '12%' },
+          { label: 'NPS', value: '+62' },
+          { label: 'Avg Session', value: '8m' }
+        ]} />
+      </Section>
+
+      <Section title="Ready to Start?">
+        <MobileCTA href="/book">Book Your Free Call</MobileCTA>
+      </Section>
 
       <ProgramSheet 
         open={!!selectedProgram} 
@@ -178,6 +198,6 @@ export default function MobileHome() {
       />
 
       <A2HSPrompt />
-    </>
+    </MobileShell>
   );
 }

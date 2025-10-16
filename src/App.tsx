@@ -39,6 +39,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import Install from "./pages/Install";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventsList from "./pages/EventsList";
 import EventDetail from "./pages/EventDetail";
@@ -85,7 +86,8 @@ function AppRoutes() {
         {/* Startup splash screen */}
         <Route path="/" element={<Startup />} />
         
-        {/* Auth routes (no layout) */}
+        {/* Standalone routes (no layout) */}
+        <Route path="/install" element={<Install />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/events" element={<AdminEvents />} />
