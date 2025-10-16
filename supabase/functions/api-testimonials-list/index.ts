@@ -11,40 +11,71 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
 
-    console.log('[Testimonials] Fetching testimonials list');
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Query testimonials - order by featured first, then by created_at
-    const { data, error } = await supabase
+    console.log('[Testimonials v2] Fetching testimonials from database');
+
+    // Fetch testimonials with explicit column selection
+    // Table has: id, name, locale, quote, role, avatar_url, featured, created_at
+    const { data: testimonials, error: dbError } = await supabase
       .from('testimonials')
       .select('id, name, locale, quote, role, avatar_url, featured, created_at')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(9);
 
-    if (error) {
-      console.error('[Testimonials] Database error:', error);
+    if (dbError) {
+      console.error('[Testimonials v2] Database query failed:', JSON.stringify(dbError));
       return new Response(
-        JSON.stringify({ ok: false, error: error.message, rows: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ 
+          ok: false, 
+          error: dbError.message || 'Database query failed',
+          code: dbError.code,
+          rows: [] 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+          status: 400 
+        }
       );
     }
 
-    console.log(`[Testimonials] Successfully fetched ${data?.length || 0} testimonials`);
+    const rowCount = testimonials?.length ?? 0;
+    console.log(`[Testimonials v2] Successfully retrieved ${rowCount} testimonial(s)`);
 
     return new Response(
-      JSON.stringify({ ok: true, rows: data || [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        ok: true, 
+        rows: testimonials ?? [],
+        count: rowCount
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     );
-  } catch (error: any) {
-    console.error('[Testimonials] Handler error:', error);
+
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('[Testimonials v2] Unexpected error:', errorMessage);
+    
     return new Response(
-      JSON.stringify({ ok: false, error: error?.message || 'Internal server error', rows: [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        ok: false, 
+        error: errorMessage,
+        rows: [] 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, 
+        status: 500 
+      }
     );
   }
 });

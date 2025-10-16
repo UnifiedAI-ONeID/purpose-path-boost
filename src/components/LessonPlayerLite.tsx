@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 interface Lesson {
   slug: string;
@@ -39,11 +40,12 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
   useEffect(() => {
     (async () => {
       try {
-        const response = await fetch(`/api/lessons/get?slug=${encodeURIComponent(slug)}`, { 
-          cache: 'no-store' 
+        const response = await invokeApi('/api/lessons/get', {
+          body: { slug }
         });
-        const json = await response.json();
-        setData(json.lesson);
+        if (response.ok && response.lesson) {
+          setData(response.lesson);
+        }
       } catch (error) {
         console.error('Failed to fetch lesson:', error);
       }

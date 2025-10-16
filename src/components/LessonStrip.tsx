@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import SmartLink from './SmartLink';
 import { LessonPlayerYT } from './LessonPlayerYT';
+import { invokeApi } from '@/lib/api-client';
 
 interface Lesson {
   slug: string;
@@ -30,12 +31,14 @@ export function LessonStrip({ profileId, tags = [] }: LessonStripProps) {
     (async () => {
       setIsLoading(true);
       const tagsParam = tags.join(',');
-      const url = `/api/lessons/for-user?profile_id=${encodeURIComponent(profileId)}&tags=${encodeURIComponent(tagsParam)}`;
       
       try {
-        const response = await fetch(url, { cache: 'no-store' });
-        const data = await response.json();
-        setRows(data.rows || []);
+        const response = await invokeApi('/api/lessons/for-user', {
+          body: { profile_id: profileId, tags: tagsParam }
+        });
+        if (response.ok) {
+          setRows(response.rows || []);
+        }
       } catch (error) {
         console.error('Failed to fetch lessons:', error);
       } finally {

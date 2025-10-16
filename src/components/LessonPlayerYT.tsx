@@ -5,6 +5,7 @@ import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { invokeApi } from '@/lib/api-client';
 
 interface Lesson {
   slug: string;
@@ -72,13 +73,13 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
           });
         }
 
-        const response = await fetch(
-          `/api/lessons/get?slug=${encodeURIComponent(slug)}&profile_id=${encodeURIComponent(profileId)}`,
-          { cache: 'no-store' }
-        );
-        const json = await response.json();
-        setData({ lesson: json.lesson, progress: json.progress });
-        setDuration(json.lesson.duration_sec || 0);
+        const response = await invokeApi('/api/lessons/get', {
+          body: { slug, profile_id: profileId }
+        });
+        if (response.ok) {
+          setData({ lesson: response.lesson, progress: response.progress });
+          setDuration(response.lesson?.duration_sec || 0);
+        }
       } catch (error) {
         console.error('Failed to fetch lesson:', error);
       }

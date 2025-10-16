@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Play } from 'lucide-react';
+import { invokeApi } from '@/lib/api-client';
 
 interface ContinueWatchingItem {
   slug: string;
@@ -25,12 +26,12 @@ export function ContinueWatchingBar({ profileId, onOpenLesson }: ContinueWatchin
     (async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(
-          `/api/lessons/continue?profile_id=${encodeURIComponent(profileId)}`,
-          { cache: 'no-store' }
-        );
-        const data = await response.json();
-        setItem(data?.item || null);
+        const response = await invokeApi('/api/lessons/continue', {
+          body: { profile_id: profileId }
+        });
+        if (response.ok) {
+          setItem(response.item || null);
+        }
       } catch (error) {
         console.error('Failed to fetch continue watching:', error);
       } finally {
