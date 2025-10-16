@@ -1210,6 +1210,24 @@ export type Database = {
         }
         Relationships: []
       }
+      secure_kv: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       social_accounts: {
         Row: {
           channel_name: string | null
