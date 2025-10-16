@@ -34,6 +34,7 @@ const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
 // Choose booking component based on region
 const BookingPage = isChinaBuild() ? BookSessionCN : BookSession;
 import ThankYou from "./pages/ThankYou";
+import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";

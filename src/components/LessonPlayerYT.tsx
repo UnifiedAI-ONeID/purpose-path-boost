@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { loadYouTubeAPI } from '@/lib/youtubeApi';
+import UpsellModal from './UpsellModal';
+import { toast } from 'sonner';
 
 interface Lesson {
   slug: string;
@@ -39,12 +41,39 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [milestones, setMilestones] = useState<{ [key: string]: boolean }>({});
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [upsellPlan, setUpsellPlan] = useState('starter');
+  const [hasAccess, setHasAccess] = useState(false);
   const isCN = detectCN();
 
-  // Fetch lesson data
+  // Fetch lesson data with paywall check
   useEffect(() => {
     (async () => {
       try {
+        const gateCheck = await fetch(
+          `/api/paywall/can-watch?profile_id=${encodeURIComponent(profileId)}&lesson_slug=${encodeURIComponent(slug)}`,
+          { cache: 'no-store' }
+        ).then(r => r.json());
+
+        if (!gateCheck.access) {
+          setShowUpsell(true);
+          setUpsellPlan(gateCheck.upsell?.recommended || 'starter');
+          return;
+        }
+
+        setHasAccess(true);
+        await fetch('/api/paywall/mark-watch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile_id: profileId, lesson_slug: slug })
+        });
+
+        if (gateCheck.plan_slug === 'free' && gateCheck.remaining === 1) {
+          toast('Unlock your next 30 days', {
+            action: { label: 'See plans', onClick: () => window.location.href = '/pricing?highlight=starter' }
+          });
+        }
+
         const response = await fetch(
           `/api/lessons/get?slug=${encodeURIComponent(slug)}&profile_id=${encodeURIComponent(profileId)}`,
           { cache: 'no-store' }
@@ -226,6 +255,10 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
       .padStart(2, '0');
     return `${mins}:${secs}`;
   };
+
+  if (showUpsell) {
+    return <UpsellModal plan={upsellPlan} onClose={onClose} />;
+  }
 
   if (!data?.lesson) {
     return (
