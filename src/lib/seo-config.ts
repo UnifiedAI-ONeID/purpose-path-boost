@@ -16,8 +16,8 @@ export const seoConfig = {
     cardType: 'summary_large_image' 
   },
   hreflangs: [
-    { hreflang: 'en', href: 'https://zhengrowth.com/?lang=en' },
-    { hreflang: 'zh-CN', href: 'https://zhengrowth.com/?lang=zh-CN' },
-    { hreflang: 'zh-TW', href: 'https://zhengrowth.com/?lang=zh-TW' }
+    { hreflang: 'en', href: 'https://zhengrowth.com/' },
+    { hreflang: 'zh-CN', href: 'https://zhengrowth.com/' },
+    { hreflang: 'zh-TW', href: 'https://zhengrowth.com/' }
   ]
 };

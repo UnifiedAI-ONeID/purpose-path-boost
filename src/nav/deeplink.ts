@@ -1,15 +1,15 @@
 /**
- * Normalize entry URL to ensure lang parameter is present
- * and persist ref/utm parameters for future navigations
+ * Normalize entry URL to persist ref/utm parameters for future navigations
+ * Language preference is managed via localStorage/cookies (no URL param needed)
  */
 export function normalizeEntryUrl() {
   try {
     const u = new URL(location.href);
-    const lang = u.searchParams.get('lang') || localStorage.getItem('zg.lang') || 'en';
     
-    if (!u.searchParams.get('lang')) {
-      u.searchParams.set('lang', lang);
-      history.replaceState({}, '', u.pathname + u.search + u.hash);
+    // If lang param exists in URL, save to localStorage (for shared URLs)
+    const langParam = u.searchParams.get('lang');
+    if (langParam && ['en', 'zh-CN', 'zh-TW'].includes(langParam)) {
+      localStorage.setItem('zg.lang', langParam);
     }
     
     // Persist ref/utm for future navigations
