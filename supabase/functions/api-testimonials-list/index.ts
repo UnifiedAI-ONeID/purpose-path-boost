@@ -16,29 +16,34 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY')!
     );
 
+    console.log('[Testimonials] Fetching testimonials list');
+
+    // Query testimonials - order by featured first, then by created_at
     const { data, error } = await supabase
       .from('testimonials')
-      .select('*')
+      .select('id, name, locale, quote, role, avatar_url, featured, created_at')
       .order('featured', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(9);
 
     if (error) {
-      console.error('Testimonials fetch error:', error);
+      console.error('[Testimonials] Database error:', error);
       return new Response(
         JSON.stringify({ ok: false, error: error.message, rows: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
 
+    console.log(`[Testimonials] Successfully fetched ${data?.length || 0} testimonials`);
+
     return new Response(
       JSON.stringify({ ok: true, rows: data || [] }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('Testimonials handler error:', error);
+  } catch (error: any) {
+    console.error('[Testimonials] Handler error:', error);
     return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error', rows: [] }),
+      JSON.stringify({ ok: false, error: error?.message || 'Internal server error', rows: [] }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
