@@ -55,7 +55,7 @@ export default function Coaching() {
   }
 
   return (
-    <>
+    <main className="mx-auto max-w-4xl px-4 py-8">
       <SEOHelmet
         title={lang === 'zh-CN' ? '推荐项目 | ZhenGrowth' : lang === 'zh-TW' ? '推薦項目 | ZhenGrowth' : 'Recommended Programs | ZhenGrowth'}
         description={lang === 'zh-CN' ? '基于你的评估结果，为你推荐最合适的辅导项目' : lang === 'zh-TW' ? '基於你的評估結果，為你推薦最合適的輔導項目' : 'Personalized coaching programs based on your self-assessment'}
@@ -63,44 +63,42 @@ export default function Coaching() {
         lang={lang as 'en'|'zh-CN'|'zh-TW'}
         image="https://zhengrowth.com/app-icon.png"
       />
-      <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="text-3xl font-bold mb-2">Recommended Programs</h1>
-        <p className="text-muted-foreground mb-6">
-          Based on your assessment, here are programs that match your growth needs.
-        </p>
+      <h1 className="text-3xl font-bold mb-2">Recommended Programs</h1>
+      <p className="text-muted-foreground mb-6">
+        Based on your assessment, here are programs that match your growth needs.
+      </p>
 
-        <div className="grid gap-4">
-          {offers.map((offer) => (
-            <Card key={offer.id}>
-              <CardHeader>
-                <CardTitle>{offer.title}</CardTitle>
-                <CardDescription>
-                  {offer.billing_type === 'free' ? 'Free' : 
-                    `${offer.base_currency} ${(offer.base_price_cents / 100).toFixed(2)}`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{offer.summary}</p>
-                <Button asChild className="w-full">
-                  <SmartLink to={pathOf('/coaching/[slug]', { slug: offer.slug })}>
-                    Learn More
-                  </SmartLink>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-          
-          {offers.length === 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  No programs available at the moment. Check back soon!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-    </>
+      <div className="grid gap-4">
+        {offers.map((offer) => (
+          <Card key={offer.id}>
+            <CardHeader>
+              <CardTitle>{offer.title}</CardTitle>
+              <CardDescription>
+                {offer.billing_type === 'free' ? 'Free' : 
+                  `${offer.base_currency} ${(offer.base_price_cents / 100).toFixed(2)}`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">{offer.summary}</p>
+              <Button asChild className="w-full">
+                <SmartLink to={pathOf('/coaching/[slug]', { slug: offer.slug })}>
+                  Learn More
+                </SmartLink>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {offers.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">
+                No programs available at the moment. Check back soon!
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </main>
   );
 }
