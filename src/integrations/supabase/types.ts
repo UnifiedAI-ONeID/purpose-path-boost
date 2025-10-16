@@ -470,6 +470,81 @@ export type Database = {
           },
         ]
       }
+      coupon_redemptions: {
+        Row: {
+          amount_cents: number
+          coupon_code: string
+          created_at: string | null
+          email: string
+          id: string
+          offer_slug: string
+        }
+        Insert: {
+          amount_cents: number
+          coupon_code: string
+          created_at?: string | null
+          email: string
+          id?: string
+          offer_slug: string
+        }
+        Update: {
+          amount_cents?: number
+          coupon_code?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          offer_slug?: string
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          active: boolean | null
+          amount_off_cents: number | null
+          applies_to_slug: string | null
+          code: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          max_redemptions: number | null
+          per_user_limit: number | null
+          percent_off: number | null
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          amount_off_cents?: number | null
+          applies_to_slug?: string | null
+          code: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          max_redemptions?: number | null
+          per_user_limit?: number | null
+          percent_off?: number | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          amount_off_cents?: number | null
+          applies_to_slug?: string | null
+          code?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          max_redemptions?: number | null
+          per_user_limit?: number | null
+          percent_off?: number | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       event_coupon_uses: {
         Row: {
           coupon_id: string | null
@@ -1020,42 +1095,51 @@ export type Database = {
           airwallex_id: string | null
           airwallex_link: string | null
           amount_cents: number
+          coupon: string | null
           created_at: string | null
           currency: string
+          discount_cents: number | null
           email: string
           id: string
           language: string | null
           name: string
           notes: string | null
           offer_slug: string
+          promo: string | null
           status: string
         }
         Insert: {
           airwallex_id?: string | null
           airwallex_link?: string | null
           amount_cents: number
+          coupon?: string | null
           created_at?: string | null
           currency: string
+          discount_cents?: number | null
           email: string
           id?: string
           language?: string | null
           name: string
           notes?: string | null
           offer_slug: string
+          promo?: string | null
           status?: string
         }
         Update: {
           airwallex_id?: string | null
           airwallex_link?: string | null
           amount_cents?: number
+          coupon?: string | null
           created_at?: string | null
           currency?: string
+          discount_cents?: number | null
           email?: string
           id?: string
           language?: string | null
           name?: string
           notes?: string | null
           offer_slug?: string
+          promo?: string | null
           status?: string
         }
         Relationships: []
@@ -1260,6 +1344,51 @@ export type Database = {
           created_at?: string
           is_admin?: boolean
           user_id?: string
+        }
+        Relationships: []
+      }
+      promotions: {
+        Row: {
+          active: boolean | null
+          amount_off_cents: number | null
+          applies_to_slug: string | null
+          auto_apply: boolean | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          key: string
+          percent_off: number | null
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          amount_off_cents?: number | null
+          applies_to_slug?: string | null
+          auto_apply?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          percent_off?: number | null
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          amount_off_cents?: number | null
+          applies_to_slug?: string | null
+          auto_apply?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          percent_off?: number | null
+          valid_from?: string | null
+          valid_to?: string | null
         }
         Relationships: []
       }

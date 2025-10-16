@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAvailability } from '@/hooks/useAvailability';
 import { Loader2 } from 'lucide-react';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
 
 interface CoachingCTAProps {
   slug: string;
@@ -13,40 +15,60 @@ interface PricingMeta {
   price?: {
     cur: string;
     cents: number;
+    discount: number;
   };
 }
 
 export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' }: CoachingCTAProps) {
   const [meta, setMeta] = useState<PricingMeta | null>(null);
   const [currency, setCurrency] = useState('USD');
+  const [coupon, setCoupon] = useState('');
+  const [promo] = useState(new URLSearchParams(window.location.search).get('promo') || '');
   const [busy, setBusy] = useState(false);
   const { slots, loading } = useAvailability(slug, { days: 14 });
 
   useEffect(() => {
-    fetch('/api/coaching/price', {
+    const body = {
+      slug,
+      currency,
+      coupon: coupon || undefined,
+      promo: promo || undefined
+    };
+
+    fetch('/api/coaching/price-with-discount', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, currency })
+      body: JSON.stringify(body)
     })
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.amount_cents > 0) {
           setMeta({
             billing: 'paid',
-            price: { cur: data.currency, cents: data.amount_cents }
+            price: {
+              cur: data.currency,
+              cents: data.amount_cents,
+              discount: data.discount_cents || 0
+            }
           });
         } else {
           setMeta({ billing: 'free' });
         }
       })
       .catch(() => setMeta({ billing: 'free' }));
-  }, [slug, currency]);
+  }, [slug, currency, coupon, promo]);
 
   async function openBooking() {
     const response = await fetch('/api/coaching/book-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, name: defaultName, email: defaultEmail })
+      body: JSON.stringify({
+        slug,
+        name: defaultName,
+        email: defaultEmail,
+        coupon: coupon || undefined,
+        promo: promo || undefined
+      })
     });
     
     const data = await response.json();
@@ -66,7 +88,9 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
           slug,
           name: defaultName || 'Client',
           email: defaultEmail || '',
-          currency
+          currency,
+          coupon: coupon || undefined,
+          promo: promo || undefined
         })
       });
 
@@ -74,6 +98,9 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       
       if (data.ok && data.url) {
         window.location.href = data.url;
+      } else if (data.ok && data.free) {
+        // Free after discount - go straight to booking
+        await openBooking();
       } else {
         alert(data.error || 'Unable to start checkout');
       }
@@ -85,6 +112,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   }
 
   const isPaid = meta?.billing === 'paid';
+  const discount = meta?.price?.discount || 0;
 
   return (
     <div className="rounded-2xl border border-border p-4 bg-card">
@@ -99,48 +127,52 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
           </div>
         </div>
 
+        {/* Action area */}
         {isPaid ? (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              className="h-10 w-32"
+              placeholder="Coupon"
+              value={coupon}
+              onChange={e => setCoupon(e.target.value.toUpperCase())}
+            />
             <select
-              className="h-10 px-3 rounded-lg border border-border bg-background text-sm"
+              className="h-10 px-3 rounded-md border border-input bg-background text-sm"
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              disabled={busy}
+              onChange={e => setCurrency(e.target.value)}
             >
               {['USD', 'CAD', 'EUR', 'GBP', 'HKD', 'SGD', 'CNY'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <button
-              className="h-10 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 text-sm font-medium flex items-center gap-2"
+            <Button
+              variant="cta"
               onClick={handlePayment}
-              disabled={busy || !meta?.price}
+              disabled={busy}
+              className="h-10"
             >
               {busy ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Processing…
                 </>
-              ) : meta?.price ? (
-                `Pay ${(meta.price.cents / 100).toFixed(2)} ${meta.price.cur}`
+              ) : discount > 0 ? (
+                `Pay ${((meta?.price?.cents || 0) / 100).toFixed(2)} ${meta?.price?.cur} (−${(discount / 100).toFixed(2)})`
               ) : (
-                'Pay'
+                `Pay ${((meta?.price?.cents || 0) / 100).toFixed(2)} ${meta?.price?.cur}`
               )}
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
-            className="h-10 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
-            onClick={openBooking}
-          >
+          <Button variant="cta" onClick={openBooking} className="h-10">
             See more times
-          </button>
+          </Button>
         )}
       </div>
 
-      {/* Quick slot pills */}
-      {slots && slots.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+      {/* Quick slots */}
+      {!loading && slots.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
           {slots.slice(0, 3).map((slot, i) => {
             const date = new Date(slot.start);
             const label = date.toLocaleString(undefined, {
@@ -150,12 +182,11 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
               hour: '2-digit',
               minute: '2-digit'
             });
-            
             return (
               <button
                 key={i}
-                className="h-10 px-3 rounded-xl border border-border bg-card hover:bg-accent text-sm transition-colors"
                 onClick={openBooking}
+                className="h-10 px-3 rounded-xl border border-border bg-muted/50 text-sm hover:bg-muted transition-colors"
               >
                 {label}
               </button>
@@ -164,10 +195,11 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
         </div>
       )}
 
+      {/* Loading state */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-10 rounded-xl bg-muted/50 animate-pulse" />
           ))}
         </div>
       )}

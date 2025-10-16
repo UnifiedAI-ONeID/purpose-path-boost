@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { slug, name, email, notes = '', currency = 'USD' } = req.body || {};
+    const { slug, name, email, notes = '', currency = 'USD', coupon, promo } = req.body || {};
 
     if (!slug || !name || !email) {
       return res.status(400).json({ ok: false, error: 'Missing required fields' });
@@ -30,25 +30,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('slug', slug)
       .single();
 
-    if (offerError || !offer || offer.billing_type !== 'paid') {
-      return res.status(400).json({ ok: false, error: 'Offer not found or not paid' });
+    if (offerError || !offer) {
+      return res.status(400).json({ ok: false, error: 'Offer not found' });
     }
 
-    // Get pricing
+    // Get pricing with discount
     const protocol = (req.headers['x-forwarded-proto'] as string) || 'https';
     const host = req.headers.host as string;
     const baseUrl = `${protocol}://${host}`;
 
-    const priceResponse = await fetch(`${baseUrl}/api/coaching/price`, {
+    const priceResponse = await fetch(`${baseUrl}/api/coaching/price-with-discount`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, currency })
+      body: JSON.stringify({ slug, currency, coupon, promo })
     });
 
     const priceData = await priceResponse.json();
 
-    if (!priceData?.ok || !priceData.amount_cents) {
+    if (!priceData?.ok) {
       return res.status(400).json({ ok: false, error: 'Pricing error' });
+    }
+
+    // If free (after discount), skip payment
+    if (priceData.amount_cents <= 0 || offer.billing_type !== 'paid') {
+      return res.status(200).json({ ok: true, free: true });
     }
 
     // Create Airwallex payment intent
@@ -58,6 +63,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ ok: false, error: 'Payment gateway not configured' });
     }
 
+    const merchantOrderId = `COACH-${slug}-${Date.now()}`;
+
     const paymentIntent = await fetch('https://api.airwallex.com/api/v1/pa/payment_intents/create', {
       method: 'POST',
       headers: {
@@ -66,10 +73,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       body: JSON.stringify({
         request_id: crypto.randomUUID(),
-        amount: priceData.amount_cents / 100, // Airwallex uses decimal amounts
+        amount: priceData.amount_cents / 100,
         currency: priceData.currency,
-        merchant_order_id: `COACH-${slug}-${Date.now()}`,
-        return_url: `${baseUrl}/coaching/${slug}?paid=1&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`,
+        merchant_order_id: merchantOrderId,
+        return_url: `${baseUrl}/coaching/${slug}?paid=1&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&coupon=${encodeURIComponent(coupon || '')}&promo=${encodeURIComponent(promo || '')}`,
         cancel_url: `${baseUrl}/coaching/${slug}?cancel=1`,
         descriptor: `ZhenGrowth ${offer.title_en || slug}`
       })
@@ -77,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const paymentData = await paymentIntent.json();
 
-    // Save order record (reusing express_orders table)
+    // Save order record
     await supabase.from('express_orders').insert({
       offer_slug: slug,
       name,
@@ -86,6 +93,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       notes,
       currency: priceData.currency,
       amount_cents: priceData.amount_cents,
+      discount_cents: priceData.discount_cents || 0,
+      coupon: coupon ? String(coupon).toUpperCase() : null,
+      promo: promo ? String(promo).toUpperCase() : null,
       status: 'pending',
       airwallex_id: paymentData.id,
       airwallex_link: paymentData.next_action?.redirect_url || paymentData.url

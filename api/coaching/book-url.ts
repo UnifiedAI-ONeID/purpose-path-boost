@@ -6,6 +6,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const slug = (req.query.slug as string) || req.body?.slug;
     const name = (req.query.name as string) || req.body?.name || '';
     const email = (req.query.email as string) || req.body?.email || '';
+    const coupon = (req.query.coupon as string) || req.body?.coupon || '';
+    const promo = (req.query.promo as string) || req.body?.promo || '';
 
     if (!slug) {
       return res.status(400).json({ ok: false, error: 'Missing slug parameter' });
@@ -38,6 +40,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       utm_medium: 'cta',
       utm_campaign: slug
     });
+
+    // Pass coupon/promo as metadata to Cal.com
+    if (coupon) {
+      params.append('metadata[coupon]', coupon);
+    }
+    if (promo) {
+      params.append('metadata[promo]', promo);
+    }
 
     const url = `https://cal.com/${team}/${offer.cal_event_type_slug}?${params.toString()}`;
 
