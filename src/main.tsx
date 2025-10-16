@@ -23,10 +23,6 @@ bootAnimOnLoad();
 // Normalize entry URL with lang and ref/utm parameters
 normalizeEntryUrl();
 
-// Initialize version guard for automatic cache invalidation
-import { bootVersionGuard } from './lib/versionGuard';
-bootVersionGuard({ pollMs: 60000 }); // Check every 60 seconds
-
 // Initialize analytics based on region
 if (!isChinaBuild()) {
   // Global build: Use Umami + PostHog + Metrics Tracker

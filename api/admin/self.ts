@@ -21,9 +21,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   
   // Check if user is admin using the is_admin function
-  const { data: isAdmin } = await supabase
+  const { data: isAdmin, error: adminError } = await supabase
     .rpc('is_admin', { _user_id: user.id })
-    .single();
+    .maybeSingle();
 
   if (!isAdmin) {
     return res.status(200).json({ ok: false, error: 'Not admin' });

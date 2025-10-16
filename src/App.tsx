@@ -192,23 +192,36 @@ function AppRoutes() {
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <PrefsProvider>
-        <I18nextProvider i18n={i18n}>
-          {/* Removed global TooltipProvider to prevent invalid hook call; tooltips still work without a global provider */}
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <RouteAnimHook />
-            <AppRoutes />
-          </BrowserRouter>
-          <div id="zg-homeclick-layer" aria-hidden="true" />
-        </I18nextProvider>
-      </PrefsProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Initialize version guard AFTER React has mounted
+  useEffect(() => {
+    // Delay version guard to ensure React is fully initialized
+    const timer = setTimeout(async () => {
+      const { bootVersionGuard } = await import('./lib/versionGuard');
+      bootVersionGuard({ pollMs: 60000 }); // Check every 60 seconds
+    }, 3000); // 3 second delay for React initialization
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <PrefsProvider>
+          <I18nextProvider i18n={i18n}>
+            {/* Removed global TooltipProvider to prevent invalid hook call; tooltips still work without a global provider */}
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <RouteAnimHook />
+              <AppRoutes />
+            </BrowserRouter>
+            <div id="zg-homeclick-layer" aria-hidden="true" />
+          </I18nextProvider>
+        </PrefsProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
