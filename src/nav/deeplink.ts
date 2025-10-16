@@ -15,7 +15,17 @@ export function normalizeEntryUrl() {
     // Persist ref/utm for future navigations
     ['ref', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(k => {
       const v = u.searchParams.get(k);
-      if (v) sessionStorage.setItem(`persist_${k}`, v);
+      if (v) {
+        sessionStorage.setItem(`persist_${k}`, v);
+        
+        // Track referral clicks
+        if (k === 'ref') {
+          // Lazy load and track referral
+          import('../lib/referral').then(({ trackReferral }) => {
+            trackReferral(v, 'click');
+          }).catch(() => {});
+        }
+      }
     });
   } catch (e) {
     // Silently fail on URL parsing errors

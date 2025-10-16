@@ -1,3 +1,6 @@
+import SmartLink from './SmartLink';
+import { pathOf } from '@/nav/routes';
+
 /**
  * Standard coaching program link component
  * Use this for any CTA that directs to a specific coaching program
@@ -12,8 +15,11 @@ export default function LinkCoaching({
   className?: string;
 }) {
   return (
-    <a className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-cta text-surface hover:bg-cta/90 shadow-medium hover:shadow-strong transition-smooth font-semibold h-10 px-4 py-2 ${className}`} href={`/coaching/${slug}`}>
+    <SmartLink 
+      to={pathOf('/coaching/[slug]', { slug })} 
+      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-cta text-surface hover:bg-cta/90 shadow-medium hover:shadow-strong transition-smooth font-semibold h-10 px-4 py-2 ${className}`}
+    >
       {children}
-    </a>
+    </SmartLink>
   );
 }

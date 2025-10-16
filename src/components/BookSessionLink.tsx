@@ -1,3 +1,6 @@
+import SmartLink from './SmartLink';
+import { pathOf } from '@/nav/routes';
+
 /**
  * Reusable booking link component
  * Points to /coaching/[slug] (canonical booking URLs)
@@ -12,8 +15,8 @@ export default function BookSessionLink({
   className?: string;
 }) {
   return (
-    <a className={`btn btn-primary ${className}`} href={`/coaching/${slug}`}>
+    <SmartLink to={pathOf('/coaching/[slug]', { slug })} className={`btn btn-primary ${className}`}>
       {children}
-    </a>
+    </SmartLink>
   );
 }
