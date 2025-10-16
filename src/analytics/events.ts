@@ -36,7 +36,7 @@ export interface EventProperties {
 
 export const track = async (eventName: EventName, properties?: EventProperties) => {
   // Track with Umami
-  if (typeof window !== 'undefined' && window.umami) {
+  if (typeof window !== 'undefined' && window.umami && typeof window.umami === 'function') {
     try {
       window.umami(eventName, properties);
     } catch (e) {
@@ -45,7 +45,7 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
   }
 
   // Track with PostHog
-  if (typeof window !== 'undefined' && window.posthog) {
+  if (typeof window !== 'undefined' && window.posthog && typeof window.posthog.capture === 'function') {
     try {
       window.posthog.capture(eventName, properties);
     } catch (e) {
