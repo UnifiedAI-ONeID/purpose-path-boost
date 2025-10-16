@@ -163,9 +163,9 @@ function AppRoutes() {
         {/* Public routes with responsive layout */}
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
-          <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/me" element={<RequireAuth><MeDashboard /></RequireAuth>} />
-        <Route path="/about" element={isMobile ? <MePage /> : <About />} />
+          <Route path="/dashboard" element={<DashboardRedirect />} />
+          <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />
         <Route path="/quiz" element={<Quiz />} />
         <Route path="/blog" element={<BlogPage />} />

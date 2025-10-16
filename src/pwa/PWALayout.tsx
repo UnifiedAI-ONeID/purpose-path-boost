@@ -10,7 +10,7 @@ export default function PWALayout() {
     { to: '/pwa', icon: Home, label: 'Home' },
     { to: '/pwa/quiz', icon: ClipboardList, label: 'Quiz' },
     { to: '/pwa/coaching', icon: GraduationCap, label: 'Programs' },
-    { to: '/pwa/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/pwa/dashboard', icon: LayoutDashboard, label: 'Me' },
   ];
 
   return (
