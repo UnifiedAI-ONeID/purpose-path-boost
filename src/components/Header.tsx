@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from '@/assets/images/logo.png';
 
 export const Header = () => {
   const { t } = useTranslation('common');
@@ -24,7 +25,8 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
+        <Link to="/" className="flex items-center space-x-3">
+          <img src={logo} alt="ZhenGrowth Logo" className="h-10 w-10" />
           <span className="text-2xl font-serif font-bold text-primary">ZhenGrowth</span>
         </Link>
 

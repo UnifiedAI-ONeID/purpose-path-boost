@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Mail, MessageCircle } from 'lucide-react';
+import logo from '@/assets/images/logo.png';
 
 export const Footer = () => {
   const { t } = useTranslation('common');
@@ -11,7 +12,10 @@ export const Footer = () => {
         <div className="grid gap-8 md:grid-cols-3">
           {/* Brand */}
           <div>
-            <h3 className="text-xl font-serif font-bold text-primary mb-4">ZhenGrowth</h3>
+            <div className="flex items-center space-x-2 mb-4">
+              <img src={logo} alt="ZhenGrowth Logo" className="h-8 w-8" />
+              <h3 className="text-xl font-serif font-bold text-primary">ZhenGrowth</h3>
+            </div>
             <p className="text-sm text-muted-foreground">
               Empowering professionals to grow with clarity, confidence, and purpose.
             </p>
