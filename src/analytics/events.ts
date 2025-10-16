@@ -62,11 +62,20 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
   try {
     const { supabase } = await import('@/integrations/supabase/client');
     
-    // Generate session ID if not exists
-    let sessionId = sessionStorage.getItem('analytics_session_id');
+    // Generate session ID if not exists (guarded for privacy modes)
+    let sessionId = '';
+    try {
+      sessionId = sessionStorage.getItem('analytics_session_id') || '';
+    } catch {}
     if (!sessionId) {
-      sessionId = crypto.randomUUID();
-      sessionStorage.setItem('analytics_session_id', sessionId);
+      try {
+        sessionId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      } catch {
+        sessionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+      try { sessionStorage.setItem('analytics_session_id', sessionId); } catch {}
     }
 
     await supabase.from('analytics_events').insert({

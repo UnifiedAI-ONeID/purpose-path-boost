@@ -5,13 +5,21 @@ export const trackEvent = (
   properties?: Record<string, any>
 ) => {
   // Track with Umami
-  if (window.umami) {
-    window.umami(eventName, properties);
+  if (typeof window !== 'undefined' && typeof window.umami === 'function') {
+    try {
+      window.umami(eventName, properties);
+    } catch (e) {
+      console.error('[Analytics] Umami error:', e);
+    }
   }
 
   // Track with PostHog if enabled
-  if (window.posthog) {
-    window.posthog.capture(eventName, properties);
+  if (typeof window !== 'undefined' && window.posthog && typeof window.posthog.capture === 'function') {
+    try {
+      window.posthog.capture(eventName, properties);
+    } catch (e) {
+      console.error('[Analytics] PostHog error:', e);
+    }
   }
 
   // Development logging
@@ -24,8 +32,12 @@ export const identifyUser = (
   userId: string,
   properties?: Record<string, any>
 ) => {
-  if (window.posthog) {
-    window.posthog.identify(userId, properties);
+  if (typeof window !== 'undefined' && window.posthog && typeof window.posthog.identify === 'function') {
+    try {
+      window.posthog.identify(userId, properties);
+    } catch (e) {
+      console.error('[Analytics] PostHog identify error:', e);
+    }
   }
 
   if (import.meta.env.DEV) {
