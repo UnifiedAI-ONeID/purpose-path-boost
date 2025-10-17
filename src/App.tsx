@@ -53,6 +53,7 @@ import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
 import AdminCoaching from "./pages/AdminCoaching";
+import AdminCalEventTypes from "./pages/AdminCalEventTypes";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminSEO from "./pages/AdminSEO";
 import PricingSuccess from "./pages/PricingSuccess";
@@ -194,6 +195,7 @@ function AppRoutes() {
         <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminAI /></ProtectedAdminRoute>} />
         <Route path="/admin/bookings" element={<ProtectedAdminRoute><AdminBookings /></ProtectedAdminRoute>} />
         <Route path="/admin/coaching" element={<ProtectedAdminRoute><AdminCoaching /></ProtectedAdminRoute>} />
+        <Route path="/admin/cal-event-types" element={<ProtectedAdminRoute><AdminCalEventTypes /></ProtectedAdminRoute>} />
         <Route path="/admin/coupons" element={<ProtectedAdminRoute><AdminCoupons /></ProtectedAdminRoute>} />
         <Route path="/admin/seo" element={<ProtectedAdminRoute><AdminSEO /></ProtectedAdminRoute>} />
         

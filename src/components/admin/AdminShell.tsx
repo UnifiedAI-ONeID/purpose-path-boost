@@ -104,6 +104,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
           <Nav href="/admin/bookings">{at(lang, 'Bookings')}</Nav>
           <Nav href="/admin/cal-bookings">Cal.com</Nav>
+          <Nav href="/admin/cal-event-types">Event Types</Nav>
           <Nav href="/admin/calendar">{at(lang, 'Calendar')}</Nav>
           
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
