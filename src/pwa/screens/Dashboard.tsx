@@ -11,51 +11,77 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    let device = localStorage.getItem('zg.device');
-    
-    // Generate device ID if not exists
-    if (!device) {
-      device = crypto.randomUUID();
-      localStorage.setItem('zg.device', device);
-    }
-
-    import('@/integrations/supabase/client').then(({ supabase }) => {
-      supabase.functions
-        .invoke('pwa-me-summary', {
-          body: { device },
-          headers: { 'x-zg-device': device }
-        })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('PWA Dashboard fetch error:', error);
-            toast({
-              title: 'Error loading dashboard',
-              description: 'Please try again later',
-              variant: 'destructive'
-            });
-            return;
-          }
-          
-          if (data?.ok) {
-            setData(data);
-          } else {
-            console.error('PWA Dashboard response not ok:', data);
-            toast({
-              title: 'Error loading dashboard',
-              description: 'Please try again later',
-              variant: 'destructive'
-            });
-          }
-        })
-        .catch((err) => {
-          console.error('PWA Dashboard exception:', err);
+    async function fetchDashboard() {
+      try {
+        // Get authenticated user session
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
           toast({
-            title: 'Error loading dashboard',
-            description: 'Please try again later',
+            title: 'Not authenticated',
+            description: 'Please sign in to view your dashboard',
             variant: 'destructive'
           });
+          return;
+        }
+
+        // Fetch user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('zg_profiles')
+          .select('id, name, email')
+          .eq('auth_user_id', session.user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Fetch next session
+        const { data: sessions } = await supabase
+          .from('me_sessions')
+          .select('*')
+          .eq('profile_id', profile.id)
+          .gte('start_at', new Date().toISOString())
+          .order('start_at', { ascending: true })
+          .limit(1);
+
+        // Fetch referral
+        const { data: referral } = await supabase
+          .from('zg_referrals')
+          .select('ref_code')
+          .eq('profile_id', profile.id)
+          .maybeSingle();
+
+        // Calculate streak
+        const { data: streakData } = await supabase
+          .rpc('get_user_streak', { p_profile_id: profile.id })
+          .maybeSingle();
+
+        const streak = streakData || 0;
+        const streak_pct = Math.min(100, (streak / 30) * 100);
+
+        setData({
+          ok: true,
+          profile,
+          next: sessions?.[0] ? { 
+            start: sessions[0].start_at, 
+            join_url: sessions[0].join_url 
+          } : null,
+          streak_pct,
+          ref_url: referral?.ref_code 
+            ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` 
+            : null
         });
-    });
+      } catch (error) {
+        console.error('PWA Dashboard fetch error:', error);
+        toast({
+          title: 'Error loading dashboard',
+          description: 'Please try again later',
+          variant: 'destructive'
+        });
+      }
+    }
+
+    fetchDashboard();
   }, [toast]);
 
   if (!data) {
