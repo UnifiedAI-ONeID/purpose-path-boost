@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { invokeApi } from '@/lib/api-client';
 
 interface Testimonial {

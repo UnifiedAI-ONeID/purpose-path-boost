@@ -1,3 +1,4 @@
+import React from 'react';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { triggerHomeAnim } from '@/anim/animator';

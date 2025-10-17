@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { track } from '@/analytics/events';
 import { ROUTES } from '@/nav/routes';
 import { ProgramSheet } from '@/components/ProgramSheet';

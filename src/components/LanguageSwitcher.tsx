@@ -1,3 +1,4 @@
+import React from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { Globe } from 'lucide-react';
 
