@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePWAPrompt } from '@/hooks/usePWAPrompt';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { Button } from './ui/button';
