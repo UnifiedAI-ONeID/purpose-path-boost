@@ -31,9 +31,18 @@ export default function Dashboard() {
           .from('zg_profiles')
           .select('id, name, email')
           .eq('auth_user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) throw profileError;
+        
+        if (!profile) {
+          toast({
+            title: 'Profile not found',
+            description: 'Please complete your profile setup',
+            variant: 'destructive'
+          });
+          return;
+        }
 
         // Fetch next session
         const { data: sessions } = await supabase
