@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { invokeApi } from '@/lib/api-client';
 import { Loader2 } from 'lucide-react';
 
 /**
@@ -25,21 +24,28 @@ export default function DashboardRedirect() {
           return;
         }
 
-        // Check admin status
-        const data = await invokeApi('/api/admin/check-role', {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        });
+        // Check admin status using edge function
+        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
+        
+        if (adminError) {
+          console.error('[DashboardRedirect] Admin check error:', adminError);
+          // Default to client dashboard on error
+          navigate('/me', { replace: true });
+          return;
+        }
         
         // Route based on role
-        if (data.is_admin) {
+        const isAdmin = adminData?.is_admin === true;
+        console.log('[DashboardRedirect] Routing user:', { isAdmin, userId: session.user.id });
+        
+        if (isAdmin) {
           navigate('/admin', { replace: true });
         } else {
           navigate('/me', { replace: true });
         }
       } catch (error) {
-        console.error('Dashboard redirect error:', error);
+        console.error('[DashboardRedirect] Error:', error);
+        // Default to auth page on exception
         navigate('/auth?returnTo=/dashboard');
       }
     }
