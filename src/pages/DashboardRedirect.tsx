@@ -15,17 +15,31 @@ export default function DashboardRedirect() {
   useEffect(() => {
     async function redirect() {
       try {
+        console.log('[DashboardRedirect] Starting redirect logic');
         // Check authentication
         const { data: { session } } = await supabase.auth.getSession();
         
+        console.log('[DashboardRedirect] Session check:', { 
+          hasSession: !!session, 
+          userId: session?.user?.id 
+        });
+        
         if (!session) {
           // Not authenticated - go to auth page
+          console.log('[DashboardRedirect] No session, redirecting to auth');
           navigate('/auth?returnTo=/dashboard');
           return;
         }
 
         // Check admin status using edge function
-        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
+        console.log('[DashboardRedirect] Calling admin check edge function');
+        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
+        
+        console.log('[DashboardRedirect] Admin check response:', { adminData, adminError });
         
         if (adminError) {
           console.error('[DashboardRedirect] Admin check error:', adminError);
@@ -39,8 +53,10 @@ export default function DashboardRedirect() {
         console.log('[DashboardRedirect] Routing user:', { isAdmin, userId: session.user.id });
         
         if (isAdmin) {
+          console.log('[DashboardRedirect] Navigating to /admin');
           navigate('/admin', { replace: true });
         } else {
+          console.log('[DashboardRedirect] Navigating to /me');
           navigate('/me', { replace: true });
         }
       } catch (error) {

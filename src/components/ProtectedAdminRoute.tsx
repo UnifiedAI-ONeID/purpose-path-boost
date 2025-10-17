@@ -22,26 +22,43 @@ export default function ProtectedAdminRoute({ children }: Props) {
 
   async function checkAdminAccess() {
     try {
+      console.log('[ProtectedAdminRoute] Starting admin access check');
       // Check if user is authenticated
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
+      console.log('[ProtectedAdminRoute] Session check:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        sessionError
+      });
+      
       if (sessionError || !session?.user) {
+        console.log('[ProtectedAdminRoute] No valid session');
         setIsAdmin(false);
         setIsLoading(false);
         return;
       }
 
-      // Check admin status via Edge Function
-      const data = await invokeApi('/api/admin/check-role');
+      // Check admin status via Edge Function WITH authorization header
+      console.log('[ProtectedAdminRoute] Calling admin check with auth token');
+      const data = await invokeApi('/api/admin/check-role', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      console.log('[ProtectedAdminRoute] Admin check response:', data);
 
       if (!data?.ok || !data?.authed || !data?.is_admin) {
+        console.log('[ProtectedAdminRoute] User is not admin:', data);
         setIsAdmin(false);
         toast.error('Admin access required');
       } else {
+        console.log('[ProtectedAdminRoute] User is admin, granting access');
         setIsAdmin(true);
       }
     } catch (err) {
-      console.error('Admin check failed:', err);
+      console.error('[ProtectedAdminRoute] Admin check failed:', err);
       setIsAdmin(false);
       toast.error('Authentication failed');
     } finally {

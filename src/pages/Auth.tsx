@@ -76,8 +76,15 @@ export default function Auth() {
           navigate(returnTo);
         } else {
         // Check admin status to route appropriately
+          console.log('[Auth] Session restore - checking admin status for user:', session?.user?.id);
           try {
-            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
+            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+              headers: {
+                Authorization: `Bearer ${session.access_token}`
+              }
+            });
+            
+            console.log('[Auth] Session restore - Admin check response:', { adminData, adminError });
             
             if (adminError) {
               console.error('[Auth] Admin check error on session restore:', adminError);
@@ -87,8 +94,10 @@ export default function Auth() {
               console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
               
               if (isAdmin) {
+                console.log('[Auth] Routing admin to /admin from session restore');
                 navigate('/admin');
               } else {
+                console.log('[Auth] Routing user to /me from session restore');
                 navigate('/me');
               }
             }
@@ -311,8 +320,15 @@ export default function Auth() {
           navigate(returnTo);
         } else {
           // Check admin status and route accordingly via Edge Function
+          console.log('[Auth] Checking admin status for user:', data?.user?.id);
           try {
-            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
+            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+              headers: {
+                Authorization: `Bearer ${data.session?.access_token}`
+              }
+            });
+            
+            console.log('[Auth] Admin check response:', { adminData, adminError });
             
             if (adminError) {
               console.error('[Auth] Admin check error on login:', adminError);
@@ -323,8 +339,10 @@ export default function Auth() {
               console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
               
               if (isAdmin) {
+                console.log('[Auth] Routing admin to /admin');
                 navigate('/admin');
               } else {
+                console.log('[Auth] Routing user to /me');
                 navigate('/me');
               }
             }
