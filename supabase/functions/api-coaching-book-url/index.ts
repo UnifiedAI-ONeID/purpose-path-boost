@@ -1,7 +1,4 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,10 +13,7 @@ Deno.serve(async (req) => {
     const team = Deno.env.get('CALCOM_TEAM') || 'zhengrowth';
 
     if (!slug) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing slug parameter' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Missing slug parameter' }, 200);
     }
 
     const params = new URLSearchParams({
@@ -32,15 +26,10 @@ Deno.serve(async (req) => {
 
     const url = `https://cal.com/${team}/${slug}?${params.toString()}`;
 
-    return new Response(
-      JSON.stringify({ ok: true, url }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, url }, 200);
   } catch (error) {
-    console.error('Coaching book-url error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-coaching-book-url] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

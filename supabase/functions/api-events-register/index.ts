@@ -1,11 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { resolveTicketPrice } from '../_shared/event-pricing.ts';
 import { validateCoupon, applyDiscount, recordCouponUse } from '../_shared/event-coupons.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 function validateEmail(email: string): boolean {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -22,10 +18,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ error: 'Method not allowed' }, 200);
   }
 
   try {
@@ -33,27 +26,18 @@ Deno.serve(async (req) => {
 
     // Input validation
     if (!event_id || !ticket_id || !name || !email) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ error: 'Missing required fields' }, 200);
     }
 
     if (!validateEmail(email)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid email address' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ error: 'Invalid email address' }, 200);
     }
 
     const sanitizedName = sanitizeInput(name, 100);
     const sanitizedEmail = sanitizeInput(email.toLowerCase(), 255);
 
     if (sanitizedName.length < 2) {
-      return new Response(
-        JSON.stringify({ error: 'Name must be at least 2 characters' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ error: 'Name must be at least 2 characters' }, 200);
     }
 
     const supabase = createClient(
@@ -75,10 +59,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!ticket || !event) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid ticket or event' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return jsonResponse({ error: 'Invalid ticket or event' }, 200);
     }
 
     // Resolve price in target currency
@@ -118,12 +99,9 @@ Deno.serve(async (req) => {
     });
 
     if (!decrementResult || !decrementResult.ok) {
-      return new Response(
-        JSON.stringify({ 
-          error: decrementResult?.error || 'Unable to reserve ticket. Please try again.' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ 
+        error: decrementResult?.error || 'Unable to reserve ticket. Please try again.' 
+      }, 200);
     }
 
     // Generate check-in code
@@ -180,15 +158,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, url, registration_id: regData.id }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, url, registration_id: regData.id }, 200);
   } catch (e: any) {
-    console.error('Registration error:', e);
-    return new Response(
-      JSON.stringify({ error: e.message || 'Registration failed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-    );
+    console.error('[api-events-register] Error:', e);
+    return jsonResponse({ error: e.message || 'Registration failed' }, 200);
   }
 });
