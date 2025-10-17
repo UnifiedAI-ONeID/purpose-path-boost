@@ -80,6 +80,8 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/billing/create-agreement': 'api-billing-create-agreement',
   '/api/billing/customer': 'api-billing-customer',
   '/api/billing/webhook': 'api-billing-webhook',
+  '/api/referral/create': 'api-referral-create',
+  '/api/referral/info': 'api-referral-info',
   '/api/cal/admin-check': 'api-cal-admin-check',
   '/api/calendar/ics': 'api-calendar-ics',
   '/api/calendar/update': 'api-calendar-update',

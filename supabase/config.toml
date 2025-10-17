@@ -221,3 +221,10 @@ verify_jwt = true
 
 [functions.api-health]
 verify_jwt = false
+
+[functions.api-referral-create]
+verify_jwt = false
+
+[functions.api-referral-info]
+verify_jwt = false
+

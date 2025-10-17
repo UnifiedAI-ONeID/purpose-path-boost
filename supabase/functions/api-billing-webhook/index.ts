@@ -94,8 +94,57 @@ Deno.serve(async (req) => {
         .eq('profile_id', profile_id)
         .gte('period_start', period_start.toISOString());
 
-      // Redeem coupon if used
+      // Handle referral reward
       if (coupon) {
+        const { data: referral } = await supabase
+          .from('referrals')
+          .select('*')
+          .eq('friend_coupon_code', coupon)
+          .maybeSingle();
+
+        if (referral && referral.status === 'issued') {
+          const { data: settings } = await supabase
+            .from('referral_settings')
+            .select('*')
+            .single();
+
+          const rewardPct = settings?.referrer_percent_off ?? 20;
+          const rewardCode = 'RF-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+          const expiry = new Date(Date.now() + (settings?.coupon_expiry_days ?? 7) * 24 * 3600 * 1000);
+
+          await supabase
+            .from('coupons')
+            .insert([{
+              code: rewardCode,
+              percent_off: rewardPct,
+              expires_at: expiry.toISOString(),
+              applies_to: ['starter', 'growth', 'pro'],
+              max_redemptions: 1
+            }]);
+
+          await supabase
+            .from('referrals')
+            .update({
+              status: 'rewarded',
+              referrer_reward_coupon: rewardCode,
+              rewarded_at: new Date().toISOString(),
+              converted_at: new Date().toISOString()
+            })
+            .eq('code', referral.code);
+
+          await supabase
+            .from('nudge_inbox')
+            .insert([{
+              profile_id: referral.referrer_profile_id,
+              kind: 'toast',
+              title: 'Thank you for the referral!',
+              body: `Here's ${rewardPct}% off: ${rewardCode}`,
+              cta_label: 'Apply at pricing',
+              cta_href: `/pricing?coupon=${rewardCode}`,
+              expire_at: expiry.toISOString()
+            }]);
+        }
+
         await supabase.rpc('redeem_coupon_once', { p_code: coupon });
       }
 
