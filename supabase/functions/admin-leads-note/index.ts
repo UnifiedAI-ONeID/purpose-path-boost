@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -13,9 +13,9 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('authorization');
-    const { isAdmin, user } = await requireAdmin(authHeader);
+    const { isAdmin } = await requireAdmin(authHeader);
     
-    if (!isAdmin || !user) {
+    if (!isAdmin) {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
@@ -25,31 +25,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Lead ID and note required' }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
-    // Get current notes
-    const { data: lead } = await supabase
-      .from('leads')
-      .select('notes')
-      .eq('id', id)
-      .single();
-
-    const currentNotes = lead?.notes || [];
-    const newNote = {
-      text: note,
-      created_at: new Date().toISOString(),
-      created_by: user.id
-    };
+    const supabase = sbSrv();
 
     const { error } = await supabase
       .from('leads')
-      .update({ 
-        notes: [...currentNotes, newNote],
-        updated_at: new Date().toISOString() 
-      })
+      .update({ notes: note })
       .eq('id', id);
 
     if (error) throw error;

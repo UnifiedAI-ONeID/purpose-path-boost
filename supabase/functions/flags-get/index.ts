@@ -1,5 +1,5 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbAnon } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -7,20 +7,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
+    const supabase = sbAnon(req);
 
     const { data, error } = await supabase
-      .from('remote_flags')
-      .select('key, value');
+      .from('experiments')
+      .select('key,enabled,variants');
 
     if (error) throw error;
 
     const flags: Record<string, any> = {};
     (data || []).forEach((row: any) => {
-      flags[row.key] = row.value;
+      flags[row.key] = { enabled: row.enabled, variants: row.variants };
     });
 
     return jsonResponse({ ok: true, flags });

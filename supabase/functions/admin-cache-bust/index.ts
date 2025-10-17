@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,19 +19,15 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
-    const body = await req.json().catch(() => ({}));
-    const key = body.key || 'content';
+    const supabase = sbSrv();
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const { error } = await supabase.rpc('bump_version_now');
 
-    await supabase.rpc('bump_version', { p_key: key });
+    if (error) throw error;
 
-    console.log(`[admin-cache-bust] Bumped version for key: ${key}`);
+    console.log('[admin-cache-bust] Cache busted successfully');
 
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, message: 'Cache busted' });
   } catch (error) {
     console.error('[admin-cache-bust] Error:', error);
     return jsonResponse({ 

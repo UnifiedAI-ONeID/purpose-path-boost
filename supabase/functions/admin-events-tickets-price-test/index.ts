@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,36 +19,42 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
-    const { event_id, variants } = await req.json();
+    const { event_id, ticket_id, variants } = await req.json();
     
-    if (!event_id || !Array.isArray(variants)) {
+    if (!event_id || !ticket_id || !Array.isArray(variants)) {
       return jsonResponse({ 
         ok: false, 
-        error: 'Event ID and variants array required' 
+        error: 'Event ID, ticket ID and variants required' 
       }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
-    // Delete existing prices for this event
+    // Delete existing price tests for this ticket
     await supabase
-      .from('event_prices')
+      .from('event_price_tests')
       .delete()
-      .eq('event_id', event_id);
+      .eq('ticket_id', ticket_id);
 
-    // Insert new price variants
-    if (variants.length > 0) {
-      const { error } = await supabase
-        .from('event_prices')
-        .insert(variants.map(v => ({ ...v, event_id })));
-      
-      if (error) throw error;
-    }
+    // Insert new variants
+    const rows = variants.map(v => ({
+      event_id,
+      ticket_id,
+      variant: v.variant || 'control',
+      region: v.region || 'global',
+      currency: v.currency,
+      price_cents: v.price_cents,
+      is_active: true,
+      started_at: new Date().toISOString()
+    }));
 
-    console.log(`[admin-events-tickets-price-test] Updated ${variants.length} price variants for event ${event_id}`);
+    const { error } = await supabase
+      .from('event_price_tests')
+      .insert(rows);
+
+    if (error) throw error;
+
+    console.log(`[admin-events-tickets-price-test] Updated ${variants.length} price tests for ticket ${ticket_id}`);
 
     return jsonResponse({ ok: true });
   } catch (error) {

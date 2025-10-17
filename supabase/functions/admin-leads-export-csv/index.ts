@@ -1,6 +1,6 @@
 import { corsHeaders } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,10 +15,7 @@ Deno.serve(async (req) => {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
     const { data, error } = await supabase
       .from('leads')
@@ -28,7 +25,7 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     // Generate CSV
-    const headers = ['id', 'email', 'name', 'locale', 'source', 'stage', 'owner', 'created_at'];
+    const headers = ['id', 'email', 'name', 'language', 'source', 'stage', 'country', 'created_at'];
     const csvRows = [headers.join(',')];
 
     for (const lead of data || []) {

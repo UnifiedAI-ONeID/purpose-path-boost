@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,34 +15,35 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
-    // Get published blogs
-    const { data: blogs } = await supabase
-      .from('blogs')
-      .select('slug, updated_at')
+    const blogs = await supabase
+      .from('blog_posts')
+      .select('slug,updated_at')
       .eq('published', true);
 
-    // Get published lessons
-    const { data: lessons } = await supabase
+    const lessons = await supabase
       .from('lessons')
-      .select('slug, updated_at')
-      .eq('published', true);
+      .select('slug,updated_at')
+      .eq('active', true);
+
+    const events = await supabase
+      .from('events')
+      .select('slug,created_at')
+      .eq('status', 'published');
 
     const items = [
-      ...(blogs || []).map(x => `/blog/${x.slug}`),
-      ...(lessons || []).map(x => `/lesson/${x.slug}`)
+      ...(blogs.data || []).map(x => `/blog/${x.slug}`),
+      ...(lessons.data || []).map(x => `/lessons/${x.slug}`),
+      ...(events.data || []).map(x => `/events/${x.slug}`)
     ];
 
     console.log(`[admin-sitemap-rebuild] Rebuilt sitemap with ${items.length} pages`);
 
-    // Bump content version
-    await supabase.rpc('bump_version', { p_key: 'content' });
+    // Bump content version to invalidate caches
+    await supabase.rpc('bump_version_now');
 
-    return jsonResponse({ ok: true, pages: items.length });
+    return jsonResponse({ ok: true, pages: items.length, items });
   } catch (error) {
     console.error('[admin-sitemap-rebuild] Error:', error);
     return jsonResponse({ 
