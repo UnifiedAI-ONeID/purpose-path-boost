@@ -35,16 +35,31 @@ export function useUserAnalytics(profileId: string | undefined) {
 
     async function fetchAnalytics() {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.error('[useUserAnalytics] No active session');
+          return;
+        }
+
         const { data: analyticsData, error } = await supabase.functions.invoke(
-          'dashboard-user-analytics',
+          `dashboard-user-analytics?profile_id=${profileId}`,
           {
-            body: { profile_id: profileId }
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
           }
         );
 
-        if (error) throw error;
+        if (error) {
+          console.error('[useUserAnalytics] Function error:', error);
+          throw error;
+        }
+        
         if (analyticsData?.ok) {
           setData(analyticsData);
+        } else {
+          console.error('[useUserAnalytics] Response not ok:', analyticsData);
         }
       } catch (error) {
         console.error('[useUserAnalytics] Error:', error);

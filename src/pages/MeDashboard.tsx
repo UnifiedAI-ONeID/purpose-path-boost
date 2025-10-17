@@ -40,7 +40,7 @@ export default function MeDashboard() {
   const { lang } = usePrefs();
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const { data: analyticsData } = useUserAnalytics(data?.profile?.id);
+  const { data: analyticsData, loading: analyticsLoading } = useUserAnalytics(data?.profile?.id);
 
   useEffect(() => {
     fetchSummary();
@@ -90,12 +90,26 @@ export default function MeDashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
-      // Fetch referral
-      const { data: referral } = await supabase
+      // Fetch referral - create if doesn't exist
+      let { data: referral } = await supabase
         .from('zg_referrals')
         .select('ref_code')
         .eq('profile_id', profile.id)
         .maybeSingle();
+
+      // Initialize referral code if it doesn't exist
+      if (!referral) {
+        const refCode = `REF${profile.id.substring(0, 8).toUpperCase()}`;
+        const { data: newReferral, error: refError } = await supabase
+          .from('zg_referrals')
+          .insert([{ profile_id: profile.id, ref_code: refCode }])
+          .select('ref_code')
+          .single();
+        
+        if (!refError && newReferral) {
+          referral = newReferral;
+        }
+      }
 
       // Calculate streak using RPC
       const { data: streakData } = await supabase

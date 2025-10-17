@@ -131,9 +131,9 @@ Deno.serve(async (req) => {
 
     // Get referral impact
     const { data: referrals } = await supabase
-      .from('referrals')
+      .from('zg_referrals')
       .select('status')
-      .eq('referrer_profile_id', profileId)
+      .eq('profile_id', profileId)
       .gte('created_at', startOfUTC(90));
 
     const invited = (referrals || []).length;
