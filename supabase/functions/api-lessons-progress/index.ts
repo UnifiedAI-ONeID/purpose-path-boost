@@ -13,8 +13,23 @@ Deno.serve(async (req) => {
   try {
     const { profile_id, lesson_slug, last_position_sec, watched_seconds, completed } = await req.json();
 
-    if (!profile_id || !lesson_slug) {
-      return jsonResponse({ ok: false, error: 'profile_id and lesson_slug required' }, 200);
+    // Validate UUID format
+    if (!profile_id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile_id)) {
+      return jsonResponse({ ok: false, error: 'Invalid profile ID' }, 400);
+    }
+
+    // Validate lesson slug
+    if (!lesson_slug || typeof lesson_slug !== 'string' || lesson_slug.length > 100) {
+      return jsonResponse({ ok: false, error: 'Invalid lesson slug' }, 400);
+    }
+
+    // Validate numeric ranges
+    if (last_position_sec !== undefined && (typeof last_position_sec !== 'number' || last_position_sec < 0 || last_position_sec > 86400)) {
+      return jsonResponse({ ok: false, error: 'Invalid position' }, 400);
+    }
+
+    if (watched_seconds !== undefined && (typeof watched_seconds !== 'number' || watched_seconds < 0 || watched_seconds > 86400)) {
+      return jsonResponse({ ok: false, error: 'Invalid duration' }, 400);
     }
 
     const supabase = createClient(
@@ -37,13 +52,12 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('[api-lessons-progress] Update error:', error);
-      return jsonResponse({ ok: false, error: error.message }, 200);
+      return jsonResponse({ ok: false, error: 'Unable to update progress' }, 500);
     }
 
     return jsonResponse({ ok: true }, 200);
   } catch (error) {
     console.error('[api-lessons-progress] Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return jsonResponse({ ok: false, error: message }, 200);
+    return jsonResponse({ ok: false, error: 'Unable to update progress' }, 500);
   }
 });

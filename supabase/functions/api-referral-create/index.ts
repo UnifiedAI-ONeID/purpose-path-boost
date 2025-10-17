@@ -18,8 +18,9 @@ Deno.serve(async (req) => {
   try {
     const { referrer_profile_id } = await req.json();
     
-    if (!referrer_profile_id) {
-      return errorResponse('Missing referrer_profile_id', 400);
+    // Validate UUID format
+    if (!referrer_profile_id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(referrer_profile_id)) {
+      return errorResponse('Invalid referrer profile ID', 400);
     }
 
     const supabase = createClient(
@@ -73,6 +74,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('[api-referral-create] Error:', error);
-    return errorResponse('Internal server error', 500);
+    return errorResponse('Unable to create referral link', 500);
   }
 });

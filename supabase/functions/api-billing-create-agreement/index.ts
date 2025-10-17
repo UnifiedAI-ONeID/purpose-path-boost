@@ -20,9 +20,34 @@ Deno.serve(async (req) => {
   try {
     const { profile_id, plan_slug, interval = 'month', coupon } = await req.json();
 
-    if (!profile_id || !plan_slug) {
+    // Validate UUID
+    if (!profile_id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile_id)) {
       return new Response(
-        JSON.stringify({ ok: false, error: 'missing parameters' }),
+        JSON.stringify({ ok: false, error: 'Invalid profile ID' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Validate plan slug
+    if (!plan_slug || typeof plan_slug !== 'string' || plan_slug.length > 50) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Invalid plan slug' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Validate interval
+    if (!['month', 'year'].includes(interval)) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Invalid interval' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Validate coupon if provided
+    if (coupon && (typeof coupon !== 'string' || coupon.length > 50)) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Invalid coupon code' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -98,7 +123,7 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('Create agreement error:', error);
     return new Response(
-      JSON.stringify({ ok: false, error: error.message }),
+      JSON.stringify({ ok: false, error: 'Unable to create billing agreement' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { verifyAirwallexSignature } from '../_shared/webhook-security.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-airwallex-signature',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-airwallex-signature, x-signature',
 };
 
 Deno.serve(async (req) => {
@@ -16,12 +17,26 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const payload = await req.json();
-    console.log('[Payment Webhook] Received:', payload);
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    
+    // Verify webhook signature
+    const webhookSecret = Deno.env.get('AIRWALLEX_WEBHOOK_SECRET');
+    if (webhookSecret) {
+      const isValid = await verifyAirwallexSignature(req, rawBody, webhookSecret);
+      if (!isValid) {
+        console.error('[Payment Webhook] Invalid signature');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      console.warn('[Payment Webhook] No webhook secret configured - signature verification skipped');
+    }
 
-    // Validate webhook signature (Airwallex specific)
-    // const signature = req.headers.get('x-airwallex-signature');
-    // TODO: Implement signature verification for production
+    const payload = JSON.parse(rawBody);
+    console.log('[Payment Webhook] Received:', payload);
 
     // Handle different payment events
     const { name: eventName, data } = payload;
@@ -134,7 +149,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('[Payment Webhook] Error:', error);
     return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : 'Internal server error' 
+      error: 'Unable to process webhook' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { verifyAirwallexSignature } from '../_shared/webhook-security.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-signature, x-awx-signature',
 };
 
 async function grantCalCredit(profile_id: string, minutes: number) {
@@ -44,7 +45,25 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const body = await req.json();
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    
+    // Verify webhook signature
+    const webhookSecret = Deno.env.get('AIRWALLEX_WEBHOOK_SECRET');
+    if (webhookSecret) {
+      const isValid = await verifyAirwallexSignature(req, rawBody, webhookSecret);
+      if (!isValid) {
+        console.error('[Billing Webhook] Invalid signature');
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Invalid signature' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+        );
+      }
+    } else {
+      console.warn('[Billing Webhook] No webhook secret configured - signature verification skipped');
+    }
+    
+    const body = JSON.parse(rawBody);
     const { event_type, data } = body || {};
     const metadata = data?.metadata || {};
 

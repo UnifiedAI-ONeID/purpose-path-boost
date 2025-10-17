@@ -1,8 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { verifyCalcomSignature } from '../_shared/webhook-security.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cal-signature-256',
 };
 
 Deno.serve(async (req) => {
@@ -10,13 +11,31 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
 
-    const payload = await req.json();
+  try {
+    // Read raw body for signature verification
+    const rawBody = await req.text();
+    
+    // Verify webhook signature
+    const webhookSecret = Deno.env.get('CAL_COM_WEBHOOK_SECRET');
+    if (webhookSecret) {
+      const isValid = await verifyCalcomSignature(req, rawBody, webhookSecret);
+      if (!isValid) {
+        console.error('[Cal Webhook] Invalid signature');
+        return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else {
+      console.warn('[Cal Webhook] No webhook secret configured - signature verification skipped');
+    }
+
+    const payload = JSON.parse(rawBody);
     console.log('Cal.com webhook received:', payload);
 
     // Handle different webhook events
@@ -54,8 +73,8 @@ Deno.serve(async (req) => {
       .upsert(booking, { onConflict: 'cal_booking_id' });
 
     if (upsertError) {
-      console.error('Error upserting booking:', upsertError);
-      return new Response(JSON.stringify({ error: upsertError.message }), {
+      console.error('[Cal Webhook] Error upserting booking:', upsertError);
+      return new Response(JSON.stringify({ error: 'Unable to process booking' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -66,8 +85,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Webhook error:', error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+    console.error('[Cal Webhook] Error:', error);
+    return new Response(JSON.stringify({ error: 'Unable to process webhook' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
