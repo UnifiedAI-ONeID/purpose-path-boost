@@ -43,19 +43,70 @@ export default function MeDashboard() {
   async function fetchSummary() {
     setLoading(true);
     try {
-      const device = localStorage.getItem('zg.device') || '';
-      if (!device) {
-        // Generate device ID if not exists
-        const newDevice = crypto.randomUUID();
-        localStorage.setItem('zg.device', newDevice);
+      // Get authenticated user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Not authenticated');
       }
 
-      const { data, error } = await supabase.functions.invoke('pwa-me-summary', {
-        body: { device: localStorage.getItem('zg.device') }
-      });
+      // Fetch user profile first to get profile_id
+      const { data: profile, error: profileError } = await supabase
+        .from('zg_profiles')
+        .select('id, name, email, avatar_url, tz, preferred_currency')
+        .eq('auth_user_id', session.user.id)
+        .single();
 
-      if (error) throw error;
-      setData(data);
+      if (profileError) throw profileError;
+
+      // Fetch next session
+      const { data: sessions } = await supabase
+        .from('me_sessions')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .gte('start_at', new Date().toISOString())
+        .order('start_at', { ascending: true })
+        .limit(1);
+
+      // Fetch goals
+      const { data: goals } = await supabase
+        .from('me_goals')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('updated_at', { ascending: false })
+        .limit(5);
+
+      // Fetch receipts
+      const { data: receipts } = await supabase
+        .from('me_receipts')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Fetch referral
+      const { data: referral } = await supabase
+        .from('zg_referrals')
+        .select('ref_code')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+
+      // Calculate streak using RPC
+      const { data: streakData } = await supabase
+        .rpc('get_user_streak', { p_profile_id: profile.id })
+        .maybeSingle();
+
+      setData({
+        ok: true,
+        profile,
+        next: sessions?.[0] || null,
+        goals: goals || [],
+        receipts: receipts || [],
+        streak: streakData || 0,
+        ref_url: referral?.ref_code 
+          ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` 
+          : null
+      });
     } catch (error) {
       console.error('Failed to fetch summary:', error);
       toast.error('Failed to load dashboard');
@@ -66,10 +117,10 @@ export default function MeDashboard() {
 
   async function updateGoal(goalId: string, updates: any) {
     try {
-      const { error } = await supabase.functions.invoke('pwa-me-goals', {
-        method: 'PATCH',
-        body: { id: goalId, ...updates }
-      });
+      const { error } = await supabase
+        .from('me_goals')
+        .update(updates)
+        .eq('id', goalId);
 
       if (error) throw error;
       fetchSummary();
@@ -84,10 +135,9 @@ export default function MeDashboard() {
     if (!data?.profile?.id) return;
 
     try {
-      const { error } = await supabase.functions.invoke('pwa-me-goals', {
-        method: 'POST',
-        body: { profile_id: data.profile.id, title, due_date }
-      });
+      const { error } = await supabase
+        .from('me_goals')
+        .insert([{ profile_id: data.profile.id, title, due_date }]);
 
       if (error) throw error;
       fetchSummary();
@@ -372,23 +422,27 @@ export default function MeDashboard() {
                     <Label htmlFor="name">
                       {lang === 'zh-CN' ? '名称' : lang === 'zh-TW' ? '名稱' : 'Name'}
                     </Label>
-                    <Input
-                      id="name"
-                      defaultValue={data.profile.name || ''}
-                      onBlur={async (e) => {
-                        try {
-                          await supabase.functions.invoke('pwa-me-update', {
-                            body: { name: e.target.value }
-                          });
-                          toast.success(
-                            lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
-                          );
-                        } catch (error) {
-                          toast.error(
-                            lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
-                          );
-                        }
-                      }}
+                  <Input
+                    id="name"
+                    defaultValue={data.profile.name || ''}
+                    onBlur={async (e) => {
+                      if (!data.profile?.id) return;
+                      try {
+                        const { error } = await supabase
+                          .from('zg_profiles')
+                          .update({ name: e.target.value })
+                          .eq('id', data.profile.id);
+                        
+                        if (error) throw error;
+                        toast.success(
+                          lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
+                        );
+                      } catch (error) {
+                        toast.error(
+                          lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
+                        );
+                      }
+                    }}
                     />
                   </div>
 
@@ -400,10 +454,14 @@ export default function MeDashboard() {
                       <Select
                         defaultValue={data.profile.tz || 'UTC'}
                         onValueChange={async (value) => {
+                          if (!data.profile?.id) return;
                           try {
-                            await supabase.functions.invoke('pwa-me-update', {
-                              body: { tz: value }
-                            });
+                            const { error } = await supabase
+                              .from('zg_profiles')
+                              .update({ tz: value })
+                              .eq('id', data.profile.id);
+                            
+                            if (error) throw error;
                             toast.success(
                               lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
                             );
@@ -436,10 +494,14 @@ export default function MeDashboard() {
                       <Select
                         defaultValue={data.profile.preferred_currency || 'USD'}
                         onValueChange={async (value) => {
+                          if (!data.profile?.id) return;
                           try {
-                            await supabase.functions.invoke('pwa-me-update', {
-                              body: { preferred_currency: value }
-                            });
+                            const { error } = await supabase
+                              .from('zg_profiles')
+                              .update({ preferred_currency: value })
+                              .eq('id', data.profile.id);
+                            
+                            if (error) throw error;
                             toast.success(
                               lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
                             );
