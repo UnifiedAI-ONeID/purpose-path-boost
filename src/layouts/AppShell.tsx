@@ -1,20 +1,25 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Calendar, Home, User, BookOpen, Layers } from "lucide-react";
+import { Home, User, BookOpen, GraduationCap } from "lucide-react";
 import LangNudge from '@/prefs/LangNudge';
 
 export default function AppShell() {
+  const navItems = [
+    { to: '/home', icon: Home, label: 'Home' },
+    { to: '/coaching', icon: GraduationCap, label: 'Coaching' },
+    { to: '/blog', icon: BookOpen, label: 'Blog' },
+    { to: '/me', icon: User, label: 'Me' },
+  ];
+
   return (
     <div className="mx-auto max-w-md h-dvh flex flex-col bg-bg">
       <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>
       <nav className="h-16 border-t border-border bg-surface">
-        <ul className="grid grid-cols-5 h-full text-xs">
-          <Tab to="/" icon={<Home size={22}/>} label="Home" />
-          <Tab to="/coaching" icon={<Layers size={22}/>} label="Programs" />
-          <Tab to="/coaching" icon={<Calendar size={22}/>} label="Book" />
-          <Tab to="/blog" icon={<BookOpen size={22}/>} label="Resources" />
-          <Tab to="/about" icon={<User size={22}/>} label="Me" />
+        <ul className="grid grid-cols-4 h-full text-xs">
+          {navItems.map((item) => (
+            <Tab key={item.to} to={item.to} icon={item.icon} label={item.label} />
+          ))}
         </ul>
       </nav>
       <LangNudge />
@@ -22,7 +27,7 @@ export default function AppShell() {
   );
 }
 
-function Tab({ to, icon, label }: { to: string; icon: React.ReactNode; label: string }) {
+function Tab({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
   return (
     <li>
       <NavLink 
@@ -32,7 +37,7 @@ function Tab({ to, icon, label }: { to: string; icon: React.ReactNode; label: st
           (isActive ? "text-fg font-medium" : "text-muted")
         }
       >
-        {icon}
+        <Icon size={22} />
         <span>{label}</span>
       </NavLink>
     </li>

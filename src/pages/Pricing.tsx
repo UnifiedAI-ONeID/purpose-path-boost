@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import SiteShell from '@/components/SiteShell';
 import SmartLink from '@/components/SmartLink';
 import SEOHelmet from '@/components/SEOHelmet';
 import { supabase } from '@/integrations/supabase/client';
@@ -157,7 +156,7 @@ export default function Pricing() {
   }
 
   return (
-    <SiteShell>
+    <>
       <SEOHelmet
         title="Pricing"
         description="Choose the perfect plan for your growth journey. Start free, upgrade anytime."
@@ -292,6 +291,6 @@ export default function Pricing() {
           </div>
         </div>
       </section>
-    </SiteShell>
+    </>
   );
 }

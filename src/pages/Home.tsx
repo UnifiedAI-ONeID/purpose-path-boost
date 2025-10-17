@@ -1,4 +1,3 @@
-import SiteShell from '@/components/SiteShell';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { triggerHomeAnim } from '@/anim/animator';
@@ -10,7 +9,7 @@ export default function Home() {
   const { lang } = usePrefs();
   
   return (
-    <SiteShell>
+    <>
       <SEOHelmet
         title="ZhenGrowth - Grow with Clarity, Confidence, and Purpose"
         description="Transform your career and life with personalized coaching. Expert guidance for Chinese-speaking professionals seeking clarity, confidence, and sustainable growth."
@@ -58,6 +57,6 @@ export default function Home() {
         </div>
         <Testimonials />
       </section>
-    </SiteShell>
+    </>
   );
 }

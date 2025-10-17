@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
-import SiteShell from '@/components/SiteShell';
 import { telemetry } from '@/lib/telemetry';
 
 export default function PricingSuccess() {
@@ -16,8 +15,7 @@ export default function PricingSuccess() {
   const isPro = plan === 'pro';
 
   return (
-    <SiteShell>
-      <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="min-h-[60vh] flex items-center justify-center">
         <div className="card max-w-lg w-full text-center p-8">
           <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Check className="h-8 w-8 text-primary" />
@@ -45,6 +43,5 @@ export default function PricingSuccess() {
           </p>
         </div>
       </div>
-    </SiteShell>
   );
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import SiteShell from '@/components/SiteShell';
 import { Calendar, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -52,7 +51,7 @@ export default function EventsList() {
   }
 
   return (
-    <SiteShell>
+    <>
       <SEOHelmet
         title="Events & Workshops | ZhenGrowth"
         description="Join our upcoming sessions for personal growth and professional development. Expert-led workshops and events for Chinese-speaking professionals worldwide."
@@ -136,6 +135,6 @@ export default function EventsList() {
           ))}
         </div>
       )}
-    </SiteShell>
+    </>
   );
 }

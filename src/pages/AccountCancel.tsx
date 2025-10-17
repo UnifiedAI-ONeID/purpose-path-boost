@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SiteShell from '@/components/SiteShell';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { invokeApi } from '@/lib/api-client';
@@ -48,8 +47,7 @@ export default function AccountCancel() {
   }
 
   return (
-    <SiteShell>
-      <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="min-h-[60vh] flex items-center justify-center">
         <div className="card max-w-lg w-full p-8">
           <h1 className="text-2xl font-semibold mb-2">Before you go</h1>
           <p className="text-sm text-muted-foreground mb-6">
@@ -93,6 +91,5 @@ export default function AccountCancel() {
           </div>
         </div>
       </div>
-    </SiteShell>
   );
 }
