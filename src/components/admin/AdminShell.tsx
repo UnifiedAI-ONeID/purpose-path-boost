@@ -1,7 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
 import { triggerHomeAnim } from '@/anim/animator';
@@ -9,15 +6,11 @@ import { usePrefs } from '@/prefs/PrefsProvider';
 import { at } from '@/i18n/admin';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   const { lang } = usePrefs();
   const [open, setOpen] = useState(false);
   const [pathname, setPathname] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
 
   useEffect(() => {
-    verifyAdminAccess();
-    
     // Register admin SW
     registerAdminSW();
     
@@ -30,45 +23,10 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     return () => {
       delete document.documentElement.dataset.admin;
     };
-  }, [navigate]);
-
-  async function verifyAdminAccess() {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        toast.error('Authentication required');
-        navigate('/auth?returnTo=/admin');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('zg_admins')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (error || !data) {
-        toast.error('Admin access required');
-        navigate('/');
-        return;
-      }
-
-      setIsVerified(true);
-    } catch (err) {
-      console.error('Admin verification failed:', err);
-      toast.error('Access verification failed');
-      navigate('/');
-    }
-  }
-
-  if (!isVerified) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  }, []);
+  
+  // Note: Authentication is handled by ProtectedAdminRoute wrapper
+  // No need to verify again here
 
   // Detect route changes
   useEffect(() => {
