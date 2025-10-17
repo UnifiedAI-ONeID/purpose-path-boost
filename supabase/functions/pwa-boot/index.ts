@@ -28,9 +28,19 @@ Deno.serve(async (req) => {
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Read request body if present
+    let bodyData: any = {};
+    if (req.method === 'POST' && req.headers.get('content-type')?.includes('application/json')) {
+      try {
+        bodyData = await req.json();
+      } catch {
+        // If JSON parsing fails, continue with empty body
+      }
+    }
+
     const lang = getLang(req);
     const url = new URL(req.url);
-    const device = url.searchParams.get('device') || req.headers.get('x-zg-device') || '';
+    const device = bodyData.device || url.searchParams.get('device') || req.headers.get('x-zg-device') || '';
     const authHeader = req.headers.get('authorization');
 
     // Check if user is authenticated
