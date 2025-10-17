@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,10 +12,7 @@ Deno.serve(async (req) => {
       : Object.fromEntries(new URL(req.url).searchParams);
 
     if (!slug) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing slug parameter' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Missing slug parameter' }, 200);
     }
 
     const supabase = createClient(
@@ -35,10 +28,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (offerError || !offer) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Coaching offer not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return jsonResponse({ ok: false, error: 'Coaching offer not found' }, 200);
     }
 
     // Check for price override
@@ -51,21 +41,16 @@ Deno.serve(async (req) => {
 
     const priceCents = override?.price_cents || offer.base_price_cents || 0;
 
-    return new Response(
-      JSON.stringify({ 
-        ok: true, 
-        currency, 
-        amount_cents: priceCents,
-        base_currency: offer.base_currency,
-        base_price_cents: offer.base_price_cents
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ 
+      ok: true, 
+      currency, 
+      amount_cents: priceCents,
+      base_currency: offer.base_currency,
+      base_price_cents: offer.base_price_cents
+    }, 200);
   } catch (error) {
-    console.error('Coaching price error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-coaching-price] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

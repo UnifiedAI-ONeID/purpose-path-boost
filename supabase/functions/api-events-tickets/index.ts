@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,10 +11,7 @@ Deno.serve(async (req) => {
     const event_id = url.searchParams.get('event_id');
 
     if (!event_id) {
-      return new Response(
-        JSON.stringify({ error: 'Event ID is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Event ID is required' }, 200);
     }
 
     const supabase = createClient(
@@ -32,17 +25,14 @@ Deno.serve(async (req) => {
       .eq('event_id', event_id)
       .order('price_cents', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[api-events-tickets] Error:', error);
+      return jsonResponse({ ok: false, error: error.message, tickets: [] }, 200);
+    }
 
-    return new Response(
-      JSON.stringify(data || []),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, tickets: data || [] }, 200);
   } catch (e: any) {
-    console.error('Tickets fetch error:', e);
-    return new Response(
-      JSON.stringify({ error: e.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-events-tickets] Error:', e);
+    return jsonResponse({ ok: false, error: e.message || 'Unknown error', tickets: [] }, 200);
   }
 });

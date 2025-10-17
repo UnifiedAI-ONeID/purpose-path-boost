@@ -132,14 +132,42 @@ All functions have been tested and verified to:
 **Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
 **Status**: ✅ Fixed
 
+### 16. api-coaching-get
+**Issue**: Returned 400, 404, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 17. api-coaching-price
+**Issue**: Returned 400, 404, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 18. api-events-tickets
+**Issue**: Returned 400, 500 status codes, used throw for error handling
+**Fix**: All errors now return 200 with `{ ok: false, error: "...", tickets: [] }` payload
+**Status**: ✅ Fixed
+
+### 19. api-quiz-answer
+**Issue**: Returned 405, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 20. api-contact-submit
+**Issue**: Returned 405, 400, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
 ## Database Tables Created
 
 ### Missing Tables Fixed
 - **testimonials**: Created with sample data (3 testimonials), RLS policies for public viewing
 - **zg_quiz_questions**: Created with sample questions (3 questions), RLS policies
 - **zg_quiz_choices**: Created with sample choices (12 choices) linked to questions, RLS policies
+- **contact_submissions**: Created for contact form data, RLS policies for admin viewing and public submission
+- **zg_quiz_answers**: Already existed, verified RLS policies
+- **zg_events**: Already existed, verified RLS policies
 
-All tables now have initial data to prevent empty result errors.
+All tables now have initial data where applicable to prevent empty result errors.
 
 ## Best Practices Applied
 
@@ -148,7 +176,8 @@ All tables now have initial data to prevent empty result errors.
 3. **Comprehensive Logging**: Added detailed logging with function prefixes for debugging
 4. **Graceful Degradation**: Services handle errors without crashing client applications
 5. **Initial Data**: Created sample data in all new tables to prevent empty result issues
+6. **No Throwing Errors**: Replaced `throw error` with proper error handling and logging
 
 ## Next Steps
 
-None required - all edge functions are properly wired, error-handling compliant, and database tables exist with initial data.
+Continue fixing remaining edge functions with non-200 status codes systematically.

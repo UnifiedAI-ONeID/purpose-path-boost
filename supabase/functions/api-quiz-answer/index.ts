@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,10 +7,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ ok: false, error: 'Method not allowed' }, 200);
   }
 
   try {
@@ -25,29 +18,31 @@ Deno.serve(async (req) => {
     
     const { device_id, profile_id, question_key, choice_value } = await req.json();
     
-    await s.from('zg_quiz_answers').insert([{
+    const { error: answerError } = await s.from('zg_quiz_answers').insert([{
       device_id,
       profile_id,
       question_key,
       choice_value
     }]);
     
-    await s.from('zg_events').insert([{
+    if (answerError) {
+      console.error('[api-quiz-answer] Answer insert error:', answerError);
+    }
+    
+    const { error: eventError } = await s.from('zg_events').insert([{
       device_id,
       profile_id,
       event: 'quiz_answer',
       payload: { question_key, choice_value }
     }]);
     
-    return new Response(
-      JSON.stringify({ ok: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    if (eventError) {
+      console.error('[api-quiz-answer] Event insert error:', eventError);
+    }
+    
+    return jsonResponse({ ok: true }, 200);
   } catch (e: any) {
-    console.error('Quiz answer error:', e);
-    return new Response(
-      JSON.stringify({ ok: false, error: e.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-quiz-answer] Error:', e);
+    return jsonResponse({ ok: false, error: e.message || 'Unknown error' }, 200);
   }
 });

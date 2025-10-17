@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,10 +7,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ ok: false, error: 'Method not allowed' }, 200);
   }
 
   try {
@@ -22,10 +15,7 @@ Deno.serve(async (req) => {
     const { name, email, subject, message, phone, company } = body;
 
     if (!name || !email || !message) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing required fields' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Missing required fields' }, 200);
     }
 
     const supabase = createClient(
@@ -47,26 +37,18 @@ Deno.serve(async (req) => {
       }]);
 
     if (insertError) {
-      console.error('Contact submission error:', insertError);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to submit contact form' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      console.error('[api-contact-submit] Insert error:', insertError);
+      return jsonResponse({ ok: false, error: 'Failed to submit contact form' }, 200);
     }
 
     // TODO: Send email notification via Resend if configured
     // const resendKey = Deno.env.get('RESEND_API_KEY');
     // if (resendKey) { ... }
 
-    return new Response(
-      JSON.stringify({ ok: true, message: 'Contact form submitted successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, message: 'Contact form submitted successfully' }, 200);
   } catch (error) {
-    console.error('Contact submit error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-contact-submit] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });
