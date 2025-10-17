@@ -1,55 +1,52 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import { corsHeaders, jsonResponse } from '../_shared/http.ts';
+import { json, bad, sbAnon, qs, corsHeaders } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const url = new URL(req.url);
-    const profileId = url.searchParams.get('profile_id');
-    const tag = url.searchParams.get('tag');
+  const pid = qs(req).get('profile_id');
+  const tags = (qs(req).get('tags') || '').split(',').filter(Boolean);
+  
+  if (!pid) return bad('MISSING_PROFILE');
+  
+  const s = sbAnon(req);
 
-    if (!profileId) {
-      return jsonResponse({ ok: false, error: 'profile_id required', lessons: [] }, 200);
-    }
+  // Get assigned lessons
+  const assigned = await s
+    .from('lesson_assignments')
+    .select('lesson_slug,order_index')
+    .in('tag', tags.length ? tags : ['_all_'])
+    .order('order_index');
+  
+  const slugs = (assigned.data || []).map(x => x.lesson_slug);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
+  // Get lessons
+  let { data: lessons } = await s
+    .from('lessons')
+    .select('slug,title_en,summary_en,poster_url,yt_id,duration_sec,tags,order_index,cn_alt_url,captions_vtt_url,published')
+    .eq('published', true)
+    .order('order_index');
 
-    // Get lessons with progress
-    let query = supabase
-      .from('lessons')
-      .select(`
-        *,
-        lesson_progress!left(
-          profile_id,
-          completed,
-          last_position_sec,
-          watched_seconds
-        )
-      `)
-      .eq('published', true)
-      .order('order_index', { ascending: true });
-
-    if (tag) {
-      query = query.contains('tags', [tag]);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('[api-lessons-for-user] Query error:', error);
-      return jsonResponse({ ok: false, error: error.message, lessons: [] }, 200);
-    }
-
-    return jsonResponse({ ok: true, lessons: data || [] }, 200);
-  } catch (error) {
-    console.error('[api-lessons-for-user] Error:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return jsonResponse({ ok: false, error: message, lessons: [] }, 200);
+  if (slugs.length) {
+    lessons = (lessons || [])
+      .filter(l => slugs.includes(l.slug))
+      .sort((a, b) => slugs.indexOf(a.slug) - slugs.indexOf(b.slug));
   }
+
+  // Get progress
+  const prog = await s
+    .from('lesson_progress')
+    .select('lesson_slug,completed,last_position_sec')
+    .eq('profile_id', pid);
+
+  const map = new Map((prog.data || []).map(p => [p.lesson_slug, p]));
+
+  return json({
+    ok: true,
+    rows: (lessons || []).map(l => ({
+      ...l,
+      progress: map.get(l.slug) || null
+    }))
+  });
 });

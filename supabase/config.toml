@@ -228,3 +228,6 @@ verify_jwt = false
 [functions.api-referral-info]
 verify_jwt = false
 
+[functions.api-auth-role]
+verify_jwt = false
+
