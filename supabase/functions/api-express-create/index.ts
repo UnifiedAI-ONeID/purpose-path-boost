@@ -1,10 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import { resolveExpressPrice } from '../_shared/event-pricing.ts';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,10 +8,7 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ ok: false, error: 'Method not allowed' }, 200);
   }
 
   try {
@@ -27,10 +20,7 @@ Deno.serve(async (req) => {
     const { name, email, language = 'en', notes = '', currency = 'USD', offer_slug = 'priority-30' } = await req.json();
     
     if (!name || !email) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing fields' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Missing fields' }, 200);
     }
 
     const price = await resolveExpressPrice(s, { offer_slug, target_currency: currency });
@@ -53,21 +43,15 @@ Deno.serve(async (req) => {
 
     const bookingUrl = `${new URL(req.url).origin}/book?express=true&order=${order.id}`;
 
-    return new Response(
-      JSON.stringify({ 
-        ok: true, 
-        url: bookingUrl, 
-        currency: price.currency, 
-        amount_cents: price.charge_cents,
-        order_id: order.id
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ 
+      ok: true, 
+      url: bookingUrl, 
+      currency: price.currency, 
+      amount_cents: price.charge_cents,
+      order_id: order.id
+    }, 200);
   } catch (e: any) {
-    console.error('Express create error:', e);
-    return new Response(
-      JSON.stringify({ ok: false, error: e.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-express-create] Error:', e);
+    return jsonResponse({ ok: false, error: e.message }, 200);
   }
 });
