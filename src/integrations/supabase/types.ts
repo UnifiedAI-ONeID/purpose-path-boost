@@ -1551,6 +1551,45 @@ export type Database = {
           },
         ]
       }
+      lesson_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          period_start: string
+          profile_id: string
+          watch_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          period_start: string
+          profile_id: string
+          watch_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          period_start?: string
+          profile_id?: string
+          watch_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_usage_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "lesson_usage_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           captions_vtt_url: string | null
@@ -1641,6 +1680,13 @@ export type Database = {
             foreignKeyName: "me_goals_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "me_goals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "zg_profiles"
             referencedColumns: ["id"]
           },
@@ -1669,6 +1715,13 @@ export type Database = {
           session_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "me_notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
           {
             foreignKeyName: "me_notes_profile_id_fkey"
             columns: ["profile_id"]
@@ -1721,6 +1774,13 @@ export type Database = {
             foreignKeyName: "me_receipts_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "me_receipts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "zg_profiles"
             referencedColumns: ["id"]
           },
@@ -1761,6 +1821,13 @@ export type Database = {
           title?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "me_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
           {
             foreignKeyName: "me_sessions_profile_id_fkey"
             columns: ["profile_id"]
@@ -1806,6 +1873,42 @@ export type Database = {
           profile_id?: string
           seen?: boolean | null
           title?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          active: boolean | null
+          base_currency: string
+          base_price_cents: number
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          base_currency?: string
+          base_price_cents?: number
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          base_currency?: string
+          base_price_cents?: number
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1972,6 +2075,81 @@ export type Database = {
           valid_to?: string | null
         }
         Relationships: []
+      }
+      referral_settings: {
+        Row: {
+          coupon_expiry_days: number | null
+          friend_percent_off: number | null
+          id: string
+          referrer_percent_off: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          coupon_expiry_days?: number | null
+          friend_percent_off?: number | null
+          id?: string
+          referrer_percent_off?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          coupon_expiry_days?: number | null
+          friend_percent_off?: number | null
+          id?: string
+          referrer_percent_off?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code: string
+          converted_at: string | null
+          created_at: string | null
+          friend_coupon_code: string
+          id: string
+          referrer_profile_id: string
+          referrer_reward_coupon: string | null
+          rewarded_at: string | null
+          status: string | null
+        }
+        Insert: {
+          code: string
+          converted_at?: string | null
+          created_at?: string | null
+          friend_coupon_code: string
+          id?: string
+          referrer_profile_id: string
+          referrer_reward_coupon?: string | null
+          rewarded_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          code?: string
+          converted_at?: string | null
+          created_at?: string | null
+          friend_coupon_code?: string
+          id?: string
+          referrer_profile_id?: string
+          referrer_reward_coupon?: string | null
+          rewarded_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referrer_profile_id_fkey"
+            columns: ["referrer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_profile_id_fkey"
+            columns: ["referrer_profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registration_attempts: {
         Row: {
@@ -2439,6 +2617,67 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          airwallex_agreement_id: string | null
+          created_at: string | null
+          id: string
+          period_end: string
+          period_start: string
+          plan_slug: string
+          profile_id: string
+          renews: boolean | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          airwallex_agreement_id?: string | null
+          created_at?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          plan_slug: string
+          profile_id: string
+          renews?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          airwallex_agreement_id?: string | null
+          created_at?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          plan_slug?: string
+          profile_id?: string
+          renews?: boolean | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_slug_fkey"
+            columns: ["plan_slug"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       telemetry_events: {
         Row: {
           event: string
@@ -2637,6 +2876,13 @@ export type Database = {
             foreignKeyName: "zg_quiz_answers_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "zg_quiz_answers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "zg_profiles"
             referencedColumns: ["id"]
           },
@@ -2740,6 +2986,13 @@ export type Database = {
             foreignKeyName: "zg_referrals_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "zg_referrals_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
             referencedRelation: "zg_profiles"
             referencedColumns: ["id"]
           },
@@ -2806,6 +3059,17 @@ export type Database = {
           },
         ]
       }
+      v_profile_plan: {
+        Row: {
+          features: Json | null
+          period_end: string | null
+          period_start: string | null
+          plan_slug: string | null
+          profile_id: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       v_tag_performance: {
         Row: {
           clicks: number | null
@@ -2844,6 +3108,10 @@ export type Database = {
       }
       increment_coupon_uses: {
         Args: { coupon_uuid: string }
+        Returns: undefined
+      }
+      increment_lesson_usage: {
+        Args: { p_profile: string; p_start: string }
         Returns: undefined
       }
       is_admin: {
