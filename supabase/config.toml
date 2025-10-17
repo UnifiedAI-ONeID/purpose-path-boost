@@ -231,3 +231,13 @@ verify_jwt = false
 [functions.api-auth-role]
 verify_jwt = false
 
+[functions.dashboard-user-summary]
+verify_jwt = false
+
+[functions.dashboard-user-lessons]
+verify_jwt = false
+
+[functions.dashboard-admin-metrics]
+verify_jwt = true
+
+

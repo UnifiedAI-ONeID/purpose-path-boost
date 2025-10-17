@@ -3094,9 +3094,43 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      calc_dau: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          n: number
+        }[]
+      }
+      calc_funnel_30d: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          count: number
+          stage: string
+        }[]
+      }
+      calc_mau: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          n: number
+        }[]
+      }
+      calc_mrr: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          amount_cents: number
+        }[]
+      }
       cleanup_expired_bookings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      content_leaderboard_30d: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          completes: number
+          slug: string
+          starts: number
+          title: string
+        }[]
       }
       decrement_ticket_qty: {
         Args: { p_amount?: number; p_ticket_id: string }
