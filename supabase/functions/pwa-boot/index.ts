@@ -110,26 +110,43 @@ Deno.serve(async (req) => {
     // Anonymous user
     let profile: any = null;
     if (device) {
-      const { data } = await anonClient
+      // First try to find existing profile
+      const { data } = await serviceClient
         .from('zg_profiles')
         .select('*')
         .eq('device_id', device)
         .is('auth_user_id', null)
         .maybeSingle();
         
-      if (!data) {
+      if (data) {
+        profile = data;
+      } else {
+        // Use INSERT ... ON CONFLICT to handle race conditions
         const { data: ins, error: insertError } = await serviceClient
           .from('zg_profiles')
-          .insert({ device_id: device, locale: lang })
+          .upsert(
+            { device_id: device, locale: lang },
+            { 
+              onConflict: 'device_id',
+              ignoreDuplicates: false 
+            }
+          )
           .select()
           .maybeSingle();
         
         if (insertError) {
-          console.error('[pwa-boot] Profile insert error:', insertError);
+          console.error('[pwa-boot] Profile upsert error:', insertError);
+          // Try to fetch the existing profile one more time
+          const { data: existing } = await serviceClient
+            .from('zg_profiles')
+            .select('*')
+            .eq('device_id', device)
+            .is('auth_user_id', null)
+            .maybeSingle();
+          profile = existing;
+        } else {
+          profile = ins;
         }
-        profile = ins;
-      } else {
-        profile = data;
       }
     }
 
