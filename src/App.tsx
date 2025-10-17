@@ -71,6 +71,9 @@ import AdminMarketing from "./pages/admin/Marketing";
 import AdminPayments from "./pages/admin/Payments";
 import AdminIntegrations from "./pages/admin/Integrations";
 import AdminSystem from "./pages/admin/System";
+import CouponsManager from "./pages/admin/CouponsManager";
+import ReferralsManager from "./pages/admin/ReferralsManager";
+import CrossPostStudio from "./pages/admin/CrossPostStudio";
 
 // Lazy load PWA screens and layout
 const PWALayout = lazy(() => import("./pwa/PWALayout"));
@@ -198,6 +201,9 @@ function AppRoutes() {
         <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeads /></ProtectedAdminRoute>} />
         <Route path="/admin/content" element={<ProtectedAdminRoute><AdminContent /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing" element={<ProtectedAdminRoute><AdminMarketing /></ProtectedAdminRoute>} />
+        <Route path="/admin/marketing/coupons" element={<ProtectedAdminRoute><CouponsManager /></ProtectedAdminRoute>} />
+        <Route path="/admin/marketing/referrals" element={<ProtectedAdminRoute><ReferralsManager /></ProtectedAdminRoute>} />
+        <Route path="/admin/marketing/crosspost" element={<ProtectedAdminRoute><CrossPostStudio /></ProtectedAdminRoute>} />
         <Route path="/admin/payments" element={<ProtectedAdminRoute><AdminPayments /></ProtectedAdminRoute>} />
         <Route path="/admin/integrations" element={<ProtectedAdminRoute><AdminIntegrations /></ProtectedAdminRoute>} />
         <Route path="/admin/system" element={<ProtectedAdminRoute><AdminSystem /></ProtectedAdminRoute>} />

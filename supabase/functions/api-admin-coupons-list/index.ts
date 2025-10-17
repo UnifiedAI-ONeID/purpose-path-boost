@@ -1,36 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-async function requireAdmin(authHeader: string | null) {
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return { isAdmin: false, user: null };
-  }
-
-  const token = authHeader.replace('Bearer ', '');
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error || !user) {
-    return { isAdmin: false, user: null };
-  }
-
-  const { data: roleData } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .eq('role', 'admin')
-    .maybeSingle();
-
-  return { isAdmin: !!roleData, user };
-}
+import { json, sbSrv, corsHeaders, qs } from '../_shared/utils.ts';
+import { requireAdmin } from '../_shared/admin-auth.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,40 +8,40 @@ Deno.serve(async (req) => {
 
   try {
     const { isAdmin } = await requireAdmin(req.headers.get('authorization'));
-    
     if (!isAdmin) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Admin access required', rows: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      );
+      return json({ ok: false, error: 'Admin access required' }, 403);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
-    );
+    const params = qs(req);
+    const tab = params.get('tab') || 'active';
+    const search = params.get('q') || '';
 
-    const { data, error } = await supabase
-      .from('coupons')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const s = sbSrv();
+    let query = s.from('coupons').select('*');
 
-    if (error) {
-      return new Response(
-        JSON.stringify({ ok: false, error: error.message, rows: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    // Filter by status
+    if (tab === 'active') {
+      query = query.eq('active', true)
+        .or(`valid_to.is.null,valid_to.gte.${new Date().toISOString()}`)
+        .or(`valid_from.is.null,valid_from.lte.${new Date().toISOString()}`);
+    } else if (tab === 'scheduled') {
+      query = query.gt('valid_from', new Date().toISOString());
+    } else if (tab === 'expired') {
+      query = query.or(`valid_to.lt.${new Date().toISOString()},active.eq.false`);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, rows: data || [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error('Admin coupons list error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error', rows: [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    // Search filter
+    if (search) {
+      query = query.or(`code.ilike.%${search}%,name.ilike.%${search}%`);
+    }
+
+    const { data: rows, error } = await query.order('created_at', { ascending: false }).limit(200);
+
+    if (error) throw error;
+
+    return json({ ok: true, rows: rows || [] });
+  } catch (error: any) {
+    console.error('[api-admin-coupons-list] Error:', error);
+    return json({ ok: false, error: error.message }, 500);
   }
 });

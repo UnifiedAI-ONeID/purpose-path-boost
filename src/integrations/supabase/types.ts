@@ -628,6 +628,8 @@ export type Database = {
           description: string | null
           id: string
           max_redemptions: number | null
+          name: string | null
+          notes: string | null
           per_user_limit: number | null
           percent_off: number | null
           redeemed: number | null
@@ -644,6 +646,8 @@ export type Database = {
           description?: string | null
           id?: string
           max_redemptions?: number | null
+          name?: string | null
+          notes?: string | null
           per_user_limit?: number | null
           percent_off?: number | null
           redeemed?: number | null
@@ -660,6 +664,8 @@ export type Database = {
           description?: string | null
           id?: string
           max_redemptions?: number | null
+          name?: string | null
+          notes?: string | null
           per_user_limit?: number | null
           percent_off?: number | null
           redeemed?: number | null
@@ -3341,6 +3347,10 @@ export type Database = {
       decrement_ticket_qty: {
         Args: { p_amount?: number; p_ticket_id: string }
         Returns: Json
+      }
+      get_coupon_status: {
+        Args: { coupon_row: Database["public"]["Tables"]["coupons"]["Row"] }
+        Returns: string
       }
       get_my_profile_id: {
         Args: Record<PropertyKey, never>

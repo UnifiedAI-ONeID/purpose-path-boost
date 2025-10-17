@@ -13,7 +13,7 @@ export default function Marketing() {
           Publish blog posts to LinkedIn, Facebook, X, and 小紅書 (China).
         </p>
         <Button asChild>
-          <Link to="/admin">Open Cross-post</Link>
+          <Link to="/admin/marketing/crosspost">Open Cross-post Studio</Link>
         </Button>
       </Card>
 
@@ -23,11 +23,11 @@ export default function Marketing() {
           Manage invite-a-friend settings, create coupons, and track redemptions.
         </p>
         <div className="space-y-2">
-          <Button asChild variant="outline" className="w-full">
-            <Link to="/admin/coupons">Manage Coupons</Link>
+          <Button asChild className="w-full">
+            <Link to="/admin/marketing/coupons">Manage Coupons</Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
-            <Link to="/admin">Referral Settings</Link>
+            <Link to="/admin/marketing/referrals">Referral Settings</Link>
           </Button>
         </div>
       </Card>
