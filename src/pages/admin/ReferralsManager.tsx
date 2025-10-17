@@ -212,8 +212,8 @@ export default function ReferralsManager() {
               </TableHeader>
               <TableBody>
                 {leaderboard.map((row) => (
-                  <TableRow key={row.referrer_profile_id}>
-                    <TableCell className="font-mono text-sm">{row.referrer_profile_id}</TableCell>
+                  <TableRow key={row.profile_id}>
+                    <TableCell className="font-mono text-sm">{row.profile_id}</TableCell>
                     <TableCell>{row.total}</TableCell>
                   </TableRow>
                 ))}

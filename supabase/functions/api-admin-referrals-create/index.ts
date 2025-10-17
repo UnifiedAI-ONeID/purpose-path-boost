@@ -57,7 +57,8 @@ Deno.serve(async (req) => {
       valid_to: expiresAt,
       max_redemptions: 1,
       applies_to_slug: 'all',
-      name: `Friend referral for ${email}`
+      name: `Friend referral for ${email}`,
+      active: true
     }]);
 
     // Create referral invite
@@ -65,9 +66,8 @@ Deno.serve(async (req) => {
     const baseUrl = Deno.env.get('PUBLIC_BASE_URL') || 'https://zhengrowth.com';
 
     await s.from('zg_referrals').insert([{
-      referrer_profile_id: profile.id,
-      ref_code: inviteCode,
-      status: 'active'
+      profile_id: profile.id,
+      ref_code: inviteCode
     }]);
 
     return json({

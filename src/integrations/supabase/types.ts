@@ -3457,7 +3457,7 @@ export type Database = {
       get_top_referrers: {
         Args: Record<PropertyKey, never>
         Returns: {
-          referrer_profile_id: string
+          profile_id: string
           total: number
         }[]
       }
