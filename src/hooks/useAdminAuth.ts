@@ -7,8 +7,9 @@ export function useAdminAuth() {
   useEffect(() => {
     (async () => {
       const { data, error } = await supabase.functions.invoke('api-admin-check-role');
-      setOk(!error && data?.ok === true);
-      if (!data?.ok) {
+      const isAdmin = !error && data?.is_admin === true;
+      setOk(isAdmin);
+      if (!isAdmin) {
         location.href = '/auth?returnTo=/admin';
       }
     })();
