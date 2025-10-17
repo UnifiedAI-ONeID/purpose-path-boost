@@ -45,14 +45,17 @@ export default function CouponsManager() {
       params.set('tab', tab);
       if (search) params.set('q', search);
 
-      const { data, error } = await supabase.functions.invoke(
-        `api-admin-coupons-list?${params}`,
-        {
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-admin-coupons-list?${params}`;
+      const response = await fetch(url, {
+        headers: { 
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch');
+      
       setCoupons(data?.rows || []);
     } catch (error) {
       console.error('[CouponsManager] Fetch failed:', error);
@@ -64,11 +67,17 @@ export default function CouponsManager() {
 
   async function handleDisable(code: string) {
     try {
-      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body: { code, active: false, notes: 'Disabled via admin' }
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
+
+      const { data, error } = await supabase.functions.invoke('api-admin-coupons-save', {
+        body: { code, active: false, notes: 'Disabled via admin' },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to disable');
+      
       toast.success('Coupon disabled');
       fetchCoupons();
     } catch (error) {
@@ -171,11 +180,17 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
 
   async function handleSave() {
     try {
-      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body: form
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
+
+      const { data, error } = await supabase.functions.invoke('api-admin-coupons-save', {
+        body: form,
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (error) throw error;
+      if (!data?.ok) throw new Error(data?.error || 'Failed to save');
+      
       toast.success(initial ? 'Coupon updated' : 'Coupon created');
       setOpen(false);
       onSaved();
@@ -187,8 +202,12 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
 
   async function handleSimulate() {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
+
       const { data, error } = await supabase.functions.invoke('api-admin-coupons-simulate', {
-        body: { base_cents: 7900, percent_off: form.percent_off }
+        body: { base_cents: 7900, percent_off: form.percent_off },
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
       });
 
       if (error) throw error;
