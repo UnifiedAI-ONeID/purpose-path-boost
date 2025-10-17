@@ -2473,6 +2473,7 @@ export type Database = {
           name: string
           quote: string
           role: string | null
+          sort: number | null
         }
         Insert: {
           avatar_url?: string | null
@@ -2483,6 +2484,7 @@ export type Database = {
           name: string
           quote: string
           role?: string | null
+          sort?: number | null
         }
         Update: {
           avatar_url?: string | null
@@ -2493,6 +2495,7 @@ export type Database = {
           name?: string
           quote?: string
           role?: string | null
+          sort?: number | null
         }
         Relationships: []
       }
