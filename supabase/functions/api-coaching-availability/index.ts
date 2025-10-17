@@ -15,20 +15,51 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Missing slug parameter' }, 200);
     }
 
-    // Get Cal.com API key
     const calApiKey = Deno.env.get('CAL_COM_API_KEY');
-    
     if (!calApiKey) {
       return jsonResponse({ ok: false, error: 'Cal.com API not configured' }, 200);
     }
 
-    // Fetch availability from Cal.com
-    const response = await fetch(`https://api.cal.com/v1/event-types/${slug}/availability`, {
-      headers: {
-        'Authorization': `Bearer ${calApiKey}`,
-        'Content-Type': 'application/json'
+    // Look up Cal.com event type ID from coaching offer slug
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!
+    );
+
+    // First get the cal_event_type_slug from coaching_offers
+    const { data: offer, error: offerError } = await supabase
+      .from('coaching_offers')
+      .select('cal_event_type_slug')
+      .eq('slug', slug)
+      .maybeSingle();
+
+    if (offerError || !offer?.cal_event_type_slug) {
+      console.error('[api-coaching-availability] Coaching offer not found:', slug);
+      return jsonResponse({ ok: false, error: 'Coaching offer not found' }, 200);
+    }
+
+    // Then get the cal_event_type_id from cal_event_types
+    const { data: eventType, error: eventTypeError } = await supabase
+      .from('cal_event_types')
+      .select('cal_event_type_id')
+      .eq('slug', offer.cal_event_type_slug)
+      .maybeSingle();
+
+    if (eventTypeError || !eventType?.cal_event_type_id) {
+      console.error('[api-coaching-availability] Cal event type not found:', offer.cal_event_type_slug);
+      return jsonResponse({ ok: false, error: 'Calendar event type not configured' }, 200);
+    }
+
+    // Fetch availability from Cal.com using the event type ID
+    const response = await fetch(
+      `https://api.cal.com/v1/event-types/${eventType.cal_event_type_id}/availability`, 
+      {
+        headers: {
+          'Authorization': `Bearer ${calApiKey}`,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
     if (!response.ok) {
       console.error('[api-coaching-availability] Cal.com API error:', response.status);

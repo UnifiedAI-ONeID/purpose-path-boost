@@ -84,17 +84,27 @@ export default function Auth() {
 
       if (emailError) {
         console.error('Password reset error:', emailError);
+        throw new Error(emailError.message || 'Failed to send reset email');
+      }
+
+      // Check response data for errors (edge function returns 200 with error payload)
+      if (!data?.success) {
+        console.error('Password reset failed:', data);
         
-        // Check for specific Resend domain verification error
-        const errorMsg = emailError.message || '';
-        if (errorMsg.includes('verify a domain') || errorMsg.includes('testing emails')) {
+        // Check for domain verification error
+        if (data?.needsDomainVerification) {
           toast.error(
-            lang === 'zh-CN' ? '邮件服务需要配置。请联系支持团队或稍后再试。' :
-            lang === 'zh-TW' ? '郵件服務需要配置。請聯繫支持團隊或稍後再試。' :
-            'Email service requires configuration. Please contact support or try again later.'
+            lang === 'zh-CN' ? '邮件服务需要域名验证。请联系支持团队。' :
+            lang === 'zh-TW' ? '郵件服務需要域名驗證。請聯繫支持團隊。' :
+            'Email service requires domain verification. Please contact support.'
           );
         } else {
-          throw new Error(emailError.message || 'Failed to send reset email');
+          toast.error(
+            data?.error ||
+            (lang === 'zh-CN' ? '发送重置邮件失败' :
+             lang === 'zh-TW' ? '發送重置郵件失敗' :
+             'Failed to send reset email')
+          );
         }
         return;
       }

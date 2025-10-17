@@ -159,14 +159,24 @@ const handler = async (req: Request): Promise<Response> => {
     const errorMessage = error.message || 'Failed to send password reset email';
     const isResendDomainError = errorMessage.includes('verify a domain') || errorMessage.includes('testing emails');
     
-    // Return 200 with error payload so client can handle it gracefully
-    return jsonResponse({ 
-      success: false, 
-      error: isResendDomainError 
-        ? 'Email service requires domain verification. Please contact support to enable password reset emails.'
-        : 'Unable to send password reset email. Please try again or contact support.',
-      needsDomainVerification: isResendDomainError
-    }, 200);
+    // CRITICAL: Return 200 status with error in body for proper client handling
+    // Using 503 or other error codes causes Supabase client to throw before parsing response
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        error: isResendDomainError 
+          ? 'Email service configuration required. Please verify your domain in Resend to send password reset emails.'
+          : 'Unable to send password reset email. Please try again or contact support.',
+        needsDomainVerification: isResendDomainError
+      }),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 };
 
