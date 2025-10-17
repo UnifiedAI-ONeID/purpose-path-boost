@@ -43,10 +43,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       }
 
       const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
+        .from('zg_admins')
+        .select('user_id')
         .eq('user_id', session.user.id)
-        .eq('role', 'admin')
         .maybeSingle();
 
       if (error || !data) {
