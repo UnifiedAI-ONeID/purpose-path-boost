@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept-language, x-zg-device',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 type Lang = 'en' | 'zh-CN' | 'zh-TW';
 
@@ -160,11 +156,8 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in pwa-boot:', error);
+    console.error('[pwa-boot] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ ok: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });
