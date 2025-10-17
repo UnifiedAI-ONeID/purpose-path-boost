@@ -248,6 +248,7 @@ function AppRoutes() {
             <Route path="/events/:slug" element={<EventDetail />} />
             <Route path="/coaching/:slug" element={<CoachingDetail />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="/coaching-session" element={
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
             <BookingPage />
