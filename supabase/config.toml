@@ -354,3 +354,93 @@ verify_jwt = true
 [functions.dashboard-user-analytics]
 verify_jwt = true
 
+[functions.pwa-boot]
+verify_jwt = false
+
+[functions.pwa-telemetry]
+verify_jwt = false
+
+[functions.pwa-ai-suggest]
+verify_jwt = false
+
+[functions.pwa-coaching-recommend]
+verify_jwt = false
+
+[functions.pwa-me-analytics]
+verify_jwt = false
+
+[functions.pwa-me-goals]
+verify_jwt = false
+
+[functions.pwa-me-notes]
+verify_jwt = false
+
+[functions.pwa-me-summary]
+verify_jwt = false
+
+[functions.pwa-me-update]
+verify_jwt = false
+
+[functions.pwa-quiz-answer]
+verify_jwt = false
+
+[functions.booking-create]
+verify_jwt = false
+
+[functions.booking-schedule]
+verify_jwt = false
+
+[functions.booking-status]
+verify_jwt = false
+
+[functions.cal-bookings]
+verify_jwt = true
+
+[functions.cal-event-types]
+verify_jwt = false
+
+[functions.cal-webhook]
+verify_jwt = false
+
+[functions.capture-quiz-lead]
+verify_jwt = false
+
+[functions.manage-secrets]
+verify_jwt = true
+
+[functions.manage-social-config]
+verify_jwt = true
+
+[functions.metrics-collect]
+verify_jwt = false
+
+[functions.metrics-rollup]
+verify_jwt = true
+
+[functions.og-render-all]
+verify_jwt = true
+
+[functions.og-render]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false
+
+[functions.post-suggestions]
+verify_jwt = true
+
+[functions.post-to-social]
+verify_jwt = true
+
+[functions.seo-watch]
+verify_jwt = true
+
+[functions.social-metrics-collect]
+verify_jwt = true
+
+[functions.social-queue]
+verify_jwt = true
+
+[functions.social-worker]
+verify_jwt = true
+
