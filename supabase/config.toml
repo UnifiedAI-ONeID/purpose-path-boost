@@ -243,4 +243,16 @@ verify_jwt = false
 [functions.dashboard-admin-metrics]
 verify_jwt = true
 
+[functions.api-admin-leads-list]
+verify_jwt = true
+
+[functions.api-admin-leads-analytics]
+verify_jwt = true
+
+[functions.api-admin-leads-update]
+verify_jwt = true
+
+[functions.api-admin-leads-export]
+verify_jwt = true
+
 

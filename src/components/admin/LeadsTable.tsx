@@ -20,6 +20,8 @@ type Lead = {
   stage: 'new' | 'contacted' | 'qualified' | 'won' | 'lost';
   tags: string[] | null;
   notes: string | null;
+  wechat?: string | null;
+  clarity_score?: number | null;
 };
 
 export default function LeadsTable() {
@@ -31,24 +33,53 @@ export default function LeadsTable() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(500);
-    
-    if (error) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please sign in to view leads');
+        return;
+      }
+
+      const response = await supabase.functions.invoke('api-admin-leads-list', {
+        body: {
+          limit: 100,
+          sortBy: 'created_at',
+          sortOrder: 'desc',
+          ...(stage !== 'all' && { stage }),
+          ...(source !== 'all' && { source }),
+          ...(q && { search: q })
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        console.error('[LeadsTable] Error loading leads:', response.error);
+        toast.error('Failed to load leads');
+        return;
+      }
+
+      if (response.data?.ok && response.data.leads) {
+        setRows(response.data.leads || []);
+      }
+    } catch (error) {
+      console.error('[LeadsTable] Exception:', error);
       toast.error('Failed to load leads');
-      console.error(error);
-    } else {
-      setRows((data || []) as Lead[]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
     load();
+  }, [stage, source, q]);
+
+  useEffect(() => {
+    // Initial load
+    load();
     
+    // Realtime subscription for updates
     const channel = supabase
       .channel('leads_table')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, load)
@@ -59,45 +90,65 @@ export default function LeadsTable() {
     };
   }, []);
 
-  const filtered = useMemo(() => rows.filter(r => {
-    if (stage !== 'all' && r.stage !== stage) return false;
-    if (source !== 'all' && r.source !== source) return false;
-    const text = (r.name || '') + ' ' + (r.email || '') + ' ' + (r.country || '') + ' ' + (r.notes || '') + ' ' + (r.tags || []).join(' ');
-    return text.toLowerCase().includes(q.toLowerCase());
-  }), [rows, q, stage, source]);
-
   async function update(id: string, patch: Partial<Lead>) {
-    const { error } = await supabase.from('leads').update(patch).eq('id', id);
-    if (error) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('api-admin-leads-update', {
+        body: { id, ...patch },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        console.error('[LeadsTable] Error updating lead:', response.error);
+        toast.error('Failed to update lead');
+        return;
+      }
+
+      if (response.data?.ok) {
+        toast.success('Lead updated');
+        load();
+      }
+    } catch (error) {
+      console.error('[LeadsTable] Exception:', error);
       toast.error('Failed to update lead');
-      console.error(error);
-    } else {
-      toast.success('Lead updated');
     }
   }
 
-  function exportCSV() {
-    const header = ['created_at', 'name', 'email', 'language', 'country', 'source', 'quiz_score', 'stage', 'tags', 'notes'];
-    const lines = [header.join(',')].concat(filtered.map(r => [
-      r.created_at,
-      csv(r.name),
-      csv(r.email),
-      r.language,
-      r.country || '',
-      r.source,
-      r.quiz_score ?? '',
-      r.stage,
-      `"${(r.tags || []).join('|')}"`,
-      csv(r.notes || '')
-    ].join(',')));
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `leads_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('CSV exported');
+  async function exportToCSV() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('api-admin-leads-export', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        console.error('[LeadsTable] Error exporting:', response.error);
+        toast.error('Failed to export leads');
+        return;
+      }
+
+      // Response is CSV text
+      const csv = response.data;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `leads_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Leads exported successfully');
+    } catch (error) {
+      console.error('[LeadsTable] Export exception:', error);
+      toast.error('Failed to export leads');
+    }
   }
 
   function csv(s: any) {
@@ -142,7 +193,7 @@ export default function LeadsTable() {
           <Button variant="outline" onClick={load} disabled={loading}>
             Refresh
           </Button>
-          <Button onClick={exportCSV}>Export CSV</Button>
+          <Button onClick={exportToCSV}>Export CSV</Button>
         </div>
       </div>
 
@@ -155,54 +206,68 @@ export default function LeadsTable() {
               <TableHead>Email</TableHead>
               <TableHead>Source</TableHead>
               <TableHead>Stage</TableHead>
+              <TableHead>Scores</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(r => (
-              <TableRow key={r.id}>
-                <TableCell className="whitespace-nowrap">
-                  {new Date(r.created_at).toLocaleString()}
-                </TableCell>
-                <TableCell>{r.name}</TableCell>
-                <TableCell>{r.email}</TableCell>
-                <TableCell>{r.source}</TableCell>
-                <TableCell>
-                  <Select
-                    value={r.stage}
-                    onValueChange={(value) => update(r.id, { stage: value as any })}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {['new', 'contacted', 'qualified', 'won', 'lost'].map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <TagEditor
-                    value={r.tags || []}
-                    onChange={(tags) => update(r.id, { tags })}
-                  />
-                </TableCell>
-                <TableCell className="min-w-[240px]">
-                  <InlineNote
-                    value={r.notes || ''}
-                    onSave={(notes) => update(r.id, { notes })}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-            {filtered.length === 0 && (
+            {loading ? (
               <TableRow>
-                <TableCell className="py-6 text-muted-foreground text-center" colSpan={7}>
-                  No leads yet.
+                <TableCell className="py-6 text-center" colSpan={8}>
+                  Loading leads...
                 </TableCell>
               </TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow>
+                <TableCell className="py-6 text-muted-foreground text-center" colSpan={8}>
+                  No leads found. Try adjusting your filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map(r => (
+                <TableRow key={r.id}>
+                  <TableCell className="whitespace-nowrap">
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-medium">{r.name}</TableCell>
+                  <TableCell>{r.email}</TableCell>
+                  <TableCell className="capitalize">{r.source}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={r.stage}
+                      onValueChange={(value) => update(r.id, { stage: value as any })}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {['new', 'contacted', 'qualified', 'won', 'lost'].map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm space-y-1">
+                      {r.quiz_score && <div>Quiz: {r.quiz_score}</div>}
+                      {r.clarity_score && <div>Clarity: {r.clarity_score}</div>}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <TagEditor
+                      value={r.tags || []}
+                      onChange={(tags) => update(r.id, { tags })}
+                    />
+                  </TableCell>
+                  <TableCell className="min-w-[240px]">
+                    <InlineNote
+                      value={r.notes || ''}
+                      onSave={(notes) => update(r.id, { notes })}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
@@ -224,12 +289,35 @@ function TagEditor({ value, onChange }: { value: string[]; onChange: (t: string[
         onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean));
       }}
       className="min-w-[120px]"
+      placeholder="Add tags..."
     />
   );
 }
 
 function InlineNote({ value, onSave }: { value: string; onSave: (v: string) => void }) {
   const [v, setV] = useState(value);
+  const [editing, setEditing] = useState(false);
+  
+  useEffect(() => setV(value), [value]);
+  
+  if (!editing && !value) {
+    return (
+      <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+        Add note
+      </Button>
+    );
+  }
+  
+  if (!editing) {
+    return (
+      <div 
+        className="text-sm cursor-pointer hover:bg-muted/50 p-2 rounded"
+        onClick={() => setEditing(true)}
+      >
+        {value}
+      </div>
+    );
+  }
   
   return (
     <div className="flex gap-2">
@@ -238,10 +326,30 @@ function InlineNote({ value, onSave }: { value: string; onSave: (v: string) => v
         value={v}
         onChange={e => setV(e.target.value)}
         className="min-w-[200px]"
+        placeholder="Add notes..."
       />
-      <Button variant="outline" size="sm" onClick={() => onSave(v)}>
-        Save
-      </Button>
+      <div className="flex flex-col gap-1">
+        <Button 
+          variant="default" 
+          size="sm" 
+          onClick={() => {
+            onSave(v);
+            setEditing(false);
+          }}
+        >
+          Save
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => {
+            setV(value);
+            setEditing(false);
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
     </div>
   );
 }

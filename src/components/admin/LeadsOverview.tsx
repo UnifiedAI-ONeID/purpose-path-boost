@@ -1,89 +1,215 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-function Spark({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * 100},${100 - (v / max) * 100}`).join(' ');
-  return (
-    <svg viewBox="0 0 100 100" className="w-full h-10">
-      <polyline fill="none" stroke="currentColor" strokeWidth="2" points={pts} opacity="0.6" />
-    </svg>
-  );
-}
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 export default function LeadsOverview() {
-  const [total, setTotal] = useState(0);
-  const [wins, setWins] = useState(0);
-  const [today, setToday] = useState(0);
-  const [series, setSeries] = useState<number[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    const { data: all } = await supabase.from('leads').select('id,created_at,stage');
-    if (!all) return;
-    
-    setTotal(all.length);
-    setWins(all.filter(l => l.stage === 'won').length);
-    
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    setToday(all.filter(l => new Date(l.created_at) >= start).length);
-    
-    // 14-day sparkline
-    const days = [...Array(14)].map((_, i) => {
-      const d0 = new Date();
-      d0.setDate(d0.getDate() - (13 - i));
-      d0.setHours(0, 0, 0, 0);
-      const d1 = new Date(d0);
-      d1.setDate(d0.getDate() + 1);
-      return all.filter(l => new Date(l.created_at) >= d0 && new Date(l.created_at) < d1).length;
-    });
-    setSeries(days);
+  const fetchAnalytics = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await supabase.functions.invoke('api-admin-leads-analytics', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        console.error('[LeadsOverview] Analytics error:', response.error);
+        toast.error('Failed to load analytics');
+        return;
+      }
+
+      if (response.data?.ok && response.data.analytics) {
+        setAnalytics(response.data.analytics);
+      }
+    } catch (error) {
+      console.error('[LeadsOverview] Error:', error);
+      toast.error('Failed to load analytics');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchData();
-
-    // realtime subscription
-    const channel = supabase
-      .channel('leads_overview')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
-        fetchData();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    fetchAnalytics();
+    
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchAnalytics, 60000);
+    
+    return () => clearInterval(interval);
   }, []);
 
-  const cards = useMemo(() => [
-    { label: 'Total Leads', value: total },
-    { label: 'Won (Clients)', value: wins },
-    { label: 'Today', value: today }
-  ], [total, wins, today]);
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <div className="h-4 bg-muted animate-pulse rounded" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-muted animate-pulse rounded" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
-  return (
-    <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {cards.map(c => (
-        <Card key={c.label}>
-          <CardHeader className="pb-2">
-            <CardDescription>{c.label}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{c.value}</div>
-          </CardContent>
-        </Card>
-      ))}
-      <Card className="md:col-span-3">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Activity Trend</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Spark data={series} />
-          <div className="text-muted-foreground text-xs mt-1">Last 14 days</div>
+  if (!analytics?.summary) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          No analytics data available
         </CardContent>
       </Card>
-    </section>
+    );
+  }
+
+  const cards = [
+    { label: 'Total Leads', value: analytics.summary.totalLeads },
+    { label: 'Won (Clients)', value: analytics.summary.wonLeads },
+    { label: 'Today', value: analytics.summary.todayLeads },
+    { label: 'Conversion Rate', value: `${analytics.summary.conversionRate}%` },
+    { label: 'Week Growth', value: `${analytics.summary.weekOverWeekGrowth > 0 ? '+' : ''}${analytics.summary.weekOverWeekGrowth.toFixed(1)}%` },
+    { label: 'Avg Clarity', value: analytics.summary.avgClarityScore.toFixed(1) }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {cards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {card.label}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{card.value}</div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Breakdown Charts */}
+      {analytics?.breakdown && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* By Stage */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">By Stage</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(analytics.breakdown.byStage).map(([stage, count]: [string, any]) => (
+                  <div key={stage} className="flex items-center justify-between">
+                    <span className="text-sm capitalize">{stage}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${(count / analytics.summary.totalLeads) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium w-12 text-right">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* By Source */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">By Source</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(analytics.breakdown.bySource).map(([source, count]: [string, any]) => (
+                  <div key={source} className="flex items-center justify-between">
+                    <span className="text-sm capitalize">{source}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${(count / analytics.summary.totalLeads) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium w-12 text-right">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* By Language */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">By Language</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(analytics.breakdown.byLanguage).map(([lang, count]: [string, any]) => (
+                  <div key={lang} className="flex items-center justify-between">
+                    <span className="text-sm uppercase">{lang}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${(count / analytics.summary.totalLeads) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium w-12 text-right">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* By Country */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">By Country</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(analytics.breakdown.byCountry).map(([country, count]: [string, any]) => (
+                  <div key={country} className="flex items-center justify-between">
+                    <span className="text-sm capitalize">{country}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-primary transition-all"
+                          style={{ width: `${(count / analytics.summary.totalLeads) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium w-12 text-right">{count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
