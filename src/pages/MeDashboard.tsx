@@ -13,6 +13,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SuggestedNextStep from '@/components/SuggestedNextStep';
 import Nudges from '@/components/Nudges';
+import { useUserAnalytics } from '@/hooks/useUserAnalytics';
+import InsightsMini from '@/components/dashboard/InsightsMini';
+import HabitsScore from '@/components/dashboard/HabitsScore';
+import NextBestAction from '@/components/dashboard/NextBestAction';
+import NpsQuick from '@/components/dashboard/NpsQuick';
 
 type Summary = {
   ok: boolean;
@@ -35,6 +40,7 @@ export default function MeDashboard() {
   const { lang } = usePrefs();
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
+  const { data: analyticsData } = useUserAnalytics(data?.profile?.id);
 
   useEffect(() => {
     fetchSummary();
@@ -194,11 +200,36 @@ export default function MeDashboard() {
       
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-20">
         <div className="container mx-auto max-w-6xl">
+          {/* Analytics Overview */}
+          {analyticsData && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <InsightsMini analytics={analyticsData} />
+            </motion.section>
+          )}
+
+          {/* Habits Score & Next Action */}
+          {analyticsData && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="grid md:grid-cols-2 gap-6 mb-6"
+            >
+              <HabitsScore score={analyticsData.habits} />
+              <NextBestAction analytics={analyticsData} />
+            </motion.section>
+          )}
+
           {/* AI Suggested Next Step */}
           {data.profile && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
               className="mb-6"
             >
               <SuggestedNextStep profileId={data.profile.id} />
@@ -209,7 +240,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.3 }}
             className="mb-6"
           >
             <Card>
@@ -260,7 +291,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.4 }}
             className="mb-6"
           >
             <Card>
@@ -321,7 +352,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.5 }}
             className="mb-6"
           >
             <div className="flex items-center justify-between mb-4">
@@ -357,12 +388,24 @@ export default function MeDashboard() {
             </div>
           </motion.section>
 
+          {/* NPS Survey */}
+          {data.profile && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mb-6"
+            >
+              <NpsQuick profileId={data.profile.id} />
+            </motion.section>
+          )}
+
           {/* Receipts */}
           {data.receipts.length > 0 && (
             <motion.section
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.7 }}
               className="mb-6"
             >
               <h2 className="text-xl font-semibold mb-4">
@@ -397,7 +440,7 @@ export default function MeDashboard() {
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.8 }}
           >
             <Card>
               <CardHeader>
