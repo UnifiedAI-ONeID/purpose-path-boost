@@ -114,7 +114,9 @@ Deno.serve(async (req) => {
     const data = await response.json();
     console.log(`[api-coaching-availability] Successfully fetched availability`);
 
-    return jsonResponse({ ok: true, data }, 200);
+    // Maintain backward compatibility: expose top-level `slots`
+    const slots = (data && (data.slots || data.availableSlots || data.timeslots)) || [];
+    return jsonResponse({ ok: true, slots, data }, 200);
   } catch (error) {
     console.error('[api-coaching-availability] Error:', error);
     const message = error instanceof Error ? error.message : 'Internal server error';
