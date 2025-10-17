@@ -297,3 +297,57 @@ verify_jwt = true
 [functions.api-integrations-public]
 verify_jwt = false
 
+[functions.admin-leads-list]
+verify_jwt = true
+
+[functions.admin-leads-upsert]
+verify_jwt = true
+
+[functions.admin-leads-stage]
+verify_jwt = true
+
+[functions.admin-leads-assign]
+verify_jwt = true
+
+[functions.admin-leads-note]
+verify_jwt = true
+
+[functions.admin-leads-export-csv]
+verify_jwt = true
+
+[functions.admin-blog-upsert]
+verify_jwt = true
+
+[functions.admin-blog-list]
+verify_jwt = true
+
+[functions.admin-blog-delete]
+verify_jwt = true
+
+[functions.admin-sitemap-rebuild]
+verify_jwt = true
+
+[functions.admin-events-upsert]
+verify_jwt = true
+
+[functions.admin-events-list]
+verify_jwt = true
+
+[functions.admin-events-tickets-price-test]
+verify_jwt = true
+
+[functions.admin-flags-set]
+verify_jwt = true
+
+[functions.flags-get]
+verify_jwt = false
+
+[functions.admin-i18n-upsert]
+verify_jwt = true
+
+[functions.i18n-get]
+verify_jwt = false
+
+[functions.admin-cache-bust]
+verify_jwt = true
+
