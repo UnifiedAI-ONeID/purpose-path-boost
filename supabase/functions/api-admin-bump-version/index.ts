@@ -8,8 +8,8 @@ Deno.serve(async (req) => {
 
   if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
+      JSON.stringify({ ok: false, error: 'Method not allowed' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
 
     if (!isAdmin) {
       return new Response(
-        JSON.stringify({ error: 'Admin access required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+        JSON.stringify({ ok: false, error: 'Admin access required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
 
     if (error) {
       return new Response(
-        JSON.stringify({ error: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ ok: false, error: error.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
   } catch (e: any) {
     console.error('Bump version error:', e);
     return new Response(
-      JSON.stringify({ error: e.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ ok: false, error: e.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

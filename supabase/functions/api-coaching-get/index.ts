@@ -7,9 +7,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const url = new URL(req.url);
-    const slug = url.searchParams.get('slug');
-    const locale = url.searchParams.get('locale') || 'en';
+    // Support both POST and GET requests
+    const params = req.method === 'POST' 
+      ? await req.json() 
+      : Object.fromEntries(new URL(req.url).searchParams);
+    
+    const slug = params.slug;
+    const locale = params.locale || 'en';
 
     if (!slug) {
       return jsonResponse({ ok: false, error: 'Missing slug parameter' }, 200);

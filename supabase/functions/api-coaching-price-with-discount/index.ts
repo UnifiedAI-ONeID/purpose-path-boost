@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (!slug) {
       return new Response(
         JSON.stringify({ ok: false, error: 'Missing slug parameter' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     if (offerError || !offer) {
       return new Response(
         JSON.stringify({ ok: false, error: 'Coaching offer not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     console.error('Coaching price with discount error:', error);
     return new Response(
       JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

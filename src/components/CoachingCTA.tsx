@@ -63,9 +63,13 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   // Load Cal.com slug for this offer
   useEffect(() => {
     (async () => {
-      const data = await invokeApi('/api/coaching/get', { body: { slug } });
-      if (data?.ok && data.offer?.cal_event_type_slug) {
-        setCalSlug(data.offer.cal_event_type_slug);
+      const response = await fetch(`/api/coaching/get?slug=${slug}`);
+      const data = await response.json();
+      if (data?.ok && data.cal_event_type_slug) {
+        setCalSlug(data.cal_event_type_slug);
+      } else if (!data.cal_event_type_slug) {
+        // Fallback to discovery call if no specific event type
+        setCalSlug('discovery');
       }
     })();
   }, [slug]);

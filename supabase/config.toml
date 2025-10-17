@@ -218,3 +218,6 @@ verify_jwt = true
 
 [functions.api-social-plan]
 verify_jwt = true
+
+[functions.api-health]
+verify_jwt = false

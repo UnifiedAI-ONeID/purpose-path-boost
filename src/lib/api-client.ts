@@ -87,6 +87,7 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/nudge/rules': 'api-nudge-rules',
   '/api/social/dispatch': 'api-social-dispatch',
   '/api/social/plan': 'api-social-plan',
+  '/api/health': 'api-health',
 };
 
 /**
