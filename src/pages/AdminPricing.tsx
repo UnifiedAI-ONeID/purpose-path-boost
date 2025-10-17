@@ -1,5 +1,6 @@
 import FxAuditGlobal from '@/components/admin/FxAuditGlobal';
 import PricingAdmin from '@/components/admin/PricingAdmin';
+import IntegrationsAdmin from '@/components/admin/IntegrationsAdmin';
 import AdminShell from '@/components/admin/AdminShell';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -12,6 +13,7 @@ export default function AdminPricing() {
         <TabsList>
           <TabsTrigger value="management">Plans & Funnels</TabsTrigger>
           <TabsTrigger value="fx">FX Rates</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="management">
@@ -20,6 +22,10 @@ export default function AdminPricing() {
 
         <TabsContent value="fx">
           <FxAuditGlobal />
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationsAdmin />
         </TabsContent>
       </Tabs>
     </AdminShell>

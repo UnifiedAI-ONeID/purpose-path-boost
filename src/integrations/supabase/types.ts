@@ -1426,6 +1426,45 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_secrets: {
+        Row: {
+          cipher_b64: string
+          iv_b64: string
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          cipher_b64: string
+          iv_b64: string
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          cipher_b64?: string
+          iv_b64?: string
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           booking_challenge: string | null

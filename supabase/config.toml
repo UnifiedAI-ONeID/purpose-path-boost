@@ -285,3 +285,15 @@ verify_jwt = true
 [functions.api-admin-funnel-triggers-set]
 verify_jwt = true
 
+[functions.api-admin-integrations-get]
+verify_jwt = true
+
+[functions.api-admin-integrations-set]
+verify_jwt = true
+
+[functions.api-admin-integrations-secret-set]
+verify_jwt = true
+
+[functions.api-integrations-public]
+verify_jwt = false
+
