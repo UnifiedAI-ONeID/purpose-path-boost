@@ -28,16 +28,39 @@ export default function Overview() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) return;
 
-      const { data, error } = await supabase.functions.invoke('dashboard-admin-metrics', {
+      const { data, error } = await supabase.functions.invoke('api-admin-analytics-overview', {
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin Overview] Analytics API error:', error);
+        // Return mock data as fallback
+        setKpi({
+          mrr: 0,
+          active: 0,
+          dau: 0,
+          mau: 0,
+          completes30: 0,
+          bookings30: 0
+        });
+        setAlerts([{ id: '1', text: 'Analytics API unavailable - using fallback data' }]);
+        setLoading(false);
+        return;
+      }
       
-      setKpi(data?.kpi || {});
-      setAlerts(data?.alerts || []);
+      // Map analytics response to KPI structure
+      const analytics = data?.analytics || {};
+      setKpi({
+        mrr: analytics.mrr_cents || 0,
+        active: analytics.clients_28d || 0,
+        dau: analytics.sessions_28d || 0,
+        mau: analytics.sessions_28d || 0,
+        completes30: analytics.calls_28d || 0,
+        bookings30: analytics.calls_28d || 0
+      });
+      setAlerts([]);
     } catch (error) {
       console.error('[Admin Overview] Failed to load data:', error);
     } finally {

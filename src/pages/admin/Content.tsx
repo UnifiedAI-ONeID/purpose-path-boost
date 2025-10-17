@@ -36,7 +36,7 @@ export default function Content() {
               Manage blog posts and publish to social media platforms.
             </p>
             <Button asChild>
-              <Link to="/admin">Open Blog Manager</Link>
+              <Link to="/admin/content/blog">Open Blog Manager</Link>
             </Button>
           </Card>
         </TabsContent>
