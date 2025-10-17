@@ -8,9 +8,7 @@ export default function PlanBadge({ profileId }: { profileId: string }) {
   useEffect(() => {
     async function load() {
       try {
-        const { data: result } = await supabase.functions.invoke('dashboard-user-summary', {
-          body: { profile_id: profileId }
-        });
+        const { data: result } = await supabase.functions.invoke('dashboard-user-summary');
         setData(result);
       } catch (error) {
         console.error('Failed to load plan:', error);

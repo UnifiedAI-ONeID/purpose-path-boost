@@ -1,4 +1,5 @@
-import { json, sbAnon, qs, corsHeaders } from '../_shared/utils.ts';
+import { json, qs, corsHeaders } from '../_shared/utils.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -6,11 +7,39 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const pid = qs(req).get('profile_id');
-    if (!pid) return json({ ok: false, error: 'Missing profile_id' }, 400);
+    // Verify authentication
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return json({ ok: false, error: 'Unauthorized' }, 401);
+    }
 
+    const token = authHeader.replace('Bearer ', '');
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { authorization: authHeader } } }
+    );
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return json({ ok: false, error: 'Unauthorized' }, 401);
+    }
+
+    // Get user's profile_id
+    const { data: profile, error: profileError } = await supabase
+      .from('zg_profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    if (profileError || !profile) {
+      return json({ ok: false, error: 'Profile not found' }, 404);
+    }
+
+    const pid = profile.id;
     const tags = (qs(req).get('tags') || '').split(',').filter(Boolean);
-    const s = sbAnon(req);
+    const s = supabase;
 
     // Get assigned lessons
     const { data: assigned } = await s
