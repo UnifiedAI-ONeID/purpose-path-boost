@@ -11,6 +11,7 @@ import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeApi } from '@/lib/api-client';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 interface Event {
   id: string;
@@ -258,7 +259,7 @@ export default function EventDetail() {
           <CardContent className="pt-6">
             <div 
               className="prose prose-slate dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: event.description }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.description) }}
             />
           </CardContent>
         </Card>

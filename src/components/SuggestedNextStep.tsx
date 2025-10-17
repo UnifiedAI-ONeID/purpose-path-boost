@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 type SuggestionData = {
   ok: boolean;
@@ -80,7 +81,7 @@ export default function SuggestedNextStep({ profileId }: { profileId: string }) 
       
       <div 
         className="prose prose-sm max-w-none text-muted-foreground mb-4"
-        dangerouslySetInnerHTML={{ __html: mdToHtml(data.suggestion_md) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(mdToHtml(data.suggestion_md)) }}
       />
       
       <div className="flex gap-2">

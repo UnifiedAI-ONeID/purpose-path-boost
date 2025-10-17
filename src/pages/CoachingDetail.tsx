@@ -6,6 +6,7 @@ import { usePrefs } from '@/prefs/PrefsProvider';
 import { pickLang } from '@/i18n/dict';
 import { useI18nFetch } from '@/hooks/useI18nFetch';
 import { invokeApi } from '@/lib/api-client';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 export default function CoachingDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -111,7 +112,7 @@ export default function CoachingDetail() {
       {localized?.body && (
         <article
           className="prose prose-lg max-w-none mb-8"
-          dangerouslySetInnerHTML={{ __html: localized.body }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(localized.body) }}
         />
       )}
 

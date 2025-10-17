@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import MobileShell from "./MobileShell";
 import { Helmet } from "react-helmet-async";
 import { Share2, Copy, MessageCircle } from "lucide-react";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 type Post = {
   id: string;
@@ -239,7 +240,7 @@ export default function BlogDetailMobile() {
         {/* Article Body */}
         <div 
           className="prose prose-sm max-w-none mb-8"
-          dangerouslySetInnerHTML={{ __html: tagHeadings(post.content) }} 
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(tagHeadings(post.content)) }} 
         />
 
         {/* CTA Buttons */}

@@ -4,7 +4,10 @@
  */
 
 export async function enc(plain: string) {
-  const keyRaw = Deno.env.get('KMS_MASTER') || Deno.env.get('MASTER_KEY')!;
+  const keyRaw = Deno.env.get('KMS_MASTER');
+  if (!keyRaw) {
+    throw new Error('KMS_MASTER environment variable not configured. Please set a 32-byte base64 encryption key.');
+  }
   const key = await crypto.subtle.importKey(
     'raw',
     b64d(keyRaw),
@@ -25,7 +28,10 @@ export async function enc(plain: string) {
 }
 
 export async function dec(cipher_b64: string, iv_b64: string) {
-  const keyRaw = Deno.env.get('KMS_MASTER') || Deno.env.get('MASTER_KEY')!;
+  const keyRaw = Deno.env.get('KMS_MASTER');
+  if (!keyRaw) {
+    throw new Error('KMS_MASTER environment variable not configured. Please set a 32-byte base64 encryption key.');
+  }
   const key = await crypto.subtle.importKey(
     'raw',
     b64d(keyRaw),
