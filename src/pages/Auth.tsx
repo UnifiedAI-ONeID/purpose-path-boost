@@ -49,7 +49,14 @@ export default function Auth() {
           // Check admin status to route appropriately
           const { data, error } = await supabase.functions.invoke('api-admin-check-role');
           
-          if (!error && data?.is_admin) {
+          if (error) {
+            console.error('[Auth] Admin check error on session restore:', error);
+          }
+          
+          const isAdmin = data?.is_admin === true;
+          console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
+          
+          if (isAdmin) {
             navigate('/admin');
           } else {
             navigate('/me');
@@ -119,7 +126,8 @@ export default function Auth() {
       setResetMode(false);
       setEmail(''); // Clear email field
     } catch (error: any) {
-      console.error('Password reset error:', error);
+      console.error('[Auth] Password reset error:', error);
+      console.error('[Auth] Error details:', { email, message: error.message });
       toast.error(
         error.message || 
         (lang === 'zh-CN' ? '发送重置邮件失败' :
@@ -231,12 +239,19 @@ export default function Auth() {
         // Check admin status and route accordingly via Edge Function
         const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
         
+        if (adminError) {
+          console.error('[Auth] Admin check error on login:', adminError);
+        }
+        
+        const isAdmin = adminData?.is_admin === true;
+        console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
+        
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
         const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
         if (returnTo) {
           navigate(returnTo);
-        } else if (!adminError && adminData?.is_admin) {
+        } else if (isAdmin) {
           navigate('/admin');
         } else {
           navigate('/me');
@@ -249,9 +264,36 @@ export default function Auth() {
         );
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
-      toast.error(
-        error.message || 
+      console.error('[Auth] Authentication error:', error);
+      console.error('[Auth] Error details:', { 
+        mode, 
+        email, 
+        message: error.message,
+        code: error.code 
+      });
+      
+      // Enhanced error messages for common scenarios
+      let errorMessage = error.message;
+      
+      if (error.message.includes('Invalid login credentials')) {
+        errorMessage = mode === 'signin'
+          ? (lang === 'zh-CN' ? '邮箱或密码错误。请检查您的凭据。' :
+             lang === 'zh-TW' ? '郵箱或密碼錯誤。請檢查您的憑據。' :
+             'Invalid email or password. Please check your credentials.')
+          : (lang === 'zh-CN' ? '此邮箱已注册。请登录。' :
+             lang === 'zh-TW' ? '此郵箱已註冊。請登入。' :
+             'This email is already registered. Please sign in.');
+      } else if (error.message.includes('Email not confirmed')) {
+        errorMessage = lang === 'zh-CN' ? '请确认您的邮箱后再登录。' :
+                       lang === 'zh-TW' ? '請確認您的郵箱後再登入。' :
+                       'Please confirm your email before signing in.';
+      } else if (error.message.includes('User already registered')) {
+        errorMessage = lang === 'zh-CN' ? '此邮箱已注册。请登录。' :
+                       lang === 'zh-TW' ? '此郵箱已註冊。請登入。' :
+                       'This email is already registered. Please sign in.';
+      }
+      
+      toast.error(errorMessage || 
         (lang === 'zh-CN' ? '认证失败，请重试。' :
          lang === 'zh-TW' ? '認證失敗，請重試。' :
          'Authentication failed. Please try again.')
@@ -274,7 +316,8 @@ export default function Auth() {
 
       if (error) throw error;
     } catch (error: any) {
-      console.error('OAuth error:', error);
+      console.error('[Auth] OAuth error:', error);
+      console.error('[Auth] OAuth details:', { provider, message: error.message });
       toast.error(
         lang === 'zh-CN' ? 'OAuth 登录失败' :
         lang === 'zh-TW' ? 'OAuth 登入失敗' :
