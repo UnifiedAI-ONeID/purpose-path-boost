@@ -41,7 +41,7 @@ serve(async (req) => {
       .from('zg_profiles')
       .select('id')
       .eq('auth_user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!profile) {
       return new Response(

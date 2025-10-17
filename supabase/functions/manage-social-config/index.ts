@@ -121,14 +121,17 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { data: roleData } = await supabaseClient
-      .from('user_roles')
-      .select('role')
+    const { data: adminRow, error: adminErr } = await supabaseClient
+      .from('zg_admins')
+      .select('user_id')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
-    if (!roleData) {
+    if (adminErr) {
+      console.error('[manage-social-config] Admin query error:', adminErr);
+    }
+
+    if (!adminRow) {
       throw new Error('Admin access required');
     }
 
@@ -175,11 +178,15 @@ Deno.serve(async (req) => {
       const { platform, enabled, posting_template, ...secretFields } = body;
 
       // Get current config
-      const { data: current } = await supabaseClient
+      const { data: current, error: currentErr } = await supabaseClient
         .from('social_configs')
         .select('*')
         .eq('platform', platform)
-        .single();
+        .maybeSingle();
+
+      if (currentErr) {
+        console.error('[manage-social-config] Load current config error:', currentErr);
+      }
 
       // Process secret fields
       const applySecret = async (currentEnc?: string, incoming?: string) => {
@@ -206,7 +213,7 @@ Deno.serve(async (req) => {
         .update(updated)
         .eq('platform', platform)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -234,11 +241,15 @@ Deno.serve(async (req) => {
     if (method === 'POST' && action === 'test') {
       const { platform } = await req.json();
 
-      const { data: config } = await supabaseClient
+      const { data: config, error: cfgErr } = await supabaseClient
         .from('social_configs')
         .select('*')
         .eq('platform', platform)
-        .single();
+        .maybeSingle();
+
+      if (cfgErr) {
+        console.error('[manage-social-config] Load config error:', cfgErr);
+      }
 
       if (!config) {
         throw new Error('Platform not configured');

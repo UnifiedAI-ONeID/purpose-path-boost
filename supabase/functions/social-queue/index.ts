@@ -26,14 +26,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: roles } = await supabase
-      .from('user_roles')
-      .select('role')
+    const { data: adminRow, error: adminErr } = await supabase
+      .from('zg_admins')
+      .select('user_id')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
-    if (!roles) {
+    if (adminErr) {
+      console.error('[social-queue] Admin query error:', adminErr);
+    }
+
+    if (!adminRow) {
       return new Response(JSON.stringify({ error: 'Admin access required' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

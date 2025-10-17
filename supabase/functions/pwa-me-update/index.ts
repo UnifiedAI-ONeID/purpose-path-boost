@@ -50,9 +50,15 @@ serve(async (req) => {
       .update(updates)
       .eq('auth_user_id', user.id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!profile) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Profile not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
       JSON.stringify({ ok: true, profile }),
