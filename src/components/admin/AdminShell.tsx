@@ -4,6 +4,7 @@ import AdminInstallButton from './AdminInstallButton';
 import { triggerHomeAnim } from '@/anim/animator';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { at } from '@/i18n/admin';
+import logo from '@/assets/images/logo.png';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { lang } = usePrefs();
@@ -53,7 +54,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   return (
     <div className="min-h-[100svh] bg-background text-foreground grid md:grid-cols-[240px_1fr]">
       <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
-        <div className="p-4 font-semibold text-primary">ZG Admin</div>
+        <div className="p-4 flex items-center gap-3">
+          <img 
+            src={logo} 
+            alt="ZhenGrowth" 
+            className="h-8 w-8"
+            onError={(e) => {
+              e.currentTarget.src = '/app-icon-192.png';
+            }}
+          />
+          <span className="text-lg font-serif font-bold text-primary">ZhenGrowth</span>
+        </div>
         <nav className="p-2 grid gap-1 text-sm">
           <Nav href="/admin">{at(lang, 'Dashboard')}</Nav>
           <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -91,7 +102,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="font-semibold">Admin</div>
+          <div className="flex items-center gap-2">
+            <img 
+              src={logo} 
+              alt="ZhenGrowth Admin" 
+              className="h-6 w-6"
+              onError={(e) => {
+                e.currentTarget.src = '/app-icon-192.png';
+              }}
+            />
+            <span className="font-serif font-semibold text-primary hidden sm:inline">ZhenGrowth</span>
+          </div>
           <div className="flex items-center gap-2">
             <AdminInstallButton />
             <a className="text-sm hover:text-primary transition-colors" href="/">{at(lang, 'ViewSite')}</a>
