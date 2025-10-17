@@ -75,24 +75,25 @@ export default function Auth() {
         if (returnTo) {
           navigate(returnTo);
         } else {
-          // Check admin status to route appropriately
+        // Check admin status to route appropriately
           try {
-            const data = await invokeApi('/api/admin/check-role', {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`
-              }
-            });
+            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
             
-            const isAdmin = data?.is_admin === true;
-            console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
-            
-            if (isAdmin) {
-              navigate('/admin');
-            } else {
+            if (adminError) {
+              console.error('[Auth] Admin check error on session restore:', adminError);
               navigate('/me');
+            } else {
+              const isAdmin = adminData?.is_admin === true;
+              console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
+              
+              if (isAdmin) {
+                navigate('/admin');
+              } else {
+                navigate('/me');
+              }
             }
           } catch (error) {
-            console.error('[Auth] Admin check error on session restore:', error);
+            console.error('[Auth] Admin check exception on session restore:', error);
             // Default to /me on error
             navigate('/me');
           }
@@ -302,25 +303,36 @@ export default function Auth() {
           throw error;
         }
 
-        // Check admin status and route accordingly via Edge Function
-        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
-        
-        if (adminError) {
-          console.error('[Auth] Admin check error on login:', adminError);
-        }
-        
-        const isAdmin = adminData?.is_admin === true;
-        console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
-        
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
         const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
         if (returnTo) {
+          // If there's a specific return URL, use it
           navigate(returnTo);
-        } else if (isAdmin) {
-          navigate('/admin');
         } else {
-          navigate('/me');
+          // Check admin status and route accordingly via Edge Function
+          try {
+            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role');
+            
+            if (adminError) {
+              console.error('[Auth] Admin check error on login:', adminError);
+              // Default to /me on error
+              navigate('/me');
+            } else {
+              const isAdmin = adminData?.is_admin === true;
+              console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
+              
+              if (isAdmin) {
+                navigate('/admin');
+              } else {
+                navigate('/me');
+              }
+            }
+          } catch (err) {
+            console.error('[Auth] Admin check exception on login:', err);
+            // Default to /me on exception
+            navigate('/me');
+          }
         }
         
         toast.success(

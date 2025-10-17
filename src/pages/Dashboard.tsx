@@ -25,7 +25,7 @@ export default function Dashboard() {
         setUser(session?.user ?? null);
         
         if (!session) {
-          navigate('/auth');
+          navigate('/auth?returnTo=/dashboard');
         }
       }
     );
@@ -34,21 +34,32 @@ export default function Dashboard() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
       
       if (!session) {
-        navigate('/auth');
-      } else {
+        navigate('/auth?returnTo=/dashboard');
+        setLoading(false);
+        return;
+      }
+      
+      try {
         // Get profile ID for nudges
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('zg_profiles')
           .select('id')
           .eq('auth_user_id', session.user.id)
           .maybeSingle();
         
-        if (profile) {
+        if (error) {
+          console.error('Error fetching profile:', error);
+        } else if (profile) {
           setProfileId(profile.id);
+        } else {
+          console.log('No profile found for user:', session.user.id);
         }
+      } catch (err) {
+        console.error('Exception fetching profile:', err);
+      } finally {
+        setLoading(false);
       }
     });
 

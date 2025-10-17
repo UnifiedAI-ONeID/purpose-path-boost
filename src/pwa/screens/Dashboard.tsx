@@ -11,8 +11,13 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const device = localStorage.getItem('zg.device');
-    if (!device) return;
+    let device = localStorage.getItem('zg.device');
+    
+    // Generate device ID if not exists
+    if (!device) {
+      device = crypto.randomUUID();
+      localStorage.setItem('zg.device', device);
+    }
 
     import('@/integrations/supabase/client').then(({ supabase }) => {
       supabase.functions
@@ -20,10 +25,21 @@ export default function Dashboard() {
           body: { device },
           headers: { 'x-zg-device': device }
         })
-        .then(({ data }) => {
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('PWA Dashboard fetch error:', error);
+            toast({
+              title: 'Error loading dashboard',
+              description: 'Please try again later',
+              variant: 'destructive'
+            });
+            return;
+          }
+          
           if (data?.ok) {
             setData(data);
           } else {
+            console.error('PWA Dashboard response not ok:', data);
             toast({
               title: 'Error loading dashboard',
               description: 'Please try again later',
@@ -31,7 +47,8 @@ export default function Dashboard() {
             });
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('PWA Dashboard exception:', err);
           toast({
             title: 'Error loading dashboard',
             description: 'Please try again later',
