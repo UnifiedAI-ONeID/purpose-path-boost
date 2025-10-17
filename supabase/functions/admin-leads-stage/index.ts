@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,14 +25,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'ID and stage required' }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
     const { error } = await supabase
       .from('leads')
-      .update({ stage, updated_at: new Date().toISOString() })
+      .update({ stage })
       .eq('id', id);
 
     if (error) throw error;

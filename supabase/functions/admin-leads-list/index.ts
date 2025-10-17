@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,22 +17,19 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const stage = url.searchParams.get('stage');
-    const owner = url.searchParams.get('owner');
+    const source = url.searchParams.get('source');
     const limit = parseInt(url.searchParams.get('limit') || '200');
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
     let query = supabase
       .from('leads')
       .select('*')
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit);
 
     if (stage) query = query.eq('stage', stage);
-    if (owner) query = query.eq('owner', owner);
+    if (source) query = query.eq('source', source);
 
     const { data, error } = await query;
 

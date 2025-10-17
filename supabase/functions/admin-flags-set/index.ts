@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,24 +19,18 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
-    const { key, value } = await req.json();
+    const { key, enabled } = await req.json();
     
     if (!key) {
       return jsonResponse({ ok: false, error: 'Key required' }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
     const { error } = await supabase
-      .from('remote_flags')
-      .upsert({ 
-        key, 
-        value: value || {}, 
-        updated_at: new Date().toISOString() 
-      });
+      .from('experiments')
+      .update({ enabled: enabled ?? true })
+      .eq('key', key);
 
     if (error) throw error;
 

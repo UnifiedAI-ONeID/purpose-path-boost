@@ -1,6 +1,6 @@
 import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 import { requireAdmin } from '../_shared/admin-auth.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { sbSrv } from '../_shared/utils.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,23 +19,27 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
     }
 
-    const { lang, ns, key, value } = await req.json();
+    const { source_lang, target_lang, source_text, translated_text, scope } = await req.json();
     
-    if (!lang || !key || !value) {
+    if (!source_lang || !target_lang || !source_text || !translated_text) {
       return jsonResponse({ 
         ok: false, 
-        error: 'Lang, key, and value required' 
+        error: 'Source lang, target lang, source text and translated text required' 
       }, 400);
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    const supabase = sbSrv();
 
     const { error } = await supabase
-      .from('i18n_dict')
-      .upsert({ lang, ns: ns || 'app', key, value });
+      .from('i18n_translations')
+      .upsert({ 
+        source_lang, 
+        target_lang, 
+        source_text, 
+        translated_text, 
+        scope: scope || 'general',
+        source_hash: `${source_lang}_${target_lang}_${source_text}`.substring(0, 255)
+      });
 
     if (error) throw error;
 
