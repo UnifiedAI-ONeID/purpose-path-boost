@@ -1,6 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Toast, ToastClose, ToastDescription, ToastProvider, ToastTitle, ToastViewport } from "@/components/ui/toast";
-import { useEffect, useState } from "react";
 
 export function Toaster() {
   const [mounted, setMounted] = useState(false);

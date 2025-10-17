@@ -1,6 +1,6 @@
+import React, { useEffect, useState } from "react";
 import { Toaster as Sonner, toast } from "sonner";
 import { usePrefs } from "@/prefs/PrefsProvider";
-import { useEffect, useState } from "react";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
