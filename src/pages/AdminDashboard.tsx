@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { User, Session } from '@supabase/supabase-js';
-import { LogOut, Mail, Calendar, Award, MessageSquare, Plus, Edit2, Trash2, Eye, BarChart3, Share2 } from 'lucide-react';
+import { LogOut, Plus, Edit2, Trash2, Eye, BarChart3, Share2 } from 'lucide-react';
 import { BlogEditor } from '@/components/BlogEditor';
 import BlogComposer from '@/components/BlogComposer';
 import CaptionBuilder from '@/components/CaptionBuilder';
@@ -66,13 +65,10 @@ interface AnalyticsEvent {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showBlogEditor, setShowBlogEditor] = useState(false);
   const [editingBlogId, setEditingBlogId] = useState<string | undefined>();
   const [sharingPost, setSharingPost] = useState<BlogPost | null>(null);
@@ -80,68 +76,8 @@ const AdminDashboard = () => {
   const [leadsSubTab, setLeadsSubTab] = useState<'overview' | 'funnel'>('overview');
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (!session?.user) {
-          navigate('/auth');
-        } else {
-          // Check admin status
-          setTimeout(() => {
-            checkAdminStatus(session.user.id);
-          }, 0);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (!session?.user) {
-        navigate('/auth');
-      } else {
-        checkAdminStatus(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const checkAdminStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error checking admin status');
-        toast.error('Access denied: Not an admin user');
-        navigate('/');
-        return;
-      }
-
-      if (!data) {
-        toast.error('Access denied: Not an admin user');
-        navigate('/');
-        return;
-      }
-
-      setIsAdmin(true);
-      loadData();
-    } catch (error) {
-      console.error('Admin check failed');
-      toast.error('Failed to verify admin access');
-      navigate('/');
-    }
-  };
+    loadData();
+  }, []);
 
   const fetchLeads = async () => {
     try {
@@ -231,20 +167,19 @@ const AdminDashboard = () => {
     }
   };
 
-  if (!isAdmin || isLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-accent mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+      <AdminShell>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
-      </div>
+      </AdminShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container max-w-7xl">
+    <AdminShell>
+      <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -261,9 +196,6 @@ const AdminDashboard = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-serif font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-muted-foreground">
-                Welcome back, {user?.email}
-              </p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => navigate('/admin/events')}>
@@ -699,7 +631,7 @@ const AdminDashboard = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </AdminShell>
   );
 };
 
