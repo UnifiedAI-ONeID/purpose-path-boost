@@ -138,7 +138,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: 'ZhenGrowth <onboarding@resend.dev>',
+      // IMPORTANT: Update this to your verified domain after completing domain verification at https://resend.com/domains
+      // For now using test domain - emails may not be delivered until domain is verified
+      from: 'ZhenGrowth <onboarding@resend.dev>', // TODO: Change to noreply@zhengrowth.com after domain verification
       to: [email],
       subject: subject,
       html: html,

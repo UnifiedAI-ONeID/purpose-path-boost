@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import GoogleIcon from '@/components/icons/GoogleIcon';
 import AppleIcon from '@/components/icons/AppleIcon';
+import { invokeApi } from '@/lib/api-client';
 
 export default function Auth() {
   const { lang } = usePrefs();
@@ -40,30 +41,32 @@ export default function Auth() {
     // Check if already authenticated
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        // For OAuth users, check if profile exists and create if missing
-        const { data: existingProfile } = await supabase
-          .from('zg_profiles')
-          .select('id')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
+        // For OAuth users, create profile using edge function if it doesn't exist
+        console.log('[Auth] Checking/creating profile for OAuth user:', session.user.id);
+        
+        try {
+          // Use edge function with service role to ensure profile creation
+          const response = await supabase.functions.invoke('api-auth-create-profile', {
+            body: {
+              userId: session.user.id,
+              email: session.user.email!,
+              name: session.user.user_metadata?.full_name || session.user.email!,
+              locale: 'en'
+            },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`
+            }
+          });
 
-        if (!existingProfile && session.user.email) {
-          console.log('[Auth] OAuth user - creating profile:', session.user.id);
-          
-          const { error: profileError } = await supabase
-            .from('zg_profiles')
-            .insert({
-              auth_user_id: session.user.id,
-              locale: 'en',
-              name: session.user.user_metadata?.full_name || session.user.email,
-              email: session.user.email
-            });
-
-          if (profileError) {
-            console.error('[Auth] OAuth profile creation error:', profileError);
+          if (response.error) {
+            console.error('[Auth] OAuth profile creation error:', response.error);
+            // Don't block login if profile creation fails
           } else {
-            console.log('[Auth] OAuth profile created successfully');
+            console.log('[Auth] OAuth profile handled:', response.data);
           }
+        } catch (profileErr) {
+          console.error('[Auth] OAuth profile creation exception:', profileErr);
+          // Non-blocking error
         }
 
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
@@ -73,18 +76,24 @@ export default function Auth() {
           navigate(returnTo);
         } else {
           // Check admin status to route appropriately
-          const { data, error } = await supabase.functions.invoke('api-admin-check-role');
-          
-          if (error) {
+          try {
+            const data = await invokeApi('/api/admin/check-role', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`
+              }
+            });
+            
+            const isAdmin = data?.is_admin === true;
+            console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
+            
+            if (isAdmin) {
+              navigate('/admin');
+            } else {
+              navigate('/me');
+            }
+          } catch (error) {
             console.error('[Auth] Admin check error on session restore:', error);
-          }
-          
-          const isAdmin = data?.is_admin === true;
-          console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
-          
-          if (isAdmin) {
-            navigate('/admin');
-          } else {
+            // Default to /me on error
             navigate('/me');
           }
         }
@@ -238,24 +247,34 @@ export default function Auth() {
 
         if (error) throw error;
 
-        // Create profile immediately after signup
+        // Create profile immediately after signup using edge function
         if (data.user) {
-          console.log('[Auth] Signup successful, creating profile:', data.user.id);
+          console.log('[Auth] Signup successful, creating profile via edge function:', data.user.id);
           
-          const { error: profileError } = await supabase
-            .from('zg_profiles')
-            .insert({
-              auth_user_id: data.user.id,
-              locale: 'en',
-              name: data.user.user_metadata?.full_name || email,
-              email: email
+          try {
+            // Use edge function with service role to bypass RLS issues
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await supabase.functions.invoke('api-auth-create-profile', {
+              body: {
+                userId: data.user.id,
+                email: email,
+                name: data.user.user_metadata?.full_name || email,
+                locale: 'en'
+              },
+              headers: session?.access_token ? {
+                Authorization: `Bearer ${session.access_token}`
+              } : undefined
             });
 
-          if (profileError) {
-            console.error('[Auth] Profile creation error:', profileError);
-            // Don't block signup - profile can be created later
-          } else {
-            console.log('[Auth] Profile created successfully');
+            if (response.error) {
+              console.error('[Auth] Profile creation error:', response.error);
+              // Don't block signup - profile can be created later
+            } else {
+              console.log('[Auth] Profile created successfully:', response.data);
+            }
+          } catch (profileErr) {
+            console.error('[Auth] Profile creation exception:', profileErr);
+            // Non-blocking error
           }
         }
 

@@ -3,6 +3,9 @@ project_id = "jwpnybimcqzcmbkjcqyj"
 [functions.webhook-user-created]
 verify_jwt = false
 
+[functions.api-auth-create-profile]
+verify_jwt = false
+
 [functions.api-version]
 verify_jwt = false
 
