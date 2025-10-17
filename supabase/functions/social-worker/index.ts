@@ -25,9 +25,13 @@ async function getSecret(supabase: any, key: string): Promise<string> {
     .from('secrets')
     .select('value, iv')
     .eq('key', key)
-    .single();
+    .maybeSingle();
   
-  if (error || !data) throw new Error(`Secret ${key} not found`);
+  if (error) {
+    console.error(`[getSecret] Error fetching ${key}:`, error);
+    throw new Error(`Secret ${key} query failed`);
+  }
+  if (!data) throw new Error(`Secret ${key} not found`);
   return await decryptSecret({ iv: data.iv, value: data.value });
 }
 

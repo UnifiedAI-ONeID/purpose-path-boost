@@ -185,7 +185,7 @@ serve(async (req) => {
     }
 
     // Save to cache
-    const { data: saved } = await supabase
+    const { data: saved, error: saveErr } = await supabase
       .from('ai_suggestions_cache')
       .insert([{
         profile_id,
@@ -195,7 +195,11 @@ serve(async (req) => {
         score: result.score
       }])
       .select()
-      .single();
+      .maybeSingle();
+
+    if (saveErr) {
+      console.error('[pwa-ai-suggest] Cache save error:', saveErr);
+    }
 
     return new Response(
       JSON.stringify({ ok: true, cached: false, ...saved, headline: result.headline }),

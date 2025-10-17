@@ -47,10 +47,18 @@ Deno.serve(async (req) => {
         .from('zg_profiles')
         .insert([{ device_id: device }])
         .select('id')
-        .single();
+        .maybeSingle();
 
       if (createError) {
-        console.error('Profile creation error:', createError);
+        console.error('[pwa-me-summary] Profile creation error:', createError);
+        return new Response(
+          JSON.stringify({ ok: true, profile: null, next: null, goals: [], receipts: [], streak: 0, ref_url: null }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!newProfile) {
+        console.error('[pwa-me-summary] Profile creation returned no data');
         return new Response(
           JSON.stringify({ ok: true, profile: null, next: null, goals: [], receipts: [], streak: 0, ref_url: null }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

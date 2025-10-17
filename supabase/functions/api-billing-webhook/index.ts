@@ -11,11 +11,15 @@ async function grantCalCredit(profile_id: string, minutes: number) {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
   
-  const { data: profile } = await supabase
+  const { data: profile, error: profileErr } = await supabase
     .from('zg_profiles')
     .select('email, name')
     .eq('id', profile_id)
-    .single();
+    .maybeSingle();
+
+  if (profileErr) {
+    console.error('[grantCalCredit] Profile query error:', profileErr);
+  }
 
   if (!profile?.email) return;
 
@@ -96,11 +100,15 @@ Deno.serve(async (req) => {
       }
 
       // Grant Cal.com credit for Pro+ plan
-      const { data: plan } = await supabase
+      const { data: plan, error: planErr } = await supabase
         .from('plans')
         .select('features')
         .eq('slug', plan_slug)
-        .single();
+        .maybeSingle();
+
+      if (planErr) {
+        console.error('[billing-webhook] Plan query error:', planErr);
+      }
 
       const sessionMinutes = Number(plan?.features?.session_credit_min || 0);
       if (sessionMinutes > 0) {

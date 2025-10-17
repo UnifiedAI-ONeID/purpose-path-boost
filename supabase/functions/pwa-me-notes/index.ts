@@ -66,12 +66,19 @@ serve(async (req) => {
         .from('me_notes')
         .insert([{ profile_id, session_id, body: noteBody }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Note creation error:', error);
+        console.error('[pwa-me-notes] Note creation error:', error);
         return new Response(
           JSON.stringify({ ok: false, error: error.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+
+      if (!data) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Failed to create note' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }

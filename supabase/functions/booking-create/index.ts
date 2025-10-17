@@ -100,10 +100,10 @@ Deno.serve(async (req) => {
         expires_at: expiresAt.toISOString(),
       })
       .select()
-      .single();
+      .maybeSingle();
 
-    if (bookingError) {
-      console.error('Error creating booking:', bookingError);
+    if (bookingError || !booking) {
+      console.error('[Booking Create] Error creating booking:', bookingError);
       return jsonResponse({ ok: false, error: 'Failed to create booking' }, 200);
     }
 

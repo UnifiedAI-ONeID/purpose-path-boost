@@ -49,11 +49,15 @@ Deno.serve(async (req) => {
 
     if (!refData) {
       const ref_code = crypto.randomUUID().substring(0, 8).toUpperCase();
-      const { data: newRef } = await supabase
+      const { data: newRef, error: insertErr } = await supabase
         .from('zg_referrals')
         .insert({ profile_id: profile.id, ref_code })
         .select()
-        .single();
+        .maybeSingle();
+      
+      if (insertErr) {
+        console.error('[api-me-summary] Referral insert error:', insertErr);
+      }
       refData = newRef;
     }
 

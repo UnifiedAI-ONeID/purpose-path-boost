@@ -64,12 +64,19 @@ serve(async (req) => {
         .from('me_goals')
         .insert([{ profile_id, title, due_date }])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Goal creation error:', error);
+        console.error('[pwa-me-goals] Goal creation error:', error);
         return new Response(
           JSON.stringify({ ok: false, error: error.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+
+      if (!data) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Failed to create goal' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
         );
       }
@@ -102,13 +109,20 @@ serve(async (req) => {
         .update(updates)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.error('Goal update error:', error);
+        console.error('[pwa-me-goals] Goal update error:', error);
         return new Response(
           JSON.stringify({ ok: false, error: error.message }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+
+      if (!data) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Goal not found' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
         );
       }
 

@@ -44,9 +44,12 @@ Deno.serve(async (req) => {
       currency: price.currency, 
       amount_cents: price.charge_cents,
       status: 'pending'
-    }]).select().single();
+    }]).select().maybeSingle();
 
-    if (orderErr) throw orderErr;
+    if (orderErr || !order) {
+      console.error('[api-express-create] Order creation error:', orderErr);
+      throw new Error(orderErr?.message || 'Failed to create order');
+    }
 
     const bookingUrl = `${new URL(req.url).origin}/book?express=true&order=${order.id}`;
 
