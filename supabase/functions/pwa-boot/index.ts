@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
         
       if (!data) {
-        const { data: ins } = await anonClient
+        const { data: ins } = await serviceClient
           .from('zg_profiles')
           .insert({ device_id: device, locale: lang })
           .select()

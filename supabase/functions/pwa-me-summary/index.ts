@@ -15,6 +15,10 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!
     );
+    const service = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
     const url = new URL(req.url);
     const device = url.searchParams.get('device');
@@ -39,7 +43,7 @@ Deno.serve(async (req) => {
 
     if (!profileId) {
       // Create profile for new device
-      const { data: newProfile, error: createError } = await supabase
+      const { data: newProfile, error: createError } = await service
         .from('zg_profiles')
         .insert([{ device_id: device }])
         .select('id')

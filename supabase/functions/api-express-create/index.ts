@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   try {
     const s = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
     const { name, email, language = 'en', notes = '', currency = 'USD', offer_slug = 'priority-30' } = await req.json();
