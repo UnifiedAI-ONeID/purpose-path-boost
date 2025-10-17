@@ -3102,6 +3102,10 @@ export type Database = {
         Args: { p_amount?: number; p_ticket_id: string }
         Returns: Json
       }
+      get_my_profile_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_streak: {
         Args: { p_profile_id: string }
         Returns: number
