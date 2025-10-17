@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAvailability } from '@/hooks/useAvailability';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { usePrefs } from '@/prefs/PrefsProvider';
@@ -8,6 +7,7 @@ import { t } from '@/i18n/dict';
 import { triggerHomeAnim } from '@/anim/animator';
 import { invokeApi } from '@/lib/api-client';
 import { toast } from 'sonner';
+import CalBook from './CalBook';
 
 interface CoachingCTAProps {
   slug: string;
@@ -31,7 +31,8 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
   const [coupon, setCoupon] = useState('');
   const [promo] = useState(new URLSearchParams(window.location.search).get('promo') || '');
   const [busy, setBusy] = useState(false);
-  const { slots, loading } = useAvailability(slug, { days: 14 });
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calSlug, setCalSlug] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -59,25 +60,27 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     })();
   }, [slug, currency, coupon, promo]);
 
+  // Load Cal.com slug for this offer
+  useEffect(() => {
+    (async () => {
+      const data = await invokeApi('/api/coaching/get', { body: { slug } });
+      if (data?.ok && data.offer?.cal_event_type_slug) {
+        setCalSlug(data.offer.cal_event_type_slug);
+      }
+    })();
+  }, [slug]);
+
   async function openBooking() {
     triggerHomeAnim(600);
     setBusy(true);
     
     try {
-      const data = await invokeApi('/api/coaching/book-url', {
-        body: {
-          slug,
-          name: defaultName,
-          email: defaultEmail,
-          campaign: 'coaching-cta'
-        }
-      });
-
-      if (data?.ok && data.url) {
-        window.open(data.url, '_blank', 'noopener,noreferrer');
-      } else {
-        toast.error('Failed to open booking');
+      if (!calSlug) {
+        toast.error('Calendar configuration not found');
+        return;
       }
+      
+      setShowCalendar(true);
     } finally {
       setTimeout(() => setBusy(false), 700);
     }
@@ -120,6 +123,33 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     style:'currency', 
     currency: meta?.price?.cur || currency 
   });
+
+  // Show embedded calendar
+  if (showCalendar && calSlug) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Select Your Time</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCalendar(false)}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
+            Close Calendar
+          </Button>
+        </div>
+        <CalBook 
+          slug={calSlug}
+          prefill={{
+            name: defaultName,
+            email: defaultEmail
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
