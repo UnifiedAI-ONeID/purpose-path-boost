@@ -255,4 +255,33 @@ verify_jwt = true
 [functions.api-admin-leads-export]
 verify_jwt = true
 
+[functions.api-admin-plans-list]
+verify_jwt = true
+
+[functions.api-admin-plans-upsert]
+verify_jwt = true
+
+[functions.api-admin-plans-delete]
+verify_jwt = true
+
+[functions.api-admin-packages-list]
+verify_jwt = true
+
+[functions.api-admin-packages-upsert]
+verify_jwt = true
+
+[functions.api-admin-package-lessons-set]
+verify_jwt = true
+
+[functions.api-admin-plan-includes-set]
+verify_jwt = true
+
+[functions.api-admin-funnels-list]
+verify_jwt = true
+
+[functions.api-admin-funnels-upsert]
+verify_jwt = true
+
+[functions.api-admin-funnel-triggers-set]
+verify_jwt = true
 

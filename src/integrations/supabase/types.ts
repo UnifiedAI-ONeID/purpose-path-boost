@@ -1343,6 +1343,38 @@ export type Database = {
           },
         ]
       }
+      funnels: {
+        Row: {
+          config: Json
+          id: string
+          name: string
+          slug: string
+          target_plan_slug: string | null
+        }
+        Insert: {
+          config?: Json
+          id?: string
+          name: string
+          slug: string
+          target_plan_slug?: string | null
+        }
+        Update: {
+          config?: Json
+          id?: string
+          name?: string
+          slug?: string
+          target_plan_slug?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnels_target_plan_slug_fkey"
+            columns: ["target_plan_slug"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       fx_rates: {
         Row: {
           base: string
@@ -1510,6 +1542,66 @@ export type Database = {
           id?: string
           lesson_slug?: string
           profile_id?: string
+        }
+        Relationships: []
+      }
+      lesson_funnel_triggers: {
+        Row: {
+          funnel_slug: string
+          lesson_slug: string
+        }
+        Insert: {
+          funnel_slug: string
+          lesson_slug: string
+        }
+        Update: {
+          funnel_slug?: string
+          lesson_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_funnel_triggers_funnel_slug_fkey"
+            columns: ["funnel_slug"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "lesson_funnel_triggers_lesson_slug_fkey"
+            columns: ["lesson_slug"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      lesson_packages: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          poster_url: string | null
+          slug: string
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          poster_url?: string | null
+          slug: string
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          poster_url?: string | null
+          slug?: string
+          summary?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -1876,15 +1968,82 @@ export type Database = {
         }
         Relationships: []
       }
+      package_lessons: {
+        Row: {
+          lesson_slug: string
+          order_index: number | null
+          package_id: string
+        }
+        Insert: {
+          lesson_slug: string
+          order_index?: number | null
+          package_id: string
+        }
+        Update: {
+          lesson_slug?: string
+          order_index?: number | null
+          package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_lessons_lesson_slug_fkey"
+            columns: ["lesson_slug"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "package_lessons_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_includes: {
+        Row: {
+          package_id: string
+          plan_slug: string
+        }
+        Insert: {
+          package_id: string
+          plan_slug: string
+        }
+        Update: {
+          package_id?: string
+          plan_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_includes_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_includes_plan_slug_fkey"
+            columns: ["plan_slug"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       plans: {
         Row: {
           active: boolean | null
           base_currency: string
           base_price_cents: number
+          blurb: string | null
           created_at: string | null
           description: string | null
+          faq: Json | null
           features: Json | null
           name: string
+          price_id_month: string | null
+          price_id_year: string | null
           slug: string
           updated_at: string | null
         }
@@ -1892,10 +2051,14 @@ export type Database = {
           active?: boolean | null
           base_currency?: string
           base_price_cents?: number
+          blurb?: string | null
           created_at?: string | null
           description?: string | null
+          faq?: Json | null
           features?: Json | null
           name: string
+          price_id_month?: string | null
+          price_id_year?: string | null
           slug: string
           updated_at?: string | null
         }
@@ -1903,10 +2066,14 @@ export type Database = {
           active?: boolean | null
           base_currency?: string
           base_price_cents?: number
+          blurb?: string | null
           created_at?: string | null
           description?: string | null
+          faq?: Json | null
           features?: Json | null
           name?: string
+          price_id_month?: string | null
+          price_id_year?: string | null
           slug?: string
           updated_at?: string | null
         }

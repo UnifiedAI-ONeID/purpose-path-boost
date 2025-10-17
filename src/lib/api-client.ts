@@ -91,6 +91,20 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/social/plan': 'api-social-plan',
   '/api/health': 'api-health',
   '/api/auth/role': 'api-auth-role',
+  '/api/admin/plans/list': 'api-admin-plans-list',
+  '/api/admin/plans/upsert': 'api-admin-plans-upsert',
+  '/api/admin/plans/delete': 'api-admin-plans-delete',
+  '/api/admin/packages/list': 'api-admin-packages-list',
+  '/api/admin/packages/upsert': 'api-admin-packages-upsert',
+  '/api/admin/package-lessons/set': 'api-admin-package-lessons-set',
+  '/api/admin/plan-includes/set': 'api-admin-plan-includes-set',
+  '/api/admin/funnels/list': 'api-admin-funnels-list',
+  '/api/admin/funnels/upsert': 'api-admin-funnels-upsert',
+  '/api/admin/funnel-triggers/set': 'api-admin-funnel-triggers-set',
+  '/api/admin/leads/list': 'api-admin-leads-list',
+  '/api/admin/leads/analytics': 'api-admin-leads-analytics',
+  '/api/admin/leads/update': 'api-admin-leads-update',
+  '/api/admin/leads/export': 'api-admin-leads-export',
 };
 
 /**
