@@ -355,3 +355,51 @@ App
 **The migration is complete and production-ready!** 🎉
 
 All React hook errors, theme provider issues, and navigation problems are resolved. The application is now stable and ready for deployment.
+
+---
+
+## Update: Deployment Lag Fix (2025-01-17) ✅
+
+### Issue: api-testimonials-list Deployment Mismatch
+**Problem:** Edge function was throwing "column testimonials.sort does not exist" errors despite code being updated to use `featured` and `created_at`.
+
+**Root Cause:** Deployment lag between code updates and runtime execution - old version still running in some instances.
+
+### ✅ Solution Applied:
+
+#### 1. Database Compatibility Layer
+Added `sort` column to ensure compatibility during deployment transition:
+```sql
+ALTER TABLE public.testimonials 
+ADD COLUMN IF NOT EXISTS sort integer DEFAULT 100;
+
+CREATE INDEX IF NOT EXISTS idx_testimonials_sort ON public.testimonials(sort DESC);
+```
+
+#### 2. Forced Redeployment
+Updated function version marker (v3 → v4) to trigger fresh deployment:
+```typescript
+console.log('[Testimonials v4] Fetching testimonials from database');
+```
+
+#### 3. Comprehensive Verification
+Checked all core edge functions - **no errors found**:
+- ✅ api-coaching-list
+- ✅ api-events-get
+- ✅ api-events-tickets
+- ✅ api-coaching-get
+- ✅ api-contact-submit
+- ✅ api-events-register
+- ✅ api-cal-book-url
+- ✅ Database error logs (no critical errors)
+
+### Prevention Strategy
+For future schema changes:
+1. Add new columns first (with defaults)
+2. Deploy edge function code
+3. Wait for full deployment (24-48 hours)
+4. Remove old columns if needed
+
+This "expand-contract" pattern prevents deployment lag issues.
+
+**Status: RESOLVED** - All edge functions operational, deployment lag mitigated.
