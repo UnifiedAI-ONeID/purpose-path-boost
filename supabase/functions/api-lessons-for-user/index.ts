@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,10 +12,7 @@ Deno.serve(async (req) => {
     const tag = url.searchParams.get('tag');
 
     if (!profileId) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'profile_id required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'profile_id required', lessons: [] }, 200);
     }
 
     const supabase = createClient(
@@ -49,22 +42,14 @@ Deno.serve(async (req) => {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Lessons query error:', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      console.error('[api-lessons-for-user] Query error:', error);
+      return jsonResponse({ ok: false, error: error.message, lessons: [] }, 200);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, lessons: data || [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, lessons: data || [] }, 200);
   } catch (error) {
-    console.error('Lessons for user error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-lessons-for-user] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message, lessons: [] }, 200);
   }
 });

@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,20 +12,14 @@ Deno.serve(async (req) => {
       : Object.fromEntries(new URL(req.url).searchParams);
 
     if (!slug) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing slug parameter' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'Missing slug parameter' }, 200);
     }
 
     // Get Cal.com API key
     const calApiKey = Deno.env.get('CAL_COM_API_KEY');
     
     if (!calApiKey) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Cal.com API not configured' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      return jsonResponse({ ok: false, error: 'Cal.com API not configured' }, 200);
     }
 
     // Fetch availability from Cal.com
@@ -41,23 +31,16 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to fetch availability' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      console.error('[api-coaching-availability] Cal.com API error:', response.status);
+      return jsonResponse({ ok: false, error: 'Failed to fetch availability' }, 200);
     }
 
     const data = await response.json();
 
-    return new Response(
-      JSON.stringify({ ok: true, ...data }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, ...data }, 200);
   } catch (error) {
-    console.error('Coaching availability error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-coaching-availability] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,20 +7,14 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ ok: false, error: 'Method not allowed' }, 200);
   }
 
   try {
     const { profile_id, lesson_slug, last_position_sec, watched_seconds, completed } = await req.json();
 
     if (!profile_id || !lesson_slug) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'profile_id and lesson_slug required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'profile_id and lesson_slug required' }, 200);
     }
 
     const supabase = createClient(
@@ -46,22 +36,14 @@ Deno.serve(async (req) => {
       });
 
     if (error) {
-      console.error('Progress update error:', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      console.error('[api-lessons-progress] Update error:', error);
+      return jsonResponse({ ok: false, error: error.message }, 200);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true }, 200);
   } catch (error) {
-    console.error('Lessons progress error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-lessons-progress] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });
