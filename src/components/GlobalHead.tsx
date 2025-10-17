@@ -19,9 +19,12 @@ export function GlobalHead() {
   return (
     <>
       <Helmet>
-        {/* Favicon */}
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/app-icon.png" />
+        {/* Favicon - Multiple sizes for better compatibility */}
+        <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/app-icon-512.png" />
+        <link rel="shortcut icon" href="/app-icon-192.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         
         {/* Manifest */}
         <link rel="manifest" href={
@@ -40,9 +43,9 @@ export function GlobalHead() {
         <meta charSet="utf-8" />
         
         {/* Apple PWA */}
-        <link rel="apple-touch-icon" href="/app-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="ZhenGrowth" />
         
         {/* iOS splash screens */}
         <link rel="apple-touch-startup-image" href="/assets/splash/launch-1290x2796.png" media="(device-width:430px) and (device-height:932px) and (-webkit-device-pixel-ratio:3)" />
@@ -54,7 +57,7 @@ export function GlobalHead() {
         
         {/* Performance hints */}
         <link rel="preconnect" href="https://cdn.zhengrowth.com" crossOrigin="anonymous" />
-        <link rel="preload" as="image" href="/app-icon.png" imageSizes="192x192" />
+        <link rel="preload" as="image" href="/app-icon-192.png" imageSizes="192x192" />
         
         {/* Security headers */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />

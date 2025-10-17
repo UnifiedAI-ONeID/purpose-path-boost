@@ -3,6 +3,7 @@ import ThemeToggle from './ThemeToggle';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import SmartLink from './SmartLink';
 import { ROUTES } from '@/nav/routes';
+import logo from '@/assets/images/logo.png';
 
 type Props = {
   children: React.ReactNode;
@@ -19,7 +20,15 @@ export default function SiteShell({ children }: Props) {
     <div className="min-h-[100svh] bg-bg text-text">
       <header className="h-14 px-4 border-b border-border bg-surface flex items-center justify-between sticky top-0 z-40 backdrop-blur-md bg-surface/90">
         <SmartLink to={ROUTES.home} className="font-semibold flex items-center gap-2 text-text hover:opacity-80 transition-opacity">
-          <span className="text-2xl">🍃</span>
+          <img 
+            src={logo} 
+            alt="ZhenGrowth Logo" 
+            className="h-8 w-8"
+            loading="eager"
+            onError={(e) => {
+              e.currentTarget.src = '/app-icon-192.png';
+            }}
+          />
           <span>ZhenGrowth</span>
         </SmartLink>
         
