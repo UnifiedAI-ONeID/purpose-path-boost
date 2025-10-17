@@ -79,7 +79,7 @@ export default function IntegrationsAdmin() {
           <div>
             <Label>Theme</Label>
             <select
-              className="input w-full"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={cal.theme}
               onChange={e => setCal({ ...cal, theme: e.target.value })}
             >
@@ -154,7 +154,7 @@ export default function IntegrationsAdmin() {
           <div>
             <Label>Secret Key</Label>
             <select
-              className="input w-full"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               value={secret.key}
               onChange={e => setSecret({ ...secret, key: e.target.value })}
             >
