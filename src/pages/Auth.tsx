@@ -40,6 +40,32 @@ export default function Auth() {
     // Check if already authenticated
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
+        // For OAuth users, check if profile exists and create if missing
+        const { data: existingProfile } = await supabase
+          .from('zg_profiles')
+          .select('id')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+
+        if (!existingProfile && session.user.email) {
+          console.log('[Auth] OAuth user - creating profile:', session.user.id);
+          
+          const { error: profileError } = await supabase
+            .from('zg_profiles')
+            .insert({
+              auth_user_id: session.user.id,
+              locale: 'en',
+              name: session.user.user_metadata?.full_name || session.user.email,
+              email: session.user.email
+            });
+
+          if (profileError) {
+            console.error('[Auth] OAuth profile creation error:', profileError);
+          } else {
+            console.log('[Auth] OAuth profile created successfully');
+          }
+        }
+
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
         const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
@@ -202,7 +228,7 @@ export default function Auth() {
 
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -211,6 +237,27 @@ export default function Auth() {
         });
 
         if (error) throw error;
+
+        // Create profile immediately after signup
+        if (data.user) {
+          console.log('[Auth] Signup successful, creating profile:', data.user.id);
+          
+          const { error: profileError } = await supabase
+            .from('zg_profiles')
+            .insert({
+              auth_user_id: data.user.id,
+              locale: 'en',
+              name: data.user.user_metadata?.full_name || email,
+              email: email
+            });
+
+          if (profileError) {
+            console.error('[Auth] Profile creation error:', profileError);
+            // Don't block signup - profile can be created later
+          } else {
+            console.log('[Auth] Profile created successfully');
+          }
+        }
 
         toast.success(
           lang === 'zh-CN' ? '注册成功！' :

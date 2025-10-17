@@ -61,36 +61,75 @@ console.error('[Auth] OAuth details:', { provider, message: error.message });
 - Simplified Chinese (zh-CN)  
 - Traditional Chinese (zh-TW)
 
-### 3. Profile Creation Trigger (Attempted)
+### 3. Profile Creation - Application-Level Implementation ✅
 
-**Issue Identified:**
-- Cannot create triggers on `auth.users` table - it's a Supabase-managed schema
-- Received error: `"must be owner of relation users"`
-- The `handle_new_user()` function exists but trigger is not connected
+**Implementation Complete:**
+- Profile creation added directly in `Auth.tsx` application code
+- Handles both email/password and OAuth signup flows
+- Creates profiles immediately after successful authentication
 
-**Workaround Options:**
+**Code Changes:**
 
-#### Option A: Supabase Auth Webhooks (Recommended)
-Set up via Lovable Cloud Backend interface:
-1. Go to Authentication → Webhooks
-2. Add webhook for `auth.user.created` event
-3. Point to edge function that creates profile
-4. Webhook triggers automatically on new signups
+#### Email/Password Signup (lines 204-236)
+```typescript
+if (data.user) {
+  console.log('[Auth] Signup successful, creating profile:', data.user.id);
+  
+  const { error: profileError } = await supabase
+    .from('zg_profiles')
+    .insert({
+      auth_user_id: data.user.id,
+      locale: 'en',
+      name: data.user.user_metadata?.full_name || email,
+      email: email
+    });
 
-#### Option B: Manual Profile Creation in Application Code
-- Create profile in application code after successful signup
-- Add call to edge function from Auth.tsx
-- Less reliable than webhooks but doesn't require infrastructure changes
+  if (profileError) {
+    console.error('[Auth] Profile creation error:', profileError);
+    // Don't block signup - profile can be created later
+  } else {
+    console.log('[Auth] Profile created successfully');
+  }
+}
+```
 
-#### Option C: Use Supabase Dashboard (If External Supabase)
-- If using external Supabase project
-- Can create trigger directly in Supabase SQL Editor
-- Not applicable for Lovable Cloud projects
+#### OAuth Signup (lines 40-91)
+```typescript
+// For OAuth users, check if profile exists and create if missing
+const { data: existingProfile } = await supabase
+  .from('zg_profiles')
+  .select('id')
+  .eq('auth_user_id', session.user.id)
+  .maybeSingle();
 
-**Current Status:**
-- Function exists: `public.handle_new_user()`
-- Trigger missing: `on_auth_user_created`
-- **Recommendation:** Set up Auth webhook in backend interface
+if (!existingProfile && session.user.email) {
+  console.log('[Auth] OAuth user - creating profile:', session.user.id);
+  
+  const { error: profileError } = await supabase
+    .from('zg_profiles')
+    .insert({
+      auth_user_id: session.user.id,
+      locale: 'en',
+      name: session.user.user_metadata?.full_name || session.user.email,
+      email: session.user.email
+    });
+
+  if (profileError) {
+    console.error('[Auth] OAuth profile creation error:', profileError);
+  } else {
+    console.log('[Auth] OAuth profile created successfully');
+  }
+}
+```
+
+**Coverage:**
+- ✅ Email/password signup
+- ✅ Google OAuth signup
+- ✅ Apple OAuth signup
+- ✅ Error handling (doesn't block signup on failure)
+- ✅ Idempotent for OAuth (checks if profile exists first)
+
+**Note:** For production, consider implementing Database Webhooks for more robust profile creation that handles all edge cases automatically.
 
 ## 🔍 Debugging Features Added
 
@@ -139,39 +178,28 @@ Each error now includes relevant context:
 
 ## 🚀 Next Steps
 
-### 1. Set Up Profile Creation (Choose One)
-
-**Option A - Auth Webhook (Recommended):**
-```xml
-<lov-actions>
-  <lov-open-backend>Open Backend to Configure Webhooks</lov-open-backend>
-</lov-actions>
-```
-
-Then:
-1. Navigate to Authentication → Webhooks
-2. Create webhook for `auth.user.created`
-3. URL: Point to your edge function endpoint
-4. Test webhook delivery
-
-**Option B - Application-Level (Quick Fix):**
-Add after successful signup in Auth.tsx:
-```typescript
-// After successful signup
-await supabase.functions.invoke('create-user-profile', {
-  body: { user_id: data.user?.id }
-});
-```
+### 1. Test Profile Creation ✅ READY
+Profile creation is now implemented in the application. Test by:
+- Creating a new user with email/password signup
+- Logging in with Google OAuth
+- Logging in with Apple OAuth
+- Check `zg_profiles` table to verify entries are created
 
 ### 2. Verify Password Reset Email
 - Check Resend domain verification status
-- Update `from` address if domain is verified
+- Update `from` address in `send-password-reset` edge function if domain is verified
 - Test password reset flow end-to-end
 
 ### 3. Monitor Logs
 - Check browser console for `[Auth]` logs
-- Verify all error scenarios are properly logged
+- Verify profile creation logs appear after signup
 - Ensure user-friendly messages display correctly
+
+### 4. (Optional) Upgrade to Database Webhooks
+For a more robust production solution:
+- Configure Database Webhook in backend for `auth.users` INSERT
+- Point to `webhook-user-created` edge function
+- Provides automatic profile creation for all edge cases
 
 ## 📊 Impact Summary
 
@@ -188,8 +216,9 @@ await supabase.functions.invoke('create-user-profile', {
 - ✅ Consistent messaging across flows
 
 ### Remaining Issues
-- ⚠️ Profile creation trigger not connected (requires webhook setup)
+- ✅ Profile creation implemented (application-level)
 - ⚠️ Password reset emails require domain verification in Resend
+- 💡 Consider upgrading to Database Webhooks for more robust profile creation
 
 ## 🔗 Related Documentation
 
@@ -198,4 +227,4 @@ await supabase.functions.invoke('create-user-profile', {
 
 ---
 
-**Status:** ✅ Auth improvements deployed, profile trigger requires backend webhook configuration
+**Status:** ✅ Auth improvements and profile creation complete - ready for testing
