@@ -351,3 +351,6 @@ verify_jwt = false
 [functions.admin-cache-bust]
 verify_jwt = true
 
+[functions.dashboard-user-analytics]
+verify_jwt = true
+
