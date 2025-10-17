@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[Testimonials v2] Fetching testimonials from database');
+    console.log('[Testimonials v3] Fetching testimonials from database');
 
     // Fetch testimonials with explicit column selection
     // Table has: id, name, locale, quote, role, avatar_url, featured, created_at
