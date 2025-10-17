@@ -2,12 +2,10 @@ import { useEffect, useState } from 'react';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
 import { triggerHomeAnim } from '@/anim/animator';
-import { usePrefs } from '@/prefs/PrefsProvider';
-import { at } from '@/i18n/admin';
+import { ADMIN_NAV } from '@/admin/nav';
 import logo from '@/assets/images/logo.png';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
-  const { lang } = usePrefs();
   const [open, setOpen] = useState(false);
   const [pathname, setPathname] = useState('');
 
@@ -52,71 +50,39 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [pathname]);
 
   return (
-    <div className="min-h-[100svh] bg-background text-foreground grid md:grid-cols-[240px_1fr]">
-      <aside className={`border-r border-border bg-card ${open ? 'block' : 'hidden'} md:block`}>
-        <div className="p-4 flex items-center gap-3">
+    <div className="min-h-[100svh] grid md:grid-cols-[240px_1fr]" style={{ background: 'var(--background)' }}>
+      <aside className={`border-r border-border ${open ? 'block' : 'hidden'} md:block`}>
+        <div className="p-4 flex items-center gap-2">
           <img 
             src={logo} 
             alt="ZhenGrowth" 
-            className="h-8 w-8"
+            className="h-8 w-8 rounded-lg"
             onError={(e) => {
               e.currentTarget.src = '/app-icon-192.png';
             }}
           />
-          <span className="text-lg font-serif font-bold text-primary">ZhenGrowth</span>
+          <div className="font-semibold">ZhenGrowth · Admin</div>
         </div>
-        <nav className="p-2 grid gap-1 text-sm">
-          <Nav href="/admin">{at(lang, 'Dashboard')}</Nav>
-          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {at(lang, 'Bookings')}
-          </div>
-          <Nav href="/admin/bookings">{at(lang, 'Bookings')}</Nav>
-          <Nav href="/admin/cal-bookings">Cal.com</Nav>
-          <Nav href="/admin/cal-event-types">Event Types</Nav>
-          <Nav href="/admin/calendar">{at(lang, 'Calendar')}</Nav>
-          
-          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {at(lang, 'Products')}
-          </div>
-          <Nav href="/admin/coaching">{at(lang, 'Coaching')}</Nav>
-          <Nav href="/admin/events">{at(lang, 'Events')}</Nav>
-          <Nav href="/admin/express">{at(lang, 'Express')}</Nav>
-          
-          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {at(lang, 'Marketing')}
-          </div>
-          <Nav href="/admin/coupons">Coupons</Nav>
-          
-          <div className="mt-3 mb-1 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {at(lang, 'Settings')}
-          </div>
-          <Nav href="/admin/pricing">{at(lang, 'Pricing')}</Nav>
-          <Nav href="/admin/ai">{at(lang, 'AI')}</Nav>
-          <Nav href="/admin/seo">SEO Monitor</Nav>
+        <nav className="p-2 space-y-1">
+          {ADMIN_NAV.map((item) => (
+            <Nav key={item.href} href={item.href}>
+              {item.label}
+            </Nav>
+          ))}
         </nav>
       </aside>
       <main>
-        <header className="sticky top-0 bg-card/80 backdrop-blur border-b border-border h-14 flex items-center justify-between px-4 z-10">
-          <button className="md:hidden" onClick={() => setOpen(o => !o)}>
+        <header 
+          className="rounded-2xl p-4 md:p-6 text-white m-4 mb-0"
+          style={{ background: 'linear-gradient(120deg,#0e7c6b,#0b5f54)' }}
+        >
+          <button className="md:hidden mb-2" onClick={() => setOpen(o => !o)}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
-            <img 
-              src={logo} 
-              alt="ZhenGrowth Admin" 
-              className="h-6 w-6"
-              onError={(e) => {
-                e.currentTarget.src = '/app-icon-192.png';
-              }}
-            />
-            <span className="font-serif font-semibold text-primary hidden sm:inline">ZhenGrowth</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <AdminInstallButton />
-            <a className="text-sm hover:text-primary transition-colors" href="/">{at(lang, 'ViewSite')}</a>
-          </div>
+          <div className="text-2xl font-semibold">Admin</div>
+          <div className="opacity-90">Grow with Clarity · 清晰成長</div>
         </header>
         <div className="p-4 md:p-6">{children}</div>
       </main>

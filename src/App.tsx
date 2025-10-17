@@ -63,6 +63,15 @@ import MeDashboard from "./pages/MeDashboard";
 import RequireAuth from "./components/RequireAuth";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
+// New admin pages
+import AdminOverview from "./pages/admin/Overview";
+import AdminLeads from "./pages/admin/Leads";
+import AdminContent from "./pages/admin/Content";
+import AdminMarketing from "./pages/admin/Marketing";
+import AdminPayments from "./pages/admin/Payments";
+import AdminIntegrations from "./pages/admin/Integrations";
+import AdminSystem from "./pages/admin/System";
+
 // Lazy load PWA screens and layout
 const PWALayout = lazy(() => import("./pwa/PWALayout"));
 const PWAHome = lazy(() => import("./pwa/screens/Home"));
@@ -185,7 +194,16 @@ function AppRoutes() {
         <Route path="/account/cancel" element={<AccountCancel />} />
         
         {/* Protected Admin Routes - Require authentication & admin role */}
-        <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+        <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
+        <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeads /></ProtectedAdminRoute>} />
+        <Route path="/admin/content" element={<ProtectedAdminRoute><AdminContent /></ProtectedAdminRoute>} />
+        <Route path="/admin/marketing" element={<ProtectedAdminRoute><AdminMarketing /></ProtectedAdminRoute>} />
+        <Route path="/admin/payments" element={<ProtectedAdminRoute><AdminPayments /></ProtectedAdminRoute>} />
+        <Route path="/admin/integrations" element={<ProtectedAdminRoute><AdminIntegrations /></ProtectedAdminRoute>} />
+        <Route path="/admin/system" element={<ProtectedAdminRoute><AdminSystem /></ProtectedAdminRoute>} />
+        
+        {/* Legacy admin routes - keep for backward compatibility */}
+        <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
         <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
         <Route path="/admin/events/:slug" element={<ProtectedAdminRoute><AdminEventEdit /></ProtectedAdminRoute>} />
         <Route path="/admin/calendar" element={<ProtectedAdminRoute><AdminCalendar /></ProtectedAdminRoute>} />
