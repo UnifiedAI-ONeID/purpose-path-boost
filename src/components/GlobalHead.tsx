@@ -5,16 +5,10 @@ import Robots from './Robots';
 
 /** Common head bundle for site-wide meta tags */
 export function GlobalHead() {
-  const [mounted, setMounted] = useState(false);
-  
-  // Ensure Helmet only renders after mount to avoid SSR issues
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
+  // Compute manifest path without hooks to avoid invalid hook call issues
+  const manifestHref = (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'))
+    ? '/admin/manifest.webmanifest'
+    : '/manifest.json';
 
   return (
     <>
@@ -27,11 +21,7 @@ export function GlobalHead() {
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         
         {/* Manifest */}
-        <link rel="manifest" href={
-          typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')
-            ? '/admin/manifest.webmanifest'
-            : '/manifest.json'
-        } />
+        <link rel="manifest" href={manifestHref} />
         
         {/* Theme color */}
         <meta name="theme-color" content="#0b1f1f" />
