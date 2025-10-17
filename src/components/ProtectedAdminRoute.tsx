@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { invokeApi } from '@/lib/api-client';
+import React from 'react';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 type Props = {
   children: React.ReactNode;
@@ -13,61 +10,10 @@ type Props = {
  * Redirects non-admin users to auth page
  */
 export default function ProtectedAdminRoute({ children }: Props) {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const isAdmin = useAdminAuth();
 
-  useEffect(() => {
-    checkAdminAccess();
-  }, []);
-
-  async function checkAdminAccess() {
-    try {
-      console.log('[ProtectedAdminRoute] Starting admin access check');
-      // Check if user is authenticated
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      console.log('[ProtectedAdminRoute] Session check:', {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        sessionError
-      });
-      
-      if (sessionError || !session?.user) {
-        console.log('[ProtectedAdminRoute] No valid session');
-        setIsAdmin(false);
-        setIsLoading(false);
-        return;
-      }
-
-      // Check admin status via Edge Function WITH authorization header
-      console.log('[ProtectedAdminRoute] Calling admin check with auth token');
-      const data = await invokeApi('/api/admin/check-role', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      console.log('[ProtectedAdminRoute] Admin check response:', data);
-
-      if (!data?.ok || !data?.authed || !data?.is_admin) {
-        console.log('[ProtectedAdminRoute] User is not admin:', data);
-        setIsAdmin(false);
-        toast.error('Admin access required');
-      } else {
-        console.log('[ProtectedAdminRoute] User is admin, granting access');
-        setIsAdmin(true);
-      }
-    } catch (err) {
-      console.error('[ProtectedAdminRoute] Admin check failed:', err);
-      setIsAdmin(false);
-      toast.error('Authentication failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // Show loading state
-  if (isLoading) {
+  // Show loading state while verifying
+  if (isAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -78,11 +24,10 @@ export default function ProtectedAdminRoute({ children }: Props) {
     );
   }
 
-  // Redirect non-admin users
+  // Non-admins are redirected by useAdminAuth
   if (!isAdmin) {
-    return <Navigate to="/auth?returnTo=/admin" replace />;
+    return null;
   }
 
-  // Render protected content for admin users
   return <>{children}</>;
 }
