@@ -2124,6 +2124,50 @@ export type Database = {
         }
         Relationships: []
       }
+      post_analytics: {
+        Row: {
+          clicks: number | null
+          comments: number | null
+          id: string
+          impressions: number | null
+          likes: number | null
+          queue_id: string | null
+          raw: Json | null
+          shares: number | null
+          snapshot_at: string | null
+        }
+        Insert: {
+          clicks?: number | null
+          comments?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          queue_id?: string | null
+          raw?: Json | null
+          shares?: number | null
+          snapshot_at?: string | null
+        }
+        Update: {
+          clicks?: number | null
+          comments?: number | null
+          id?: string
+          impressions?: number | null
+          likes?: number | null
+          queue_id?: string | null
+          raw?: Json | null
+          shares?: number | null
+          snapshot_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_analytics_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "social_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           body_html: string
@@ -2829,6 +2873,60 @@ export type Database = {
         }
         Relationships: []
       }
+      social_queue: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          created_by: string | null
+          error: string | null
+          id: string
+          link_url: string | null
+          locale: string | null
+          media_url: string | null
+          metrics: Json | null
+          platform: string
+          post_id: string | null
+          published_at: string | null
+          scheduled_at: string | null
+          status: string
+          title: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          link_url?: string | null
+          locale?: string | null
+          media_url?: string | null
+          metrics?: Json | null
+          platform: string
+          post_id?: string | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error?: string | null
+          id?: string
+          link_url?: string | null
+          locale?: string | null
+          media_url?: string | null
+          metrics?: Json | null
+          platform?: string
+          post_id?: string | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           airwallex_agreement_id: string | null
@@ -3355,6 +3453,13 @@ export type Database = {
       get_my_profile_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_top_referrers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          referrer_profile_id: string
+          total: number
+        }[]
       }
       get_user_streak: {
         Args: { p_profile_id: string }
