@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -25,25 +21,17 @@ Deno.serve(async (req) => {
       .order('sort', { ascending: true });
 
     if (error) {
-      console.error('Coaching list error:', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: error.message, rows: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      console.error('[api-coaching-list] Error:', error);
+      return jsonResponse({ ok: false, error: error.message, rows: [] }, 200);
     }
 
     // Filter by locale if available
     const filtered = locale ? data?.filter(item => !item.locale || item.locale === locale) : data;
 
-    return new Response(
-      JSON.stringify({ ok: true, rows: filtered || [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: true, rows: filtered || [] }, 200);
   } catch (error) {
-    console.error('Coaching list handler error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error', rows: [] }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-coaching-list] Handler error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message, rows: [] }, 200);
   }
 });

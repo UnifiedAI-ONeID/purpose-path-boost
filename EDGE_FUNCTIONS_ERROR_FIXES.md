@@ -113,18 +113,41 @@ All functions have been tested and verified to:
 **Status**: ✅ Fixed
 
 ### 12. pwa-boot
-**Issue**: Returned 500 status codes for service errors
+**Issue**: Returned 500 status codes for service errors, used `.single()` which throws errors
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload, replaced `.single()` with `.maybeSingle()`
+**Status**: ✅ Fixed
+
+### 13. api-coaching-list
+**Issue**: Returned 400, 500 status codes for database/service errors
+**Fix**: All errors now return 200 with `{ ok: false, error: "...", rows: [] }` payload
+**Status**: ✅ Fixed
+
+### 14. api-events-get
+**Issue**: Returned 400, 404, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 15. api-lessons-get
+**Issue**: Returned 400, 404, 500 status codes
 **Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
 **Status**: ✅ Fixed
 
 ## Database Tables Created
 
 ### Missing Tables Fixed
-- **testimonials**: Created with sample data, RLS policies for public viewing
-- **zg_quiz_questions**: Created with sample questions, RLS policies
-- **zg_quiz_choices**: Created with sample choices linked to questions, RLS policies
+- **testimonials**: Created with sample data (3 testimonials), RLS policies for public viewing
+- **zg_quiz_questions**: Created with sample questions (3 questions), RLS policies
+- **zg_quiz_choices**: Created with sample choices (12 choices) linked to questions, RLS policies
 
 All tables now have initial data to prevent empty result errors.
+
+## Best Practices Applied
+
+1. **Consistent Error Responses**: All edge functions return HTTP 200 with `{ ok: false, error: "..." }` payload
+2. **Safe Database Queries**: Replaced `.single()` with `.maybeSingle()` and added null checks
+3. **Comprehensive Logging**: Added detailed logging with function prefixes for debugging
+4. **Graceful Degradation**: Services handle errors without crashing client applications
+5. **Initial Data**: Created sample data in all new tables to prevent empty result issues
 
 ## Next Steps
 

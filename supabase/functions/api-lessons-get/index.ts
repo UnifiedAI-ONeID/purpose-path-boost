@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -16,10 +12,7 @@ Deno.serve(async (req) => {
     const profile_id = url.searchParams.get('profile_id') || '';
 
     if (!slug) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'missing slug' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'missing slug' }, 200);
     }
 
     const supabase = createClient(
@@ -34,10 +27,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (error || !lesson) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Lesson not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return jsonResponse({ ok: false, error: 'Lesson not found' }, 200);
     }
 
     // Fetch user progress if profile_id provided
@@ -53,21 +43,12 @@ Deno.serve(async (req) => {
       progress = progressData || null;
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, lesson, progress }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store, max-age=0'
-        }
-      }
-    );
+    return jsonResponse({ ok: true, lesson, progress }, 200, {
+      'Cache-Control': 'no-store, max-age=0'
+    });
   } catch (error) {
-    console.error('Lesson get error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-lessons-get] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

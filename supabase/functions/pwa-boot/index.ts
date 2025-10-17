@@ -118,11 +118,15 @@ Deno.serve(async (req) => {
         .maybeSingle();
         
       if (!data) {
-        const { data: ins } = await serviceClient
+        const { data: ins, error: insertError } = await serviceClient
           .from('zg_profiles')
           .insert({ device_id: device, locale: lang })
           .select()
-          .single();
+          .maybeSingle();
+        
+        if (insertError) {
+          console.error('[pwa-boot] Profile insert error:', insertError);
+        }
         profile = ins;
       } else {
         profile = data;
