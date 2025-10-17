@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -24,10 +20,7 @@ Deno.serve(async (req) => {
     const device = url.searchParams.get('device');
 
     if (!device) {
-      return new Response(
-        JSON.stringify({ error: 'Device ID required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ ok: false, error: 'Device ID required' }, 200);
     }
 
     console.log('Fetching summary for device:', device);
@@ -51,18 +44,28 @@ Deno.serve(async (req) => {
 
       if (createError) {
         console.error('[pwa-me-summary] Profile creation error:', createError);
-        return new Response(
-          JSON.stringify({ ok: true, profile: null, next: null, goals: [], receipts: [], streak: 0, ref_url: null }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ 
+          ok: true, 
+          profile: null, 
+          next: null, 
+          goals: [], 
+          receipts: [], 
+          streak: 0, 
+          ref_url: null 
+        }, 200);
       }
 
       if (!newProfile) {
         console.error('[pwa-me-summary] Profile creation returned no data');
-        return new Response(
-          JSON.stringify({ ok: true, profile: null, next: null, goals: [], receipts: [], streak: 0, ref_url: null }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        return jsonResponse({ 
+          ok: true, 
+          profile: null, 
+          next: null, 
+          goals: [], 
+          receipts: [], 
+          streak: 0, 
+          ref_url: null 
+        }, 200);
       }
 
       profileId = newProfile.id;
@@ -108,28 +111,22 @@ Deno.serve(async (req) => {
       ? `https://zhengrowth.com/?ref=${encodeURIComponent(refResult.data.ref_code)}` 
       : null;
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        profile: profile ? { 
-          id: profile.id, 
-          name: profile.name, 
-          email: profile.email 
-        } : null,
-        next: nextSession,
-        goals: goalsResult.data || [],
-        receipts: receiptsResult.data || [],
-        streak: streakData || 0,
-        ref_url
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      ok: true,
+      profile: profile ? { 
+        id: profile.id, 
+        name: profile.name, 
+        email: profile.email 
+      } : null,
+      next: nextSession,
+      goals: goalsResult.data || [],
+      receipts: receiptsResult.data || [],
+      streak: streakData || 0,
+      ref_url
+    }, 200);
   } catch (error) {
-    console.error('Error in pwa-me-summary:', error);
+    console.error('[pwa-me-summary] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ ok: false, error: message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

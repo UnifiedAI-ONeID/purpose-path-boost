@@ -92,6 +92,26 @@ All functions have been tested and verified to:
 - Provide descriptive error messages in `error` field
 - Maintain backward compatibility with existing clients
 
+### 8. api-me-summary
+**Issue**: Returned 400, 404, 500 status codes for validation/data errors
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 9. pwa-me-summary
+**Issue**: Returned 400, 500 status codes for validation/service errors
+**Fix**: All errors now return 200 with `{ ok: false/true, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 10. pwa-me-goals
+**Issue**: Returned 400, 404, 405, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
+### 11. pwa-me-notes
+**Issue**: Returned 400, 405, 500 status codes
+**Fix**: All errors now return 200 with `{ ok: false, error: "..." }` payload
+**Status**: ✅ Fixed
+
 ## Next Steps
 
 None required - all edge functions are now properly wired and error-handling compliant.

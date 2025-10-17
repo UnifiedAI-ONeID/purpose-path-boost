@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -23,10 +19,7 @@ serve(async (req) => {
       const profile_id = url.searchParams.get('profile_id');
       
       if (!profile_id) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Missing profile_id' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
+        return jsonResponse({ ok: false, error: 'Missing profile_id' }, 200);
       }
 
       const { data, error } = await supabase
@@ -36,17 +29,11 @@ serve(async (req) => {
         .order('updated_at', { ascending: false });
 
       if (error) {
-        console.error('Goals fetch error:', error);
-        return new Response(
-          JSON.stringify({ ok: false, error: error.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        console.error('[pwa-me-goals] Fetch error:', error);
+        return jsonResponse({ ok: false, error: error.message }, 200);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, rows: data || [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ ok: true, rows: data || [] }, 200);
     }
 
     if (req.method === 'POST') {
@@ -54,10 +41,7 @@ serve(async (req) => {
       const { profile_id, title, due_date } = body;
 
       if (!profile_id || !title) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Missing required fields' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
+        return jsonResponse({ ok: false, error: 'Missing required fields' }, 200);
       }
 
       const { data, error } = await supabase
@@ -68,23 +52,14 @@ serve(async (req) => {
 
       if (error) {
         console.error('[pwa-me-goals] Goal creation error:', error);
-        return new Response(
-          JSON.stringify({ ok: false, error: error.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        return jsonResponse({ ok: false, error: error.message }, 200);
       }
 
       if (!data) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to create goal' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        return jsonResponse({ ok: false, error: 'Failed to create goal' }, 200);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, goal: data }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ ok: true, goal: data }, 200);
     }
 
     if (req.method === 'PATCH') {
@@ -92,10 +67,7 @@ serve(async (req) => {
       const { id, title, status, progress, due_date } = body;
 
       if (!id) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Missing goal ID' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
+        return jsonResponse({ ok: false, error: 'Missing goal ID' }, 200);
       }
 
       const updates: any = { updated_at: new Date().toISOString() };
@@ -113,38 +85,20 @@ serve(async (req) => {
 
       if (error) {
         console.error('[pwa-me-goals] Goal update error:', error);
-        return new Response(
-          JSON.stringify({ ok: false, error: error.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        return jsonResponse({ ok: false, error: error.message }, 200);
       }
 
       if (!data) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Goal not found' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-        );
+        return jsonResponse({ ok: false, error: 'Goal not found' }, 200);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, goal: data }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ ok: true, goal: data }, 200);
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 405 }
-    );
+    return jsonResponse({ ok: false, error: 'Method not allowed' }, 200);
   } catch (error) {
-    console.error('Goals API error:', error);
+    console.error('[pwa-me-goals] Error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ ok: false, error: message }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });

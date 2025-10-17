@@ -1,9 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, jsonResponse } from '../_shared/http.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,10 +11,7 @@ Deno.serve(async (req) => {
     const device = url.searchParams.get('device') || req.headers.get('x-zg-device') || '';
     
     if (!device) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'device_id required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      return jsonResponse({ ok: false, error: 'device_id required' }, 200);
     }
 
     const supabase = createClient(
@@ -34,10 +27,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!profile) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'profile not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
+      return jsonResponse({ ok: false, error: 'profile not found' }, 200);
     }
 
     // Get referral code
@@ -82,24 +72,19 @@ Deno.serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'https://zhengrowth.com';
 
-    return new Response(
-      JSON.stringify({
-        ok: true,
-        next: nextSession ? {
-          start: nextSession.start_time,
-          join_url: nextSession.meeting_url
-        } : null,
-        streak_pct,
-        ref_url: `${origin}?ref=${refData?.ref_code}`,
-        profile
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      ok: true,
+      next: nextSession ? {
+        start: nextSession.start_time,
+        join_url: nextSession.meeting_url
+      } : null,
+      streak_pct,
+      ref_url: `${origin}?ref=${refData?.ref_code}`,
+      profile
+    }, 200);
   } catch (error) {
-    console.error('Me summary error:', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+    console.error('[api-me-summary] Error:', error);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return jsonResponse({ ok: false, error: message }, 200);
   }
 });
