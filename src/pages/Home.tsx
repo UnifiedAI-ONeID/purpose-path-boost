@@ -17,7 +17,7 @@ export default function Home() {
         description="Transform your career and life with personalized coaching. Expert guidance for Chinese-speaking professionals seeking clarity, confidence, and sustainable growth."
         path="/home"
         lang={lang as 'en'|'zh-CN'|'zh-TW'}
-        image="https://zhengrowth.com/app-icon.png"
+        image="https://zhengrowth.com/app-icon-512.png"
       />
       
       {/* Hero Section with Image */}

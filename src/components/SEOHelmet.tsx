@@ -18,7 +18,8 @@ export function SEOHelmet({
   const host = site?.host || 'https://zhengrowth.com';
   const cnHost = site?.cnHost || 'https://zhengrowth.cn';
   const url = canonical || `${host}${path}`;
-  const img = image || `${host}/og${path}.png`.replace(/\/$/, '/home.png');
+  // Use high-res app icon (512x512) as default OG image instead of 192x192
+  const img = image || `${host}/app-icon-512.png`;
 
   const altEN   = alternates?.['en']    || `${host}${path}`;
   const altZHCN = alternates?.['zh-CN'] || `${host}/zh-CN${path}`;
@@ -42,11 +43,21 @@ export function SEOHelmet({
       <meta property="og:type" content="website"/>
       <meta property="og:url" content={url}/>
       <meta property="og:image" content={img}/>
+      <meta property="og:image:secure_url" content={img}/>
+      <meta property="og:image:type" content="image/png"/>
+      <meta property="og:image:width" content="512"/>
+      <meta property="og:image:height" content="512"/>
+      <meta property="og:image:alt" content={title}/>
+      <meta property="og:site_name" content="ZhenGrowth"/>
+      <meta property="og:locale" content={lang === 'zh-CN' ? 'zh_CN' : lang === 'zh-TW' ? 'zh_TW' : 'en_US'}/>
       
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title}/>
       <meta name="twitter:description" content={description}/>
       <meta name="twitter:image" content={img}/>
+      <meta name="twitter:image:alt" content={title}/>
+      <meta name="twitter:site" content="@zhengrowth"/>
+      <meta name="twitter:creator" content="@gracehuangco"/>
       
       <meta httpEquiv="content-language" content={lang}/>
     </Helmet>

@@ -59,7 +59,7 @@ export default function Home() {
         description="Life & career coaching for Chinese-speaking professionals worldwide. Start with a 60-second self-assessment to discover your path to clarity and growth."
         path="/pwa/home"
         lang={lang as 'en'|'zh-CN'|'zh-TW'}
-        image="https://zhengrowth.com/app-icon.png"
+        image="https://zhengrowth.com/app-icon-512.png"
       />
       <Card className="rounded-2xl p-6 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground border-0">
         <h1 className="text-3xl font-bold mb-2">{heroTitle}</h1>
