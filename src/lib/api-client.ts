@@ -91,11 +91,6 @@ const ROUTE_MAP: Record<string, string> = {
   '/api/social/plan': 'api-social-plan',
   '/api/health': 'api-health',
   '/api/auth/role': 'api-auth-role',
-  '/api/lessons/for-user': 'api-lessons-for-user',
-  '/api/paywall/can-watch': 'api-paywall-can-watch',
-  '/api/paywall/mark-watch': 'api-paywall-mark-watch',
-  '/api/nudge/pull': 'api-nudge-pull',
-  '/api/nudge/mark': 'api-nudge-mark',
 };
 
 /**
