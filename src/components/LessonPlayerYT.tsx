@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
+import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeApi } from '@/lib/api-client';
@@ -45,6 +46,7 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   const [milestones, setMilestones] = useState<{ [key: string]: boolean }>({});
   const [showUpsell, setShowUpsell] = useState(false);
   const [upsellPlan, setUpsellPlan] = useState('starter');
+  const [showFunnelDialog, setShowFunnelDialog] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
   const isCN = detectCN();
 
@@ -214,6 +216,9 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   const markComplete = async () => {
     await saveProgress(true);
     trackEvent('complete');
+    
+    // Show funnel upsell dialog after completion
+    setShowFunnelDialog(true);
   };
 
   const trackEvent = (ev: string) => {
@@ -271,6 +276,13 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
 
   return (
     <div>
+      {/* Funnel upsell dialog */}
+      <FunnelUpsellDialog
+        lessonSlug={slug}
+        open={showFunnelDialog}
+        onOpenChange={setShowFunnelDialog}
+      />
+
       {/* Video container */}
       <div className="relative aspect-video w-full bg-black">
         {!isCN && data.lesson.yt_id ? (

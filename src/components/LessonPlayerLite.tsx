@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { invokeApi } from '@/lib/api-client';
+import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 
 interface Lesson {
   slug: string;
@@ -34,6 +35,7 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
   const [data, setData] = useState<Lesson | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [milestones, setMilestones] = useState<{ [key: string]: boolean }>({});
+  const [showFunnelDialog, setShowFunnelDialog] = useState(false);
   const isCN = detectCN();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -108,6 +110,9 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
         at_sec: currentTime,
       }
     });
+
+    // Show funnel upsell dialog after completion
+    setShowFunnelDialog(true);
   };
 
   const saveProgress = async () => {
@@ -135,6 +140,13 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
 
   return (
     <div>
+      {/* Funnel upsell dialog */}
+      <FunnelUpsellDialog
+        lessonSlug={slug}
+        open={showFunnelDialog}
+        onOpenChange={setShowFunnelDialog}
+      />
+
       {/* Video container */}
       <div className="relative aspect-video w-full bg-black">
         {!isCN && data.yt_id ? (
