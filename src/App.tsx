@@ -74,7 +74,6 @@ import AdminSystem from "./pages/admin/System";
 import CouponsManager from "./pages/admin/CouponsManager";
 import ReferralsManager from "./pages/admin/ReferralsManager";
 import CrossPostStudio from "./pages/admin/CrossPostStudio";
-import BlogManager from "./pages/admin/blog/BlogManager";
 
 // Lazy load PWA screens and layout
 const PWALayout = lazy(() => import("./pwa/PWALayout"));
@@ -201,7 +200,6 @@ function AppRoutes() {
         <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
         <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeads /></ProtectedAdminRoute>} />
         <Route path="/admin/content" element={<ProtectedAdminRoute><AdminContent /></ProtectedAdminRoute>} />
-        <Route path="/admin/content/blog" element={<ProtectedAdminRoute><BlogManager /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing" element={<ProtectedAdminRoute><AdminMarketing /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing/coupons" element={<ProtectedAdminRoute><CouponsManager /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing/referrals" element={<ProtectedAdminRoute><ReferralsManager /></ProtectedAdminRoute>} />
