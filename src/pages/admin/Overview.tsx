@@ -34,16 +34,25 @@ export default function Overview() {
 
   async function loadData() {
     try {
+      console.log('[Admin Overview] Starting to load data');
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
+      
+      if (!sessionData?.session) {
+        console.log('[Admin Overview] No session found');
+        return;
+      }
 
+      console.log('[Admin Overview] Calling dashboard-admin-metrics');
       const { data, error } = await supabase.functions.invoke('dashboard-admin-metrics', {
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Admin Overview] Error loading metrics:', error);
+        throw error;
+      }
       
       console.log('[Admin Overview] Loaded metrics:', data);
       
