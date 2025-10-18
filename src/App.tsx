@@ -70,6 +70,7 @@ import AdminMarketing from "./pages/admin/Marketing";
 import AdminPayments from "./pages/admin/Payments";
 import AdminIntegrations from "./pages/admin/Integrations";
 import AdminSystem from "./pages/admin/System";
+import AdminCoachingNew from "./pages/admin/Coaching";
 import CouponsManager from "./pages/admin/CouponsManager";
 import ReferralsManager from "./pages/admin/ReferralsManager";
 import CrossPostStudio from "./pages/admin/CrossPostStudio";
@@ -223,7 +224,7 @@ function AppRoutes() {
         <Route path="/admin/express" element={<ProtectedAdminRoute><AdminExpress /></ProtectedAdminRoute>} />
         <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminAI /></ProtectedAdminRoute>} />
         <Route path="/admin/bookings" element={<ProtectedAdminRoute><AdminBookings /></ProtectedAdminRoute>} />
-        <Route path="/admin/coaching" element={<ProtectedAdminRoute><AdminCoaching /></ProtectedAdminRoute>} />
+        <Route path="/admin/coaching" element={<ProtectedAdminRoute><AdminCoachingNew /></ProtectedAdminRoute>} />
         <Route path="/admin/cal-event-types" element={<ProtectedAdminRoute><AdminCalEventTypes /></ProtectedAdminRoute>} />
         <Route path="/admin/coupons" element={<ProtectedAdminRoute><AdminCoupons /></ProtectedAdminRoute>} />
         <Route path="/admin/seo" element={<ProtectedAdminRoute><AdminSEO /></ProtectedAdminRoute>} />

@@ -2082,6 +2082,27 @@ export type Database = {
           },
         ]
       }
+      pages: {
+        Row: {
+          html_en: string | null
+          html_zh: string | null
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          html_en?: string | null
+          html_zh?: string | null
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          html_en?: string | null
+          html_zh?: string | null
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       plan_includes: {
         Row: {
           package_id: string
