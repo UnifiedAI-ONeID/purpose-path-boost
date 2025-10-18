@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { logout } from '@/lib/auth';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -12,26 +12,35 @@ import { invokeApi } from '@/lib/api-client';
 export default function HeaderUser() {
   const { lang } = usePrefs();
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Get initial user
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data?.user || null);
-      if (data?.user) {
-        checkAdminStatus();
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user || null);
+      
+      // Defer admin check to avoid blocking the auth callback
+      if (newSession?.user) {
+        setTimeout(() => {
+          checkAdminStatus();
+        }, 0);
+      } else {
+        setIsAdmin(false);
       }
     });
 
-    // Listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // THEN get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setUser(session?.user || null);
       if (session?.user) {
-        checkAdminStatus();
-      } else {
-        setIsAdmin(false);
+        setTimeout(() => {
+          checkAdminStatus();
+        }, 0);
       }
     });
 

@@ -37,78 +37,84 @@ export default function Auth() {
     }
 
     // Check if already authenticated
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        // For OAuth users, create profile using edge function if it doesn't exist
-        console.log('[Auth] Checking/creating profile for OAuth user:', session.user.id);
-        
-        try {
-          // Use edge function with service role to ensure profile creation
-          const response = await supabase.functions.invoke('api-auth-create-profile', {
-            body: {
-              userId: session.user.id,
-              email: session.user.email!,
-              name: session.user.user_metadata?.full_name || session.user.email!,
-              locale: 'en'
-            },
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          });
+        // Defer navigation and async operations to avoid blocking
+        setTimeout(() => {
+          handleExistingSession(session);
+        }, 0);
+      } else {
+        setCheckingAuth(false);
+      }
+    });
+  }, [navigate, searchParams]);
 
-          if (response.error) {
-            console.error('[Auth] OAuth profile creation error:', response.error);
-            // Don't block login if profile creation fails
-          } else {
-            console.log('[Auth] OAuth profile handled:', response.data);
-          }
-        } catch (profileErr) {
-          console.error('[Auth] OAuth profile creation exception:', profileErr);
-          // Non-blocking error
+  // Separate async function to handle existing session
+  const handleExistingSession = async (session: any) => {
+    try {
+      // For OAuth users, create profile using edge function if it doesn't exist
+      console.log('[Auth] Checking/creating profile for OAuth user:', session.user.id);
+      
+      const response = await supabase.functions.invoke('api-auth-create-profile', {
+        body: {
+          userId: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata?.full_name || session.user.email!,
+          locale: 'en'
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
+      });
 
-        // Support both 'returnTo' and 'redirect' parameters for backward compatibility
-        const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
+      if (response.error) {
+        console.error('[Auth] OAuth profile creation error:', response.error);
+      } else {
+        console.log('[Auth] OAuth profile handled:', response.data);
+      }
+    } catch (profileErr) {
+      console.error('[Auth] OAuth profile creation exception:', profileErr);
+    }
+
+    // Support both 'returnTo' and 'redirect' parameters for backward compatibility
+    const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
+    
+    if (returnTo) {
+      navigate(returnTo);
+    } else {
+      // Check admin status to route appropriately
+      console.log('[Auth] Session restore - checking admin status for user:', session?.user?.id);
+      try {
+        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        });
         
-        if (returnTo) {
-          navigate(returnTo);
+        console.log('[Auth] Session restore - Admin check response:', { adminData, adminError });
+        
+        if (adminError) {
+          console.error('[Auth] Admin check error on session restore:', adminError);
+          navigate('/me');
         } else {
-        // Check admin status to route appropriately
-          console.log('[Auth] Session restore - checking admin status for user:', session?.user?.id);
-          try {
-            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
-              headers: {
-                Authorization: `Bearer ${session.access_token}`
-              }
-            });
-            
-            console.log('[Auth] Session restore - Admin check response:', { adminData, adminError });
-            
-            if (adminError) {
-              console.error('[Auth] Admin check error on session restore:', adminError);
-              navigate('/me');
-            } else {
-              const isAdmin = adminData?.is_admin === true;
-              console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
-              
-              if (isAdmin) {
-                console.log('[Auth] Routing admin to /admin from session restore');
-                navigate('/admin');
-              } else {
-                console.log('[Auth] Routing user to /me from session restore');
-                navigate('/me');
-              }
-            }
-          } catch (error) {
-            console.error('[Auth] Admin check exception on session restore:', error);
-            // Default to /me on error
+          const isAdmin = adminData?.is_admin === true;
+          console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
+          
+          if (isAdmin) {
+            console.log('[Auth] Routing admin to /admin from session restore');
+            navigate('/admin');
+          } else {
+            console.log('[Auth] Routing user to /me from session restore');
             navigate('/me');
           }
         }
+      } catch (error) {
+        console.error('[Auth] Admin check exception on session restore:', error);
+        navigate('/me');
       }
-      setCheckingAuth(false);
-    });
-  }, [navigate, searchParams]);
+    }
+    setCheckingAuth(false);
+  };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();

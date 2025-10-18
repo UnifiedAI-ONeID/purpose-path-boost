@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { track } from '@/analytics/events';
 import { ChevronRight, Globe, Bell, Calendar, LogOut, User } from 'lucide-react';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 export default function MobileMe() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
@@ -17,11 +19,15 @@ export default function MobileMe() {
   useEffect(() => {
     track('page_view', { page: 'mobile_me' });
     
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    // THEN get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setUser(session?.user ?? null);
     });
 
