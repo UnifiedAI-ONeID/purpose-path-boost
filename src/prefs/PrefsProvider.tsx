@@ -148,30 +148,8 @@ function PrefsProviderInternal({ children }: { children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-// Main export - checks if React hooks are available before using them
+// Main export
 export function PrefsProvider({ children }:{ children: React.ReactNode }){
-  // Check if React dispatcher is available (detects duplicate React copies)
-  try {
-    const internals = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-    const dispatcher = internals?.ReactCurrentDispatcher?.current;
-    
-    if (!dispatcher) {
-      console.warn('[PrefsProvider] React hooks not available, using fallback');
-      // Fallback: provide static context without hooks
-      const fallback: Prefs = {
-        theme: 'auto',
-        resolvedTheme: 'light',
-        setTheme: () => {},
-        lang: 'en',
-        setLang: () => {},
-      };
-      return <Ctx.Provider value={fallback}>{children}</Ctx.Provider>;
-    }
-  } catch (e) {
-    console.error('[PrefsProvider] Error checking React internals:', e);
-  }
-
-  // Normal path: use hooks
   return <PrefsProviderInternal>{children}</PrefsProviderInternal>;
 }
 

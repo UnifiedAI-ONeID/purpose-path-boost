@@ -116,9 +116,14 @@ export default defineConfig(({ mode }) => ({
       "@tanstack/react-query"
     ],
     // Force rebuild to clear any cached duplicate React copies
+    force: true,
     esbuildOptions: {
       resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
     }
+  },
+  // Force React to be bundled (prevent duplicate instances)
+  ssr: {
+    noExternal: ['react', 'react-dom'],
   },
   build: {
     rollupOptions: {

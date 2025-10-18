@@ -152,8 +152,18 @@ export async function apiFetch(
 ): Promise<Response> {
   // Check if this is an /api route
   if (url.startsWith('/api/')) {
+    let parsedBody;
+    if (options?.body) {
+      try {
+        parsedBody = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
+      } catch (e) {
+        console.error('[API Client] Failed to parse body:', e);
+        parsedBody = undefined;
+      }
+    }
+    
     const result = await invokeApi(url, {
-      body: options?.body ? JSON.parse(options.body as string) : undefined,
+      body: parsedBody,
       headers: options?.headers as Record<string, string>,
     });
 
