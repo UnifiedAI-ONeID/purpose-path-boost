@@ -108,12 +108,14 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: [
-      "react", 
-      "react-dom", 
-      "react-dom/client", 
-      "react/jsx-runtime",
       "react-router-dom",
       "@tanstack/react-query"
+    ],
+    exclude: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime"
     ],
     // Force rebuild to clear any cached duplicate React copies
     force: true,
