@@ -108,6 +108,12 @@ function AppRoutes() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // Debug: detect multiple React copies
+        import('react').then((R:any)=>{
+          // eslint-disable-next-line no-console
+          console.log('[React Debug] version', R.version, 'sameRef', R.useState === React.useState);
+        });
+
         // Import all initialization functions dynamically to avoid early execution
         const [
           { registerSW },
