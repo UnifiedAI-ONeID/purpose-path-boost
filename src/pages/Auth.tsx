@@ -79,55 +79,48 @@ export default function Auth() {
 
     // Support both 'returnTo' and 'redirect' parameters for backward compatibility
     const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
-    
-    if (returnTo) {
-      navigate(returnTo);
-    } else {
-      // Check admin status to route appropriately
-      console.log('[Auth] Session restore - checking admin status for user:', session?.user?.id);
-      try {
-        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-        
-        console.log('[Auth] Session restore - Admin check response:', { adminData, adminError });
-        
-        if (adminError) {
-          console.error('[Auth] Admin check error on session restore:', adminError);
-          // Default to appropriate dashboard based on device
-          const shouldUseMobile = isMobileDevice();
-          const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-          navigate(fallbackRoute);
-        } else {
-          const isAdmin = adminData?.is_admin === true;
-          console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
-          
-          if (isAdmin) {
-            console.log('[Auth] Routing admin to /admin from session restore');
-            navigate('/admin');
-          } else {
-            // Route non-admin to appropriate dashboard based on device
-            let devicePreference: string | null = null;
-            try {
-              devicePreference = localStorage.getItem('zg.devicePreference');
-            } catch (e) {
-              console.warn('localStorage not available:', e);
-            }
-            
-            const shouldUseMobile = devicePreference 
-              ? devicePreference === 'mobile' 
-              : isMobileDevice();
-            
-            const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-            console.log('[Auth] Routing user to', targetRoute, 'from session restore');
-            navigate(targetRoute);
-          }
+
+    // Always determine admin status first so we can override incorrect returnTo targets
+    let isAdmin = false;
+    try {
+      const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
-      } catch (error) {
-        console.error('[Auth] Admin check exception on session restore:', error);
-        navigate('/me');
+      });
+      if (!adminError) {
+        isAdmin = adminData?.is_admin === true;
+      } else {
+        console.error('[Auth] Admin check error on session restore:', adminError);
+      }
+    } catch (error) {
+      console.error('[Auth] Admin check exception on session restore:', error);
+    }
+
+    if (returnTo) {
+      // If admin, ensure they land on admin dashboard unless explicitly returning to an admin route
+      if (isAdmin) {
+        const isAdminRoute = returnTo.startsWith('/admin');
+        navigate(isAdminRoute ? returnTo : '/admin');
+      } else {
+        navigate(returnTo);
+      }
+    } else {
+      if (isAdmin) {
+        console.log('[Auth] Routing admin to /admin from session restore');
+        navigate('/admin');
+      } else {
+        // Default to appropriate dashboard based on device
+        let devicePreference: string | null = null;
+        try {
+          devicePreference = localStorage.getItem('zg.devicePreference');
+        } catch (e) {
+          console.warn('localStorage not available:', e);
+        }
+        const shouldUseMobile = devicePreference ? devicePreference === 'mobile' : isMobileDevice();
+        const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+        console.log('[Auth] Routing user to', targetRoute, 'from session restore');
+        navigate(targetRoute);
       }
     }
     setCheckingAuth(false);
@@ -336,58 +329,51 @@ export default function Auth() {
         // Support both 'returnTo' and 'redirect' parameters for backward compatibility
         const returnTo = searchParams.get('returnTo') || searchParams.get('redirect');
         
-        if (returnTo) {
-          // If there's a specific return URL, use it
-          navigate(returnTo);
-        } else {
-          // Check admin status and route accordingly via Edge Function
-          console.log('[Auth] Checking admin status for user:', data?.user?.id);
-          try {
-            const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
-              headers: {
-                Authorization: `Bearer ${data.session?.access_token}`
-              }
-            });
-            
-            console.log('[Auth] Admin check response:', { adminData, adminError });
-            
-            if (adminError) {
-              console.error('[Auth] Admin check error on login:', adminError);
-              // Default to appropriate dashboard based on device
-              const shouldUseMobile = isMobileDevice();
-              const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-              navigate(fallbackRoute);
-            } else {
-              const isAdmin = adminData?.is_admin === true;
-              console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
-              
-              if (isAdmin) {
-                console.log('[Auth] Routing admin to /admin');
-                navigate('/admin');
-              } else {
-                // Route non-admin to appropriate dashboard based on device
-                let devicePreference: string | null = null;
-                try {
-                  devicePreference = localStorage.getItem('zg.devicePreference');
-                } catch (e) {
-                  console.warn('localStorage not available:', e);
-                }
-                
-                const shouldUseMobile = devicePreference 
-                  ? devicePreference === 'mobile' 
-                  : isMobileDevice();
-                
-                const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-                console.log('[Auth] Routing user to', targetRoute);
-                navigate(targetRoute);
-              }
+        // Determine admin status so we can override incorrect destinations
+        let isAdmin = false;
+        try {
+          const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
+            headers: {
+              Authorization: `Bearer ${data.session?.access_token}`
             }
-          } catch (err) {
-            console.error('[Auth] Admin check exception on login:', err);
-            // Default to appropriate dashboard based on device
-            const shouldUseMobile = isMobileDevice();
-            const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-            navigate(fallbackRoute);
+          });
+          if (!adminError) {
+            isAdmin = adminData?.is_admin === true;
+          } else {
+            console.error('[Auth] Admin check error on login:', adminError);
+          }
+        } catch (err) {
+          console.error('[Auth] Admin check exception on login:', err);
+        }
+        
+        if (returnTo) {
+          if (isAdmin) {
+            const isAdminRoute = returnTo.startsWith('/admin');
+            navigate(isAdminRoute ? returnTo : '/admin');
+          } else {
+            // If there's a specific return URL, use it for non-admin users
+            navigate(returnTo);
+          }
+        } else {
+          if (isAdmin) {
+            console.log('[Auth] Routing admin to /admin');
+            navigate('/admin');
+          } else {
+            // Route non-admin to appropriate dashboard based on device
+            let devicePreference: string | null = null;
+            try {
+              devicePreference = localStorage.getItem('zg.devicePreference');
+            } catch (e) {
+              console.warn('localStorage not available:', e);
+            }
+            
+            const shouldUseMobile = devicePreference 
+              ? devicePreference === 'mobile' 
+              : isMobileDevice();
+            
+            const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+            console.log('[Auth] Routing user to', targetRoute);
+            navigate(targetRoute);
           }
         }
         
