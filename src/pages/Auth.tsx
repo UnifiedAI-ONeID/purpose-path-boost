@@ -10,8 +10,6 @@ import { toast } from 'sonner';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import GoogleIcon from '@/components/icons/GoogleIcon';
-import AppleIcon from '@/components/icons/AppleIcon';
 import { invokeApi } from '@/lib/api-client';
 
 export default function Auth() {
@@ -399,29 +397,6 @@ export default function Auth() {
     }
   };
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
-    try {
-      // Support both 'returnTo' and 'redirect' parameters for backward compatibility
-      const returnTo = searchParams.get('returnTo') || searchParams.get('redirect') || '/me';
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}${returnTo}`
-        }
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('[Auth] OAuth error:', error);
-      console.error('[Auth] OAuth details:', { provider, message: error.message });
-      toast.error(
-        lang === 'zh-CN' ? 'OAuth 登录失败' :
-        lang === 'zh-TW' ? 'OAuth 登入失敗' :
-        'OAuth sign in failed'
-      );
-    }
-  };
-
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5">
@@ -550,49 +525,7 @@ export default function Auth() {
                 </form>
               ) : (
                 <>
-                  {/* OAuth Buttons */}
-                  <div className="space-y-2 mb-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => handleOAuth('google')}
-                      disabled={loading}
-                    >
-                      <GoogleIcon className="h-5 w-5" />
-                      <span>
-                        {lang === 'zh-CN' ? '使用 Google 继续' :
-                         lang === 'zh-TW' ? '使用 Google 繼續' :
-                         'Continue with Google'}
-                      </span>
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => handleOAuth('apple')}
-                      disabled={loading}
-                    >
-                      <AppleIcon className="h-5 w-5" />
-                      <span>
-                        {lang === 'zh-CN' ? '使用 Apple 继续' :
-                         lang === 'zh-TW' ? '使用 Apple 繼續' :
-                         'Continue with Apple'}
-                      </span>
-                    </Button>
-                  </div>
-
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">
-                        {lang === 'zh-CN' ? '或' : lang === 'zh-TW' ? '或' : 'Or'}
-                      </span>
-                    </div>
-                  </div>
+                  {/* OAuth Buttons - Hidden until providers are enabled in backend */}
 
                   <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
