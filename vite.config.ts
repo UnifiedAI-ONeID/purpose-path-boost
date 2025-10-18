@@ -107,7 +107,20 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   optimizeDeps: {
-    disabled: true
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-router',
+      'react-router-dom',
+      '@tanstack/react-query'
+    ],
+    force: true,
+    esbuildOptions: {
+      resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
+    }
   },
   // Force React to be bundled (prevent duplicate instances)
   ssr: {
