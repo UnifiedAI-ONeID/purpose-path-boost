@@ -40,7 +40,6 @@ import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
-import AdminDashboard from "./pages/AdminDashboard";
 import EventsList from "./pages/EventsList";
 import EventDetail from "./pages/EventDetail";
 import CoachingDetail from "./pages/CoachingDetail";
@@ -204,6 +203,7 @@ function AppRoutes() {
         
         {/* Protected Admin Routes - Require authentication & admin role */}
         <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
+        <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
         <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeads /></ProtectedAdminRoute>} />
         <Route path="/admin/content" element={<ProtectedAdminRoute><AdminContent /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing" element={<ProtectedAdminRoute><AdminMarketing /></ProtectedAdminRoute>} />
@@ -215,7 +215,6 @@ function AppRoutes() {
         <Route path="/admin/system" element={<ProtectedAdminRoute><AdminSystem /></ProtectedAdminRoute>} />
         
         {/* Legacy admin routes - keep for backward compatibility */}
-        <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
         <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
         <Route path="/admin/events/:slug" element={<ProtectedAdminRoute><AdminEventEdit /></ProtectedAdminRoute>} />
         <Route path="/admin/calendar" element={<ProtectedAdminRoute><AdminCalendar /></ProtectedAdminRoute>} />
