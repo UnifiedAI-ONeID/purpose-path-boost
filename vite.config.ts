@@ -86,11 +86,17 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Force single React instance - critical for hooks to work
+      "react": path.resolve(__dirname, "./node_modules/react"),
+      "react-dom": path.resolve(__dirname, "./node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "./node_modules/react/jsx-runtime"),
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime"],
+    dedupe: ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
   },
   optimizeDeps: {
     include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
+    // Force rebuild of dependencies to ensure single React copy
+    force: true,
   },
   build: {
     rollupOptions: {
