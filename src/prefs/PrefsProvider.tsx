@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { postPref, onPref } from './bus';
 
 type Theme = 'light'|'dark'|'auto';
@@ -12,16 +12,28 @@ type Prefs = {
   setLang: (l:Lang)=>void;
 };
 
-const Ctx = createContext<Prefs | null>(null);
+const Ctx = React.createContext<Prefs | null>(null);
 
 export function PrefsProvider({ children }:{ children: React.ReactNode }){
-  // Safer initialization - use direct values instead of function initializers
-  const [theme, setThemeState] = useState<Theme>('auto');
-  const [lang, setLangState] = useState<Lang>('en');
-  const [systemDark, setSystemDark] = useState<boolean>(false);
+  // If hooks not ready (e.g., duplicate React copies), provide a safe no-hook fallback to avoid crash
+  const internals = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+  if (internals?.ReactCurrentDispatcher?.current == null) {
+    const fallback: Prefs = {
+      theme: 'auto',
+      resolvedTheme: 'light',
+      setTheme: () => {},
+      lang: 'en',
+      setLang: () => {},
+    };
+    return <Ctx.Provider value={fallback}>{children}</Ctx.Provider>;
+  }
+  // Normal hook-based provider
+  const [theme, setThemeState] = React.useState<Theme>('auto');
+  const [lang, setLangState] = React.useState<Lang>('en');
+  const [systemDark, setSystemDark] = React.useState<boolean>(false);
   
   // Initialize from storage on mount
-  useEffect(() => {
+  React.useEffect(() => {
     try {
       const savedTheme = localStorage.getItem('zg.theme') as Theme;
       const savedLang = localStorage.getItem('zg.lang') as Lang;
@@ -39,7 +51,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
   }, []);
 
   // Watch system changes
-  useEffect(()=>{
+  React.useEffect(()=>{
     if (typeof window === 'undefined' || !window.matchMedia) return;
     
     const mq = matchMedia('(prefers-color-scheme: dark)');
@@ -49,7 +61,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
   },[]);
 
   // Apply theme to DOM + theme-color meta + persist + broadcast
-  useEffect(()=>{
+  React.useEffect(()=>{
     const resolved: 'light'|'dark' = theme==='dark'?'dark': theme==='light'?'light' : (systemDark?'dark':'light');
     const doc = document.documentElement;
     doc.setAttribute('data-theme', resolved);
@@ -90,7 +102,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
   },[theme, systemDark, lang]);
 
   // Apply language to DOM and sync with i18next
-  useEffect(()=>{
+  React.useEffect(()=>{
     document.documentElement.setAttribute('lang', lang);
     localStorage.setItem('zg.lang', lang);
     document.cookie = `zg_lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
@@ -105,7 +117,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
   },[lang]);
 
   // Listen for external changes (other tabs/PWAs)
-  useEffect(()=>{
+  React.useEffect(()=>{
     return onPref((p)=>{
       if (p.kind==='theme') {
         // Only auto-apply if we're on auto mode, otherwise respect local preference
@@ -134,7 +146,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
     });
   },[theme, lang]);
 
-  const value = useMemo(()=>{
+  const value = React.useMemo(()=>{
     const resolved: 'light'|'dark' = theme==='dark'?'dark': theme==='light'?'light' : (systemDark?'dark':'light');
     return {
       theme,
@@ -149,7 +161,7 @@ export function PrefsProvider({ children }:{ children: React.ReactNode }){
 }
 
 export function usePrefs(){
-  const v = useContext(Ctx);
+  const v = React.useContext(Ctx);
   if (!v) throw new Error('usePrefs must be used within PrefsProvider');
   return v;
 }
