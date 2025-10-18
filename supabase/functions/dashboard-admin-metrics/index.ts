@@ -14,38 +14,58 @@ Deno.serve(async (req) => {
     }
 
     const s = sbSrv();
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 864e5).toISOString();
 
-    // Get KPI metrics
-    const [mrrResult, activeResult, dauResult, mauResult, completes30Result, bookings30Result] = await Promise.all([
+    // Get KPI metrics in parallel
+    const [
+      mrrResult, 
+      activeResult, 
+      dauResult, 
+      mauResult, 
+      completes30Result, 
+      bookings30Result,
+      leads30Result,
+      funnelResult,
+      contentResult
+    ] = await Promise.all([
       s.rpc('calc_mrr'),
       s.from('coaching_offers').select('id', { count: 'exact', head: true }).eq('active', true).eq('billing_type', 'subscription'),
       s.rpc('calc_dau'),
       s.rpc('calc_mau'),
-      s.from('lesson_events').select('id', { count: 'exact', head: true }).eq('ev', 'complete').gte('created_at', new Date(Date.now() - 30 * 864e5).toISOString()),
-      s.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 864e5).toISOString())
+      s.from('lesson_events').select('id', { count: 'exact', head: true }).eq('ev', 'complete').gte('created_at', thirtyDaysAgo),
+      s.from('bookings').select('id', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo),
+      s.from('leads').select('id', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo),
+      s.rpc('calc_funnel_30d'),
+      s.rpc('content_leaderboard_30d')
     ]);
 
-    // Get funnel data
-    const { data: funnel } = await s.rpc('calc_funnel_30d');
+    // Parse funnel data into structured object
+    const funnelData = funnelResult.data || [];
+    const funnel = {
+      sessions: funnelData.find((f: any) => f.stage === 'visitors')?.count || 0,
+      leads: funnelData.find((f: any) => f.stage === 'leads')?.count || 0,
+      calls: funnelData.find((f: any) => f.stage === 'bookings')?.count || 0,
+      clients: funnelData.find((f: any) => f.stage === 'paid')?.count || 0
+    };
 
-    // Get content leaderboard
-    const { data: content } = await s.rpc('content_leaderboard_30d');
+    // Calculate conversion rate (leads to clients)
+    const conversionRate = funnel.leads > 0 ? funnel.clients / funnel.leads : 0;
 
-    // Get recent referrals
-    const { data: referrals } = await s
-      .from('referrals')
-      .select('code, status, created_at, converted_at')
-      .gte('created_at', new Date(Date.now() - 30 * 864e5).toISOString())
+    // Get system alerts
+    const { data: alertsData } = await s
+      .from('nudge_inbox')
+      .select('id, title, body')
+      .is('profile_id', null)
+      .eq('kind', 'banner')
+      .gte('expire_at', now.toISOString())
       .order('created_at', { ascending: false })
-      .limit(15);
+      .limit(5);
 
-    // Get webhook health (recent events)
-    const { data: webhooks } = await s
-      .from('events_raw')
-      .select('event, ts, meta')
-      .in('event', ['awx_webhook_ok', 'awx_webhook_err', 'cal_webhook_ok', 'cal_webhook_err'])
-      .order('ts', { ascending: false })
-      .limit(20);
+    const alerts = (alertsData || []).map((a: any) => ({
+      id: a.id,
+      text: a.body || a.title
+    }));
 
     return json({
       ok: true,
@@ -55,13 +75,13 @@ Deno.serve(async (req) => {
         dau: dauResult.data?.[0]?.n || 0,
         mau: mauResult.data?.[0]?.n || 0,
         completes30: completes30Result.count || 0,
-        bookings30: bookings30Result.count || 0
+        bookings30: bookings30Result.count || 0,
+        leads30: leads30Result.count || 0,
+        conversion_rate: conversionRate
       },
-      revenue: [], // Placeholder for revenue series
-      funnel: funnel || [],
-      content: content || [],
-      referrals: referrals || [],
-      webhooks: webhooks || []
+      funnel,
+      top_content: contentResult.data || [],
+      alerts
     });
   } catch (error: any) {
     console.error('[dashboard-admin-metrics] Error:', error);
