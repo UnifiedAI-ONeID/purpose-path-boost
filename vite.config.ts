@@ -107,21 +107,7 @@ export default defineConfig(({ mode }) => ({
     ],
   },
   optimizeDeps: {
-    include: [
-      "react-router-dom",
-      "@tanstack/react-query"
-    ],
-    exclude: [
-      "react",
-      "react-dom",
-      "react/jsx-runtime",
-      "react/jsx-dev-runtime"
-    ],
-    // Force rebuild to clear any cached duplicate React copies
-    force: true,
-    esbuildOptions: {
-      resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
-    }
+    disabled: true
   },
   // Force React to be bundled (prevent duplicate instances)
   ssr: {
