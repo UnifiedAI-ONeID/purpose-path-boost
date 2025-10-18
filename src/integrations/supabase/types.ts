@@ -188,6 +188,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_templates: {
+        Row: {
+          active: boolean | null
+          body: string
+          created_at: string | null
+          id: string
+          locale: string
+          max_chars: number | null
+          name: string
+          platform: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          body: string
+          created_at?: string | null
+          id?: string
+          locale?: string
+          max_chars?: number | null
+          name?: string
+          platform: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          body?: string
+          created_at?: string | null
+          id?: string
+          locale?: string
+          max_chars?: number | null
+          name?: string
+          platform?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           amount_cents: number

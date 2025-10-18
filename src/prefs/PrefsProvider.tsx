@@ -15,13 +15,28 @@ type Prefs = {
 const Ctx = createContext<Prefs | null>(null);
 
 export function PrefsProvider({ children }:{ children: React.ReactNode }){
-  const [theme, setThemeState] = useState<Theme>(() => (localStorage.getItem('zg.theme') as Theme) || 'auto');
-  const [lang, setLangState] = useState<Lang>(() => (localStorage.getItem('zg.lang') as Lang) || (document.documentElement.getAttribute('lang') as Lang) || 'en');
-  const [systemDark, setSystemDark] = useState<boolean>(() => 
-    typeof window !== 'undefined' && window.matchMedia 
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches 
-      : false
-  );
+  // Safer initialization - use direct values instead of function initializers
+  const [theme, setThemeState] = useState<Theme>('auto');
+  const [lang, setLangState] = useState<Lang>('en');
+  const [systemDark, setSystemDark] = useState<boolean>(false);
+  
+  // Initialize from storage on mount
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('zg.theme') as Theme;
+      const savedLang = localStorage.getItem('zg.lang') as Lang;
+      const docLang = document.documentElement.getAttribute('lang') as Lang;
+      const isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches || false;
+      
+      if (savedTheme) setThemeState(savedTheme);
+      if (savedLang) setLangState(savedLang);
+      else if (docLang) setLangState(docLang);
+      setSystemDark(isDark);
+    } catch (e) {
+      // Fail silently if localStorage not available
+      console.warn('[Prefs] Init failed:', e);
+    }
+  }, []);
 
   // Watch system changes
   useEffect(()=>{
