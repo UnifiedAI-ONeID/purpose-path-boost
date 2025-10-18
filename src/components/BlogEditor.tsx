@@ -125,7 +125,14 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   const onSubmit = async (data: BlogFormData) => {
     setIsLoading(true);
     try {
-      const blogData = {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.access_token) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const blogData: any = {
         ...data,
         content: sanitizeHtml(data.content), // Sanitize HTML content
         image_url: data.image_url || null,
@@ -133,38 +140,44 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
         meta_description: data.meta_description || null,
       };
 
+      // Add id for updates
       if (blogId) {
-        // Update existing blog
-        const { error } = await supabase
-          .from('blog_posts')
-          .update(blogData)
-          .eq('id', blogId);
-
-        if (error) throw error;
-        toast.success('Blog post updated successfully');
-      } else {
-        // Create new blog
-        const { data: newBlog, error } = await supabase
-          .from('blog_posts')
-          .insert([blogData])
-          .select()
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!newBlog) throw new Error('Failed to create blog post');
-
-        // If published, trigger social media posting
-        if (data.published && selectedPlatforms.length > 0) {
-          await publishToSocial(newBlog.id, newBlog.title, newBlog.excerpt, newBlog.slug);
-        }
-
-        toast.success('Blog post created successfully');
+        blogData.id = blogId;
       }
 
+      // Use admin edge function
+      const { data: result, error } = await supabase.functions.invoke('admin-blog-upsert', {
+        body: blogData,
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (!result?.ok) {
+        throw new Error(result?.error || 'Failed to save blog post');
+      }
+
+      // If published and it's a new post, trigger social media posting
+      if (!blogId && data.published && selectedPlatforms.length > 0) {
+        // Get the newly created blog's slug for social posting
+        const { data: newBlog } = await supabase
+          .from('blog_posts')
+          .select('id, slug')
+          .eq('slug', data.slug)
+          .maybeSingle();
+        
+        if (newBlog) {
+          await publishToSocial(newBlog.id, data.title, data.excerpt, newBlog.slug);
+        }
+      }
+
+      toast.success(blogId ? 'Blog post updated successfully' : 'Blog post created successfully');
       onSave();
       onClose();
     } catch (error: any) {
-      console.error('Failed to save blog post');
+      console.error('Failed to save blog post:', error);
       toast.error(error.message || 'Failed to save blog post');
     } finally {
       setIsLoading(false);

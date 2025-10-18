@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import AdminShell from '@/components/admin/AdminShell';
+import { AdminBlogList } from '@/components/admin/AdminBlogList';
 
 export default function Content() {
   const [tab, setTab] = useState<'pages' | 'blog'>('pages');
@@ -41,15 +42,7 @@ export default function Content() {
         </TabsContent>
 
         <TabsContent value="blog">
-          <Card className="p-6">
-            <h3 className="font-semibold mb-2">Blog & Cross-post</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Manage blog posts and publish to social media platforms.
-            </p>
-            <Button asChild>
-              <Link to="/admin/marketing/crosspost">Open Cross-post Studio</Link>
-            </Button>
-          </Card>
+          <AdminBlogList />
         </TabsContent>
       </Tabs>
     </div>
