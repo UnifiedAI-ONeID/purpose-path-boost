@@ -51,17 +51,17 @@ const ROUTE_MAPPINGS: { [key: string]: string } = {
  * Routes that should never be redirected (admin, auth, static pages, etc.)
  */
 const EXCLUDED_ROUTES = [
-  '/admin',
-  '/auth',
-  '/install',
-  '/payment',
-  '/thank-you',
-  '/privacy',
-  '/terms',
-  '/blog',
-  '/events',
-  '/contact',
-  '/book',
+  '/admin',      // All admin routes must never be auto-redirected
+  '/auth',       // Authentication page
+  '/install',    // PWA installation page
+  '/payment',    // Payment processing
+  '/thank-you',  // Thank you pages
+  '/privacy',    // Privacy policy
+  '/terms',      // Terms of service
+  '/blog',       // Blog pages
+  '/events',     // Events
+  '/contact',    // Contact form
+  '/book',       // Booking pages
 ];
 
 /**

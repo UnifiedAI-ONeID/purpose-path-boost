@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { isMobileDevice } from '@/lib/deviceDetect';
 
 /**
  * DashboardRedirect - Redirects authenticated users to the appropriate dashboard
@@ -43,8 +44,11 @@ export default function DashboardRedirect() {
         
         if (adminError) {
           console.error('[DashboardRedirect] Admin check error:', adminError);
-          // Default to client dashboard on error
-          navigate('/me', { replace: true });
+          // Default to appropriate dashboard based on device
+          const shouldUseMobile = isMobileDevice();
+          const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+          console.log('[DashboardRedirect] Error fallback to', fallbackRoute);
+          navigate(fallbackRoute, { replace: true });
           return;
         }
         
@@ -53,11 +57,26 @@ export default function DashboardRedirect() {
         console.log('[DashboardRedirect] Routing user:', { isAdmin, userId: session.user.id });
         
         if (isAdmin) {
-          console.log('[DashboardRedirect] Navigating to /admin');
+          // Admins always go to /admin regardless of device
+          console.log('[DashboardRedirect] Navigating admin to /admin');
           navigate('/admin', { replace: true });
         } else {
-          console.log('[DashboardRedirect] Navigating to /me');
-          navigate('/me', { replace: true });
+          // Check device preference for non-admin users
+          let devicePreference: string | null = null;
+          try {
+            devicePreference = localStorage.getItem('zg.devicePreference');
+          } catch (e) {
+            console.warn('localStorage not available:', e);
+          }
+          
+          const shouldUseMobile = devicePreference 
+            ? devicePreference === 'mobile' 
+            : isMobileDevice();
+          
+          // Route to appropriate dashboard based on device
+          const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+          console.log('[DashboardRedirect] Navigating user to', targetRoute, { shouldUseMobile });
+          navigate(targetRoute, { replace: true });
         }
       } catch (error) {
         console.error('[DashboardRedirect] Error:', error);

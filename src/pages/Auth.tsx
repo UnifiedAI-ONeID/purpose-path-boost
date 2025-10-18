@@ -11,6 +11,7 @@ import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { invokeApi } from '@/lib/api-client';
+import { isMobileDevice } from '@/lib/deviceDetect';
 
 export default function Auth() {
   const { lang } = usePrefs();
@@ -95,7 +96,10 @@ export default function Auth() {
         
         if (adminError) {
           console.error('[Auth] Admin check error on session restore:', adminError);
-          navigate('/me');
+          // Default to appropriate dashboard based on device
+          const shouldUseMobile = isMobileDevice();
+          const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+          navigate(fallbackRoute);
         } else {
           const isAdmin = adminData?.is_admin === true;
           console.log('[Auth] Session restore - Admin check:', { isAdmin, userId: session?.user?.id });
@@ -104,8 +108,21 @@ export default function Auth() {
             console.log('[Auth] Routing admin to /admin from session restore');
             navigate('/admin');
           } else {
-            console.log('[Auth] Routing user to /me from session restore');
-            navigate('/me');
+            // Route non-admin to appropriate dashboard based on device
+            let devicePreference: string | null = null;
+            try {
+              devicePreference = localStorage.getItem('zg.devicePreference');
+            } catch (e) {
+              console.warn('localStorage not available:', e);
+            }
+            
+            const shouldUseMobile = devicePreference 
+              ? devicePreference === 'mobile' 
+              : isMobileDevice();
+            
+            const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+            console.log('[Auth] Routing user to', targetRoute, 'from session restore');
+            navigate(targetRoute);
           }
         }
       } catch (error) {
@@ -336,8 +353,10 @@ export default function Auth() {
             
             if (adminError) {
               console.error('[Auth] Admin check error on login:', adminError);
-              // Default to /me on error
-              navigate('/me');
+              // Default to appropriate dashboard based on device
+              const shouldUseMobile = isMobileDevice();
+              const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+              navigate(fallbackRoute);
             } else {
               const isAdmin = adminData?.is_admin === true;
               console.log('[Auth] Login - Admin check result:', { isAdmin, userId: data?.user?.id });
@@ -346,14 +365,29 @@ export default function Auth() {
                 console.log('[Auth] Routing admin to /admin');
                 navigate('/admin');
               } else {
-                console.log('[Auth] Routing user to /me');
-                navigate('/me');
+                // Route non-admin to appropriate dashboard based on device
+                let devicePreference: string | null = null;
+                try {
+                  devicePreference = localStorage.getItem('zg.devicePreference');
+                } catch (e) {
+                  console.warn('localStorage not available:', e);
+                }
+                
+                const shouldUseMobile = devicePreference 
+                  ? devicePreference === 'mobile' 
+                  : isMobileDevice();
+                
+                const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+                console.log('[Auth] Routing user to', targetRoute);
+                navigate(targetRoute);
               }
             }
           } catch (err) {
             console.error('[Auth] Admin check exception on login:', err);
-            // Default to /me on exception
-            navigate('/me');
+            // Default to appropriate dashboard based on device
+            const shouldUseMobile = isMobileDevice();
+            const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+            navigate(fallbackRoute);
           }
         }
         
