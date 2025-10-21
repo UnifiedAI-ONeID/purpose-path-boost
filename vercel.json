@@ -24,6 +24,16 @@
   ],
   "redirects": [
     {
+      "source": "/admin",
+      "destination": "https://admin.zhengrowth.com",
+      "permanent": true
+    },
+    {
+      "source": "/admin/:splat*",
+      "destination": "https://admin.zhengrowth.com/#/:splat*",
+      "permanent": true
+    },
+    {
       "source": "/book",
       "destination": "/coaching",
       "permanent": true
