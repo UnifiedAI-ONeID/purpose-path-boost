@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       }
     );
 
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await (supabase.auth as any).getUser(token);
     
     if (error || !user) {
       console.log('[api-admin-check-role] Auth error or no user:', error?.message);

@@ -16,7 +16,7 @@ async function requireAdmin(authHeader: string | null) {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  const { data: { user }, error } = await (supabase.auth as any).getUser(token);
   
   if (error || !user) {
     return { isAdmin: false, user: null };

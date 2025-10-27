@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     }
   );
 
-  const { data: u } = await sUser.auth.getUser(auth);
+  const { data: u } = await (sUser.auth as any).getUser(auth);
   if (!u?.user) return json({ ok: true, authed: false });
 
   const s = sbSrv();
