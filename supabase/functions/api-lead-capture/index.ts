@@ -1,24 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-interface LeadPayload {
-  full_name?: string
-  email: string
-  phone?: string
-  locale?: string
-  pathway?: string
-  timeline?: string
-  family_details?: string
-  country_of_citizenship?: string
-  current_location?: string
-  consent?: boolean
-  needs_checklist?: boolean
-  utm?: any
-}
+import { json, readJson, sbSrv, corsHeaders } from '../_shared/utils.ts';
 
 async function scheduleSequence(
   supabase: any,
@@ -27,7 +7,7 @@ async function scheduleSequence(
   pathway: string,
   needs_checklist: boolean
 ) {
-  const now = Date.now()
+  const now = Date.now();
   const rows = [
     {
       lead_id,
@@ -53,26 +33,22 @@ async function scheduleSequence(
       locale,
       pathway,
     },
-  ]
+  ];
 
-  const { error } = await supabase.from('email_sequences').insert(rows)
+  const { error } = await supabase.from('email_sequences').insert(rows);
   if (error) {
-    console.error('Error scheduling sequences:', error)
+    console.error('[api-lead-capture] Error scheduling sequences:', error);
   }
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    const body: LeadPayload = await req.json()
+    const supabase = sbSrv();
+    const body = await readJson(req);
 
     const leadPayload = {
       name: body.full_name ?? '',
@@ -86,20 +62,17 @@ Deno.serve(async (req) => {
       current_location: body.current_location ?? null,
       needs_checklist: body.needs_checklist ?? false,
       stage: 'new',
-    }
+    };
 
     const { data: upserted, error } = await supabase
       .from('leads')
       .upsert(leadPayload, { onConflict: 'email' })
       .select()
-      .single()
+      .single();
 
     if (error) {
-      console.error('Database error:', error)
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      console.error('[api-lead-capture] Database error:', error);
+      return json({ ok: false, error: error.message }, 500);
     }
 
     await scheduleSequence(
@@ -108,17 +81,11 @@ Deno.serve(async (req) => {
       upserted.locale || 'en',
       upserted.pathway || 'general',
       upserted.needs_checklist === true
-    )
+    );
 
-    return new Response(
-      JSON.stringify({ ok: true, lead_id: upserted.id }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Error:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ ok: true, lead_id: upserted.id });
+  } catch (error: any) {
+    console.error('[api-lead-capture] Error:', error);
+    return json({ ok: false, error: error.message }, 500);
   }
-})
+});
