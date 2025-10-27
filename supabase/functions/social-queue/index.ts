@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     );
 
     // Verify admin access
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await (supabase.auth as any).getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,

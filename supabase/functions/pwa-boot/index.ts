@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const userClient = createClient(supabaseUrl, token);
       
-      const { data: { user }, error: userError } = await userClient.auth.getUser();
+      const { data: { user }, error: userError } = await (userClient.auth as any).getUser();
       
       if (user && !userError) {
         // Get authenticated profile

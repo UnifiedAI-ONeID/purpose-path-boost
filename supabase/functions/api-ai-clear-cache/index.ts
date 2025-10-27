@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       }
     );
     
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await (supabase.auth as any).getUser();
     
     if (!user) {
       return new Response(

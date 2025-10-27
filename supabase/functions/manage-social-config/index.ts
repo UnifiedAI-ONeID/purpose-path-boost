@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
     );
 
     // Verify admin access
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: userError } = await (supabaseClient.auth as any).getUser();
     if (userError || !user) {
       throw new Error('Unauthorized');
     }

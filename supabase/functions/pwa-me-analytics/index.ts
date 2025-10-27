@@ -27,7 +27,7 @@ serve(async (req) => {
     const userClient = createClient(supabaseUrl, token);
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const { data: { user }, error: userError } = await (userClient.auth as any).getUser();
     
     if (!user || userError) {
       return new Response(

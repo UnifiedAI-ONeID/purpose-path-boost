@@ -74,7 +74,7 @@ serve(async (req) => {
     );
 
     // Verify user is authenticated and admin
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    const { data: { user }, error: userError } = await (supabaseClient.auth as any).getUser();
     console.log('User check:', { user: user?.email, error: userError });
     
     assert(user && !userError, 'Authentication failed');
