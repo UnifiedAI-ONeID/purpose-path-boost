@@ -12,7 +12,8 @@ export async function requireAdmin(authHeader: string | null) {
   const token = authHeader.replace('Bearer ', '');
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    { global: { fetch } }
   );
 
   const { data: { user }, error } = await supabase.auth.getUser(token);
