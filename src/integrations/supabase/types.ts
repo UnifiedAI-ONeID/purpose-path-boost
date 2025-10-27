@@ -710,6 +710,80 @@ export type Database = {
         }
         Relationships: []
       }
+      email_assets: {
+        Row: {
+          created_at: string | null
+          id: string
+          locale: string | null
+          pathway: string
+          public_url: string
+          purpose: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          locale?: string | null
+          pathway: string
+          public_url: string
+          purpose: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          locale?: string | null
+          pathway?: string
+          public_url?: string
+          purpose?: string
+        }
+        Relationships: []
+      }
+      email_sequences: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          locale: string | null
+          pathway: string | null
+          scheduled_at: string
+          sent_at: string | null
+          status: string | null
+          step: number
+          template_key: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          locale?: string | null
+          pathway?: string | null
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string | null
+          step: number
+          template_key: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          locale?: string | null
+          pathway?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string | null
+          step?: number
+          template_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_sequences_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_coupon_uses: {
         Row: {
           coupon_id: string | null
@@ -1514,17 +1588,24 @@ export type Database = {
           booking_timeline: string | null
           clarity_score: number | null
           country: string | null
+          country_of_citizenship: string | null
           created_at: string | null
+          current_location: string | null
           email: string
+          family_details: string | null
           id: string
           language: string | null
+          locale: string | null
           name: string
+          needs_checklist: boolean | null
           notes: string | null
+          pathway: string | null
           quiz_answers: Json | null
           quiz_score: number | null
           source: string | null
           stage: string | null
           tags: string[] | null
+          timeline: string | null
           wechat: string | null
         }
         Insert: {
@@ -1533,17 +1614,24 @@ export type Database = {
           booking_timeline?: string | null
           clarity_score?: number | null
           country?: string | null
+          country_of_citizenship?: string | null
           created_at?: string | null
+          current_location?: string | null
           email: string
+          family_details?: string | null
           id?: string
           language?: string | null
+          locale?: string | null
           name: string
+          needs_checklist?: boolean | null
           notes?: string | null
+          pathway?: string | null
           quiz_answers?: Json | null
           quiz_score?: number | null
           source?: string | null
           stage?: string | null
           tags?: string[] | null
+          timeline?: string | null
           wechat?: string | null
         }
         Update: {
@@ -1552,17 +1640,24 @@ export type Database = {
           booking_timeline?: string | null
           clarity_score?: number | null
           country?: string | null
+          country_of_citizenship?: string | null
           created_at?: string | null
+          current_location?: string | null
           email?: string
+          family_details?: string | null
           id?: string
           language?: string | null
+          locale?: string | null
           name?: string
+          needs_checklist?: boolean | null
           notes?: string | null
+          pathway?: string | null
           quiz_answers?: Json | null
           quiz_score?: number | null
           source?: string | null
           stage?: string | null
           tags?: string[] | null
+          timeline?: string | null
           wechat?: string | null
         }
         Relationships: []
@@ -2046,6 +2141,36 @@ export type Database = {
           profile_id?: string
           seen?: boolean | null
           title?: string
+        }
+        Relationships: []
+      }
+      oauth_tokens: {
+        Row: {
+          access_token: string
+          account_email: string
+          created_at: string | null
+          expiry: string
+          id: string
+          provider: string
+          refresh_token: string
+        }
+        Insert: {
+          access_token: string
+          account_email: string
+          created_at?: string | null
+          expiry: string
+          id?: string
+          provider: string
+          refresh_token: string
+        }
+        Update: {
+          access_token?: string
+          account_email?: string
+          created_at?: string | null
+          expiry?: string
+          id?: string
+          provider?: string
+          refresh_token?: string
         }
         Relationships: []
       }
@@ -3457,41 +3582,35 @@ export type Database = {
         Args: { p_from: string; p_to: string }
         Returns: Json
       }
-      bump_version_now: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      bump_version_now: { Args: never; Returns: undefined }
       calc_dau: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           n: number
         }[]
       }
       calc_funnel_30d: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           count: number
           stage: string
         }[]
       }
       calc_mau: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           n: number
         }[]
       }
       calc_mrr: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           amount_cents: number
         }[]
       }
-      cleanup_expired_bookings: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_expired_bookings: { Args: never; Returns: undefined }
       content_leaderboard_30d: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           completes: number
           slug: string
@@ -3507,21 +3626,15 @@ export type Database = {
         Args: { coupon_row: Database["public"]["Tables"]["coupons"]["Row"] }
         Returns: string
       }
-      get_my_profile_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_my_profile_id: { Args: never; Returns: string }
       get_top_referrers: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           profile_id: string
           total: number
         }[]
       }
-      get_user_streak: {
-        Args: { p_profile_id: string }
-        Returns: number
-      }
+      get_user_streak: { Args: { p_profile_id: string }; Returns: number }
       increment_coupon_uses: {
         Args: { coupon_uuid: string }
         Returns: undefined
@@ -3530,22 +3643,12 @@ export type Database = {
         Args: { p_profile: string; p_start: string }
         Returns: undefined
       }
-      is_admin: {
-        Args: Record<PropertyKey, never> | { _user_id: string }
-        Returns: boolean
-      }
-      redeem_coupon_once: {
-        Args: { p_code: string }
-        Returns: undefined
-      }
-      rollup_delete_day: {
-        Args: { p_day: string }
-        Returns: undefined
-      }
-      rollup_insert_day: {
-        Args: { p_day: string }
-        Returns: undefined
-      }
+      is_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id: string }; Returns: boolean }
+      redeem_coupon_once: { Args: { p_code: string }; Returns: undefined }
+      rollup_delete_day: { Args: { p_day: string }; Returns: undefined }
+      rollup_insert_day: { Args: { p_day: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

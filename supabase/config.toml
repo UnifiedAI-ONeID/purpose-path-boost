@@ -444,3 +444,12 @@ verify_jwt = true
 [functions.social-worker]
 verify_jwt = true
 
+[functions.api-lead-capture]
+verify_jwt = false
+
+[functions.api-ai-chat]
+verify_jwt = false
+
+[functions.api-email-sequence-cron]
+verify_jwt = true
+
