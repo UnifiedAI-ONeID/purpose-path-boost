@@ -25,8 +25,8 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, { global: { fetch } });
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey, { global: { fetch } });
 
     // Read request body if present
     let bodyData: any = {};
