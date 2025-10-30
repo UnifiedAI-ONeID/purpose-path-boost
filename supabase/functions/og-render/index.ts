@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 import satori from 'https://esm.sh/satori@0.10.14';
 import { initWasm, Resvg } from 'https://esm.sh/@resvg/resvg-wasm@2.6.2';
 

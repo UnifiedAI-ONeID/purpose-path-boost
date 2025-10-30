@@ -46,7 +46,13 @@ Deno.serve(async (req) => {
     // Check if user is authenticated
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
-      const userClient = createClient(supabaseUrl, token);
+      const userClient = createClient(
+        supabaseUrl, 
+        supabaseAnonKey,
+        {
+          global: { headers: { Authorization: `Bearer ${token}` } }
+        }
+      );
       
       const { data: { user }, error: userError } = await (userClient.auth as any).getUser();
       

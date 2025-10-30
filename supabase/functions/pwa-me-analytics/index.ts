@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,10 +22,17 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    const userClient = createClient(supabaseUrl, token);
-    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
+    const userClient = createClient(
+      supabaseUrl, 
+      supabaseAnonKey,
+      {
+        global: { headers: { Authorization: `Bearer ${token}` } }
+      }
+    );
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey, { global: { fetch } });
     
     const { data: { user }, error: userError } = await (userClient.auth as any).getUser();
     
