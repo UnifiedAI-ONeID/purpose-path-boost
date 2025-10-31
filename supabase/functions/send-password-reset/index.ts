@@ -81,6 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      global: { fetch },
       auth: {
         autoRefreshToken: false,
         persistSession: false
