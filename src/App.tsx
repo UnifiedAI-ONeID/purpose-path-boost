@@ -75,12 +75,18 @@ import CouponsManager from "./pages/admin/CouponsManager";
 import ReferralsManager from "./pages/admin/ReferralsManager";
 import CrossPostStudio from "./pages/admin/CrossPostStudio";
 
-// Lazy load PWA screens and layout
-const PWALayout = lazy(() => import("./pwa/PWALayout"));
-const PWAHome = lazy(() => import("./pwa/screens/Home"));
+// Lazy load PWA screens and layout  
+const EnhancedPWALayout = lazy(() => import("./pwa/layouts/EnhancedPWALayout"));
+const EnhancedHome = lazy(() => import("./pwa/screens/EnhancedHome"));
 const PWAQuiz = lazy(() => import("./pwa/screens/Quiz"));
-const PWADashboard = lazy(() => import("./pwa/screens/Dashboard"));
+const Goals = lazy(() => import("./pwa/screens/Goals"));
+const AIChat = lazy(() => import("./pwa/screens/AIChat"));
+const Content = lazy(() => import("./pwa/screens/Content"));
+const PWAMeDashboard = lazy(() => import("./pwa/screens/MeDashboard"));
 const PWACoaching = lazy(() => import("./pwa/screens/Coaching"));
+const PWAAnalytics = lazy(() => import("./pwa/screens/Analytics"));
+const PWASessions = lazy(() => import("./pwa/screens/Sessions"));
+const PWASettings = lazy(() => import("./pwa/screens/Settings"));
 
 const queryClient = new QueryClient();
 
@@ -229,39 +235,24 @@ function AppRoutes() {
         <Route path="/admin/coupons" element={<ProtectedAdminRoute><AdminCoupons /></ProtectedAdminRoute>} />
         <Route path="/admin/seo" element={<ProtectedAdminRoute><AdminSEO /></ProtectedAdminRoute>} />
         
-        {/* PWA routes with shared layout */}
+        {/* Enhanced PWA routes */}
         <Route path="/pwa" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-            <PWALayout />
+          <Suspense fallback={<LoadingSpinner />}>
+            <EnhancedPWALayout />
           </Suspense>
         }>
-          <Route index element={
-            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-              <PWAHome />
-            </Suspense>
-          } />
-          <Route path="home" element={
-            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-              <PWAHome />
-            </Suspense>
-          } />
-          <Route path="quiz" element={
-            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-              <PWAQuiz />
-            </Suspense>
-          } />
-          <Route path="dashboard" element={
-            <RequireAuth>
-              <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-                <PWADashboard />
-              </Suspense>
-            </RequireAuth>
-          } />
-          <Route path="coaching" element={
-            <Suspense fallback={<div className="flex items-center justify-center p-8">Loading...</div>}>
-              <PWACoaching />
-            </Suspense>
-          } />
+          <Route index element={<Suspense fallback={<LoadingSpinner />}><EnhancedHome /></Suspense>} />
+          <Route path="home" element={<Suspense fallback={<LoadingSpinner />}><EnhancedHome /></Suspense>} />
+          <Route path="goals" element={<Suspense fallback={<LoadingSpinner />}><Goals /></Suspense>} />
+          <Route path="ai" element={<Suspense fallback={<LoadingSpinner />}><AIChat /></Suspense>} />
+          <Route path="content" element={<Suspense fallback={<LoadingSpinner />}><Content /></Suspense>} />
+          <Route path="me" element={<Suspense fallback={<LoadingSpinner />}><PWAMeDashboard /></Suspense>} />
+          <Route path="quiz" element={<Suspense fallback={<LoadingSpinner />}><PWAQuiz /></Suspense>} />
+          <Route path="coaching" element={<Suspense fallback={<LoadingSpinner />}><PWACoaching /></Suspense>} />
+          <Route path="analytics" element={<Suspense fallback={<LoadingSpinner />}><PWAAnalytics /></Suspense>} />
+          <Route path="sessions" element={<Suspense fallback={<LoadingSpinner />}><PWASessions /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<LoadingSpinner />}><PWASettings /></Suspense>} />
+          <Route path="dashboard" element={<Suspense fallback={<LoadingSpinner />}><PWAMeDashboard /></Suspense>} />
         </Route>
         
         {/* Public routes with responsive layout */}
