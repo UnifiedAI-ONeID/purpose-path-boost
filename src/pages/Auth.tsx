@@ -98,14 +98,18 @@ export default function Auth() {
     }
 
     if (returnTo) {
-      // If admin, ensure they land on admin dashboard unless explicitly returning to an admin route
-      if (isAdmin) {
-        const isAdminRoute = returnTo.startsWith('/admin');
-        navigate(isAdminRoute ? returnTo : '/admin');
+      // Navigate to the requested page, or default to /admin for admins without a return path
+      if (returnTo !== '/' && returnTo !== '/dashboard') {
+        // Allow access to any requested page
+        navigate(returnTo);
+      } else if (isAdmin) {
+        // Only default to /admin if no specific page was requested
+        navigate('/admin');
       } else {
         navigate(returnTo);
       }
     } else {
+      // No return path specified
       if (isAdmin) {
         console.log('[Auth] Routing admin to /admin from session restore');
         navigate('/admin');
@@ -346,35 +350,29 @@ export default function Auth() {
           console.error('[Auth] Admin check exception on login:', err);
         }
         
-        if (returnTo) {
-          if (isAdmin) {
-            const isAdminRoute = returnTo.startsWith('/admin');
-            navigate(isAdminRoute ? returnTo : '/admin');
-          } else {
-            // If there's a specific return URL, use it for non-admin users
-            navigate(returnTo);
-          }
+        if (returnTo && returnTo !== '/' && returnTo !== '/dashboard') {
+          // Allow access to any requested page
+          navigate(returnTo);
+        } else if (isAdmin) {
+          // Only default to /admin if no specific page was requested
+          console.log('[Auth] Routing admin to /admin');
+          navigate('/admin');
         } else {
-          if (isAdmin) {
-            console.log('[Auth] Routing admin to /admin');
-            navigate('/admin');
-          } else {
-            // Route non-admin to appropriate dashboard based on device
-            let devicePreference: string | null = null;
-            try {
-              devicePreference = localStorage.getItem('zg.devicePreference');
-            } catch (e) {
-              console.warn('localStorage not available:', e);
-            }
-            
-            const shouldUseMobile = devicePreference 
-              ? devicePreference === 'mobile' 
-              : isMobileDevice();
-            
-            const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-            console.log('[Auth] Routing user to', targetRoute);
-            navigate(targetRoute);
+          // Route non-admin to appropriate dashboard based on device
+          let devicePreference: string | null = null;
+          try {
+            devicePreference = localStorage.getItem('zg.devicePreference');
+          } catch (e) {
+            console.warn('localStorage not available:', e);
           }
+          
+          const shouldUseMobile = devicePreference 
+            ? devicePreference === 'mobile' 
+            : isMobileDevice();
+          
+          const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+          console.log('[Auth] Routing user to', targetRoute);
+          navigate(targetRoute);
         }
         
         toast.success(
