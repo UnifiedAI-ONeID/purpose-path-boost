@@ -75,6 +75,10 @@ import CouponsManager from "./pages/admin/CouponsManager";
 import ReferralsManager from "./pages/admin/ReferralsManager";
 import CrossPostStudio from "./pages/admin/CrossPostStudio";
 
+// PWA Core
+import { PWAProvider } from "./pwa/core/PWAProvider";
+import { LoadingSpinner } from "./components/LoadingSpinner";
+
 // Lazy load PWA screens and layout  
 const EnhancedPWALayout = lazy(() => import("./pwa/layouts/EnhancedPWALayout"));
 const EnhancedHome = lazy(() => import("./pwa/screens/EnhancedHome"));
@@ -294,15 +298,17 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
         <PrefsProvider>
-          <I18nextProvider i18n={i18n}>
-            <BrowserRouter>
-              <RouteAnimHook />
-              <AppRoutes />
-              <Toaster />
-              <Sonner />
-            </BrowserRouter>
-            <div id="zg-homeclick-layer" aria-hidden="true" />
-          </I18nextProvider>
+          <PWAProvider>
+            <I18nextProvider i18n={i18n}>
+              <BrowserRouter>
+                <RouteAnimHook />
+                <AppRoutes />
+                <Toaster />
+                <Sonner />
+              </BrowserRouter>
+              <div id="zg-homeclick-layer" aria-hidden="true" />
+            </I18nextProvider>
+          </PWAProvider>
         </PrefsProvider>
       </HelmetProvider>
     </QueryClientProvider>
