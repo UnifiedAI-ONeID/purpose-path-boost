@@ -1,18 +1,51 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 import { verifyAirwallexSignature } from '../_shared/webhook-security.ts';
+import { isValidUUID } from '../_shared/validators.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-signature, x-awx-signature',
 };
 
-// Validation schema for webhook payload
-const WebhookSchema = z.object({
-  order_id: z.string().uuid({ message: 'Invalid order ID format' }),
-  payment_intent_id: z.string().max(255).optional(),
-  status: z.enum(['pending', 'paid', 'failed', 'refunded', 'cancelled']).default('paid')
-});
+const VALID_STATUSES = ['pending', 'paid', 'failed', 'refunded', 'cancelled'] as const;
+
+function validateWebhookPayload(data: any): { valid: boolean; error?: string; validated?: any } {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid payload format' };
+  }
+
+  const { order_id, payment_intent_id, status } = data;
+
+  if (!order_id || typeof order_id !== 'string') {
+    return { valid: false, error: 'order_id is required and must be a string' };
+  }
+
+  if (!isValidUUID(order_id)) {
+    return { valid: false, error: 'order_id must be a valid UUID' };
+  }
+
+  if (payment_intent_id && typeof payment_intent_id !== 'string') {
+    return { valid: false, error: 'payment_intent_id must be a string' };
+  }
+
+  if (payment_intent_id && payment_intent_id.length > 255) {
+    return { valid: false, error: 'payment_intent_id exceeds maximum length of 255' };
+  }
+
+  const finalStatus = status || 'paid';
+  if (!VALID_STATUSES.includes(finalStatus)) {
+    return { valid: false, error: `status must be one of: ${VALID_STATUSES.join(', ')}` };
+  }
+
+  return {
+    valid: true,
+    validated: {
+      order_id,
+      payment_intent_id: payment_intent_id || null,
+      status: finalStatus
+    }
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -51,24 +84,27 @@ Deno.serve(async (req) => {
     }
     
     // Parse and validate input
-    let validated;
+    let bodyData;
     try {
-      const bodyData = JSON.parse(rawBody);
-      validated = WebhookSchema.parse(bodyData);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error('[Express Webhook] Validation error:', error.errors);
-        return new Response(
-          JSON.stringify({ 
-            ok: false, 
-            error: 'Invalid input', 
-            details: error.errors 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
-      }
-      throw error;
+      bodyData = JSON.parse(rawBody);
+    } catch {
+      console.error('[Express Webhook] Invalid JSON');
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Invalid JSON payload' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
+
+    const validation = validateWebhookPayload(bodyData);
+    if (!validation.valid) {
+      console.error('[Express Webhook] Validation error:', validation.error);
+      return new Response(
+        JSON.stringify({ ok: false, error: validation.error }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const validated = validation.validated!;
 
     // Update order with validated data
     const { error: updateError } = await s
