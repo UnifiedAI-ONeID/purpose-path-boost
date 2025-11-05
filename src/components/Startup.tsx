@@ -39,10 +39,9 @@ export default function Startup() {
             console.log('[Startup] Admin check result:', { adminData, adminError });
             
             if (!adminError && adminData?.is_admin === true) {
-              console.log('[Startup] Admin verified, redirecting to /admin');
+              console.log('[Startup] Admin verified, redirecting to admin.zhengrowth.com');
               setTimeout(() => {
-                navigate('/admin', { replace: true });
-                setChecking(false);
+                window.location.href = 'https://admin.zhengrowth.com';
               }, 1200);
               return;
             }

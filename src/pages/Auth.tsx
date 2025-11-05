@@ -98,21 +98,24 @@ export default function Auth() {
     }
 
     if (returnTo) {
-      // Navigate to the requested page, or default to /admin for admins without a return path
+      // Navigate to the requested page, or default to admin domain for admins without a return path
       if (returnTo !== '/' && returnTo !== '/dashboard') {
         // Allow access to any requested page
         navigate(returnTo);
       } else if (isAdmin) {
-        // Only default to /admin if no specific page was requested
-        navigate('/admin');
+        // Redirect to external admin domain
+        console.log('[Auth] Routing admin to admin.zhengrowth.com from session restore');
+        window.location.href = 'https://admin.zhengrowth.com';
+        return;
       } else {
         navigate(returnTo);
       }
     } else {
       // No return path specified
       if (isAdmin) {
-        console.log('[Auth] Routing admin to /admin from session restore');
-        navigate('/admin');
+        console.log('[Auth] Routing admin to admin.zhengrowth.com from session restore');
+        window.location.href = 'https://admin.zhengrowth.com';
+        return;
       } else {
         // Default to appropriate dashboard based on device
         let devicePreference: string | null = null;
@@ -354,9 +357,10 @@ export default function Auth() {
           // Allow access to any requested page
           navigate(returnTo);
         } else if (isAdmin) {
-          // Only default to /admin if no specific page was requested
-          console.log('[Auth] Routing admin to /admin');
-          navigate('/admin');
+          // Redirect to external admin domain
+          console.log('[Auth] Routing admin to admin.zhengrowth.com');
+          window.location.href = 'https://admin.zhengrowth.com';
+          return;
         } else {
           // Route non-admin to appropriate dashboard based on device
           let devicePreference: string | null = null;
