@@ -737,6 +737,160 @@ export type Database = {
         }
         Relationships: []
       }
+      email_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          filename: string
+          id: string
+          size_bytes: number | null
+          storage_path: string
+          template_id: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          filename: string
+          id?: string
+          size_bytes?: number | null
+          storage_path: string
+          template_id?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          filename?: string
+          id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          profile_id: string | null
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          to_email: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          profile_id?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status: string
+          subject: string
+          template_id?: string | null
+          to_email: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          profile_id?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "email_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          profile_id: string | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          template_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "email_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_sequences: {
         Row: {
           created_at: string | null
@@ -780,6 +934,53 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          from_email: string | null
+          from_name: string | null
+          html_body: string
+          id: string
+          name: string
+          stage_id: string | null
+          subject: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          html_body: string
+          id?: string
+          name: string
+          stage_id?: string | null
+          subject: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          html_body?: string
+          id?: string
+          name?: string
+          stage_id?: string | null
+          subject?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_stages"
             referencedColumns: ["id"]
           },
         ]
@@ -1458,6 +1659,39 @@ export type Database = {
             referencedColumns: ["slug"]
           },
         ]
+      }
+      funnel_stages: {
+        Row: {
+          active: boolean | null
+          auto_progress: boolean | null
+          created_at: string | null
+          delay_hours: number | null
+          description: string | null
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          active?: boolean | null
+          auto_progress?: boolean | null
+          created_at?: string | null
+          delay_hours?: number | null
+          description?: string | null
+          id?: string
+          name: string
+          order_index?: number
+        }
+        Update: {
+          active?: boolean | null
+          auto_progress?: boolean | null
+          created_at?: string | null
+          delay_hours?: number | null
+          description?: string | null
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
       }
       funnels: {
         Row: {
@@ -3229,6 +3463,52 @@ export type Database = {
           sort?: number | null
         }
         Relationships: []
+      }
+      user_funnel_progress: {
+        Row: {
+          completed_at: string | null
+          entered_at: string | null
+          id: string
+          profile_id: string | null
+          stage_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          entered_at?: string | null
+          id?: string
+          profile_id?: string | null
+          stage_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          entered_at?: string | null
+          id?: string
+          profile_id?: string | null
+          stage_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_funnel_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_plan"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "user_funnel_progress_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zg_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_funnel_progress_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "funnel_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
