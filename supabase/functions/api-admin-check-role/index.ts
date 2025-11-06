@@ -46,23 +46,40 @@ Deno.serve(async (req) => {
 
     console.log('[api-admin-check-role] User authenticated:', user.id, user.email);
 
-    // Check admin role against zg_admins (single source of truth for policies)
-    const { data: adminRow, error: adminErr } = await supabase
-      .from('zg_admins')
-      .select('user_id')
+    // Check new RBAC system first (user_roles)
+    const { data: roleRow, error: roleErr } = await supabase
+      .from('user_roles')
+      .select('role')
       .eq('user_id', user.id)
+      .in('role', ['owner', 'admin'])
       .maybeSingle();
 
-    if (adminErr) {
-      console.error('[api-admin-check-role] Admin query error:', adminErr);
+    if (roleErr && roleErr.code !== 'PGRST116') {
+      console.error('[api-admin-check-role] Role query error:', roleErr);
     }
 
-    const isAdmin = !!adminRow;
+    // Fallback to legacy zg_admins for backward compatibility
+    let isAdmin = !!roleRow;
+    
+    if (!isAdmin) {
+      const { data: adminRow, error: adminErr } = await supabase
+        .from('zg_admins')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (adminErr && adminErr.code !== 'PGRST116') {
+        console.error('[api-admin-check-role] Admin query error:', adminErr);
+      }
+
+      isAdmin = !!adminRow;
+    }
+
     console.log('[api-admin-check-role] Admin check result:', { 
       userId: user.id, 
       email: user.email, 
-      isAdmin, 
-      adminRow 
+      isAdmin,
+      role: roleRow?.role || 'none'
     });
 
 
