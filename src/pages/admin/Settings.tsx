@@ -19,7 +19,7 @@ export default function Settings() {
 
   async function loadOrganization() {
     const { data } = await supabase
-      .from('organizations')
+      .from('organizations' as any)
       .select('*')
       .single();
     
@@ -30,7 +30,7 @@ export default function Settings() {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('organizations')
+        .from('organizations' as any)
         .update(updates)
         .eq('id', org.id);
 

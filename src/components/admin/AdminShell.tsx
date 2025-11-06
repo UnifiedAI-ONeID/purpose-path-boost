@@ -3,11 +3,13 @@ import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
 import { triggerHomeAnim } from '@/anim/animator';
 import { ADMIN_NAV } from '@/admin/nav';
+import { useUserRole } from '@/hooks/useUserRole';
 import logo from '@/assets/images/logo.png';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [pathname, setPathname] = useState('');
+  const { role } = useUserRole();
 
   useEffect(() => {
     // Register admin SW
@@ -64,7 +66,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <div className="font-semibold">ZhenGrowth · Admin</div>
         </div>
         <nav className="p-2 space-y-1">
-          {ADMIN_NAV.map((item) => (
+          {ADMIN_NAV.filter(item => {
+            // Show all items if no role restrictions, or if user role matches
+            if (!item.roles || !role) return !item.roles;
+            return item.roles.includes(role);
+          }).map((item) => (
             <Nav key={item.href} href={item.href}>
               {item.label}
             </Nav>
