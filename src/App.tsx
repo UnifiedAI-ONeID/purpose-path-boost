@@ -75,6 +75,9 @@ import CouponsManager from "./pages/admin/CouponsManager";
 import ReferralsManager from "./pages/admin/ReferralsManager";
 import CrossPostStudio from "./pages/admin/CrossPostStudio";
 import FunnelManager from "./pages/admin/Funnel";
+import AdminCRM from "./pages/admin/CRM";
+import AdminAnalytics from "./pages/admin/Analytics";
+import AdminSettings from "./pages/admin/Settings";
 
 // PWA Core
 import { PWAProvider } from "./pwa/core/PWAProvider";
@@ -216,7 +219,10 @@ function AppRoutes() {
         {/* Protected Admin Routes - Require authentication & admin role */}
         <Route path="/admin" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
         <Route path="/admin/dashboard" element={<ProtectedAdminRoute><AdminOverview /></ProtectedAdminRoute>} />
+        <Route path="/admin/crm" element={<ProtectedAdminRoute><AdminCRM /></ProtectedAdminRoute>} />
         <Route path="/admin/leads" element={<ProtectedAdminRoute><AdminLeads /></ProtectedAdminRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
+        <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
         <Route path="/admin/content" element={<ProtectedAdminRoute><AdminContent /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing" element={<ProtectedAdminRoute><AdminMarketing /></ProtectedAdminRoute>} />
         <Route path="/admin/marketing/coupons" element={<ProtectedAdminRoute><CouponsManager /></ProtectedAdminRoute>} />

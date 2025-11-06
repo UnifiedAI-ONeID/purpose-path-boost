@@ -2,14 +2,18 @@ export type AdminNavItem = {
   label: string;
   href: string;
   icon?: string;
+  roles?: string[]; // Which roles can see this nav item
 };
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { label: 'Overview', href: '/admin' },
-  { label: 'Leads', href: '/admin/leads' },
-  { label: 'Content', href: '/admin/content' },
-  { label: 'Coaching', href: '/admin/coaching' },
-  { label: 'Marketing', href: '/admin/marketing' },
-  { label: 'Payments', href: '/admin/payments' },
-  { label: 'System', href: '/admin/system' },
+  { label: 'CRM', href: '/admin/crm', roles: ['owner', 'admin', 'sales'] },
+  { label: 'Leads', href: '/admin/leads', roles: ['owner', 'admin', 'sales'] },
+  { label: 'Analytics', href: '/admin/analytics', roles: ['owner', 'admin'] },
+  { label: 'Content', href: '/admin/content', roles: ['owner', 'admin'] },
+  { label: 'Coaching', href: '/admin/coaching', roles: ['owner', 'admin', 'coach'] },
+  { label: 'Marketing', href: '/admin/marketing', roles: ['owner', 'admin', 'sales'] },
+  { label: 'Payments', href: '/admin/payments', roles: ['owner', 'admin', 'finance'] },
+  { label: 'Settings', href: '/admin/settings', roles: ['owner', 'admin'] },
+  { label: 'System', href: '/admin/system', roles: ['owner', 'admin'] },
 ];
