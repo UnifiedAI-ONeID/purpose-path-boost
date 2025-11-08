@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { registerAdminSW } from '../../pwa/registerAdminSW';
 import AdminInstallButton from './AdminInstallButton';
 import { triggerHomeAnim } from '@/anim/animator';
@@ -8,7 +9,7 @@ import logo from '@/assets/images/logo.png';
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [pathname, setPathname] = useState('');
+  const location = useLocation();
   const { role } = useUserRole();
 
   useEffect(() => {
@@ -18,38 +19,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     // Apply admin theme
     document.documentElement.dataset.admin = 'true';
     
-    // Track initial pathname
-    setPathname(window.location.pathname);
-    
     return () => {
       delete document.documentElement.dataset.admin;
     };
   }, []);
-  
-  // Note: Authentication is handled by ProtectedAdminRoute wrapper
-  // No need to verify again here
 
-  // Detect route changes
+  // Trigger animation on route change
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    if (pathname && currentPath !== pathname) {
-      triggerHomeAnim(600);
-      setPathname(currentPath);
-    }
-  }, [pathname]);
-
-  // Listen for navigation events
-  useEffect(() => {
-    const handleNavigation = () => {
-      const newPath = window.location.pathname;
-      if (newPath !== pathname) {
-        setPathname(newPath);
-      }
-    };
-
-    window.addEventListener('popstate', handleNavigation);
-    return () => window.removeEventListener('popstate', handleNavigation);
-  }, [pathname]);
+    triggerHomeAnim(600);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-[100svh] grid md:grid-cols-[240px_1fr]" style={{ background: 'var(--background)' }}>
@@ -97,15 +75,16 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 }
 
 function Nav({ href, children }: { href: string; children: React.ReactNode }) {
-  const active = typeof window !== 'undefined' && location.pathname === href;
+  const location = useLocation();
+  const active = location.pathname === href;
   return (
-    <a
-      href={href}
-      className={`px-3 py-2 rounded-lg transition-colors ${
+    <Link
+      to={href}
+      className={`block px-3 py-2 rounded-lg transition-colors ${
         active ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-accent'
       }`}
     >
       {children}
-    </a>
+    </Link>
   );
 }
