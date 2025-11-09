@@ -91,6 +91,20 @@ export function PWAProvider({ children }: PWAProviderProps) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Periodic session verification (every 5 minutes)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session && user) {
+        console.log('[PWA] Session expired, logging out');
+        setUser(null);
+        setProfileId(null);
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   // Fetch profile ID
   const fetchProfile = async (userId: string) => {
     try {
