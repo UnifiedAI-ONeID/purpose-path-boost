@@ -14,6 +14,7 @@ import { ArrowRight, CheckCircle } from 'lucide-react';
 import { track } from '@/analytics/events';
 import Cal, { getCalApi } from '@calcom/embed-react';
 import { useEffect } from 'react';
+import { trackEvent } from '@/lib/trackEvent';
 
 const bookingSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -47,9 +48,7 @@ const BookSession = () => {
 
   useEffect(() => {
     track('book_view');
-  }, []);
-
-  useEffect(() => {
+    
     (async function () {
       const cal = await getCalApi();
       cal('ui', {
@@ -64,6 +63,10 @@ const BookSession = () => {
       goal: data.goal.substring(0, 50),
       timeline: data.timeline,
       language: data.language,
+    });
+    trackEvent('booking_form_submitted', {
+      timeline: data.timeline,
+      language: data.language
     });
     
     // Store form data for thank you page

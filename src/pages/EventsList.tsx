@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
 import { toast } from 'sonner';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { trackEvent } from '@/lib/trackEvent';
 
 export default function EventsList() {
   const isMobile = useIsMobile();
@@ -15,6 +16,8 @@ export default function EventsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('events_list_view');
+    
     async function load() {
       try {
         const { data, error } = await supabase

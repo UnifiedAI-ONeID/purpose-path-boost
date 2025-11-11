@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { triggerHomeAnim } from '@/anim/animator';
@@ -7,9 +7,14 @@ import { SEOHelmet } from '@/components/SEOHelmet';
 import Testimonials from '@/components/Testimonials';
 import coachHero from '@/assets/images/coach-hero.jpg';
 import { CheckCircle } from 'lucide-react';
+import { trackEvent } from '@/lib/trackEvent';
 
 export default function Home() {
   const { lang } = usePrefs();
+  
+  useEffect(() => {
+    trackEvent('home_page_view', { lang });
+  }, [lang]);
   
   return (
     <>

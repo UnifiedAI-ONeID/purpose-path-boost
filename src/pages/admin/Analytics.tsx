@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, Target, Eye, MousePointer } from 'lucide-react';
+import { trackEvent } from '@/lib/trackEvent';
 
 interface MetricsData {
   kpi: {
@@ -29,6 +30,7 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('admin_analytics_view');
     loadMetrics();
     
     // Refresh every minute

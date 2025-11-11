@@ -3,6 +3,7 @@ import CoachingCard from '@/components/CoachingCard';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { SEOHelmet } from '@/components/SEOHelmet';
 import { supabase } from '@/integrations/supabase/client';
+import { trackEvent } from '@/lib/trackEvent';
 
 type ListResponse = {
   ok: boolean;
@@ -19,6 +20,8 @@ export default function CoachingPrograms() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    trackEvent('coaching_programs_view', { lang });
+    
     const loadCoaching = async () => {
       try {
         const { data: result, error: err } = await supabase.functions.invoke('api-coaching-list', {

@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import AdminShell from '@/components/admin/AdminShell';
+import { trackEvent } from '@/lib/trackEvent';
 
 interface KpiData {
   mrr: number;
@@ -25,6 +26,7 @@ export default function Overview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('admin_overview_view');
     loadData();
     
     // Refresh every 60 seconds

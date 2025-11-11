@@ -4,6 +4,8 @@ import SEOHelmet from '@/components/SEOHelmet';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
+import { trackEvent } from '@/lib/trackEvent';
+import { usePrefs } from '@/prefs/PrefsProvider';
 
 const TIERS = [
   { 
@@ -30,9 +32,14 @@ const TIERS = [
 ];
 
 export default function Pricing() {
+  const { lang } = usePrefs();
   const [cycle, setCycle] = useState<'m' | 'a'>('m');
   const [loading, setLoading] = useState<string | null>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
+
+  useEffect(() => {
+    trackEvent('pricing_page_view', { lang });
+  }, [lang]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -42,6 +49,13 @@ export default function Pricing() {
 
   async function startCheckout(slug: string) {
     setLoading(slug);
+    
+    // Track checkout initiation
+    trackEvent('checkout_started', {
+      plan_slug: slug,
+      interval: cycle === 'm' ? 'month' : 'year',
+      lang
+    });
     
     try {
       const { data: { user } } = await supabase.auth.getUser();

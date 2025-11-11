@@ -197,6 +197,14 @@ export default function ContactPage(){
         return;
       }
       
+      // Track successful contact form submission
+      const { trackEvent } = await import('@/lib/trackEvent');
+      trackEvent('contact_form_submitted', {
+        topic: payload.topic,
+        channel_pref: payload.channel_pref,
+        lang_pref: payload.lang_pref
+      });
+      
       setBusy(false);
       setSent('ok');
       toast.success('Message sent successfully!');
