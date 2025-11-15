@@ -67,6 +67,9 @@ const BlogDetail = () => {
       }
 
       setPost(data);
+      
+      // Track blog read
+      track('blog_read', { slug: data.slug, category: data.category });
     } catch (error) {
       console.error('Failed to load blog post:', error);
       toast.error('Failed to load blog post. Please try again.');
