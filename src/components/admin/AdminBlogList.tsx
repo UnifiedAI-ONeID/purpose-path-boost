@@ -82,7 +82,7 @@ export function AdminBlogList() {
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Delete blog post "${title}"?`)) return;
+    if (!confirm(`Delete blog post "${title}"? This cannot be undone.`)) return;
 
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -99,17 +99,20 @@ export function AdminBlogList() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[AdminBlogList] Delete error:', error);
+        throw new Error('Failed to connect to server');
+      }
 
       if (data?.ok) {
-        toast.success('Blog post deleted');
-        loadPosts();
+        toast.success('Blog post deleted successfully');
+        await loadPosts();
       } else {
         throw new Error(data?.error || 'Failed to delete');
       }
     } catch (error) {
       console.error('[AdminBlogList] Delete error:', error);
-      toast.error('Failed to delete blog post');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete blog post');
     }
   };
 
@@ -128,10 +131,10 @@ export function AdminBlogList() {
     setEditingId(undefined);
   };
 
-  const handleEditorSave = () => {
+  const handleEditorSave = async () => {
     setEditorOpen(false);
     setEditingId(undefined);
-    loadPosts();
+    await loadPosts();
   };
 
   if (isLoading) {
