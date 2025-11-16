@@ -1,21 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import AdminShell from '@/components/admin/AdminShell';
 import { AdminBlogList } from '@/components/admin/AdminBlogList';
+import ContentLeaderboard from '@/components/admin/ContentLeaderboard';
+import { VersionControl } from '@/components/admin/VersionControl';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Content() {
-  const [tab, setTab] = useState<'pages' | 'blog'>('pages');
+  const [tab, setTab] = useState<'pages' | 'blog' | 'analytics'>('pages');
+  const [topContent, setTopContent] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (tab === 'analytics') {
+      loadTopContent();
+    }
+  }, [tab]);
+
+  async function loadTopContent() {
+    try {
+      const { data, error } = await supabase.rpc('content_leaderboard_30d');
+      if (!error && data) {
+        setTopContent(data);
+      }
+    } catch (error) {
+      console.error('[Content] Failed to load top content:', error);
+    }
+  }
 
   return (
     <AdminShell>
     <div className="space-y-4">
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'pages' | 'blog')}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'pages' | 'blog' | 'analytics')}>
         <TabsList>
           <TabsTrigger value="pages">Pages</TabsTrigger>
           <TabsTrigger value="blog">Blog</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics & Tools</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pages">
@@ -43,6 +65,13 @@ export default function Content() {
 
         <TabsContent value="blog">
           <AdminBlogList />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <div className="space-y-6">
+            <VersionControl />
+            <ContentLeaderboard rows={topContent} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

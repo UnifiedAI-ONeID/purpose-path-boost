@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw } from 'lucide-react';
@@ -8,6 +8,10 @@ import { toast } from 'sonner';
 export function VersionControl() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetchCurrentVersion();
+  }, []);
 
   const fetchCurrentVersion = async () => {
     const { data } = await supabase
