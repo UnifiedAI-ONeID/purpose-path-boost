@@ -106,6 +106,24 @@ export function AdminBlogList() {
 
       if (data?.ok) {
         toast.success('Blog post deleted successfully');
+        
+        // Trigger cache bust and sitemap rebuild
+        try {
+          await supabase.functions.invoke('admin-cache-bust', {
+            headers: {
+              Authorization: `Bearer ${session.session.access_token}`,
+            },
+          });
+          
+          await supabase.functions.invoke('admin-sitemap-rebuild', {
+            headers: {
+              Authorization: `Bearer ${session.session.access_token}`,
+            },
+          });
+        } catch (cacheError) {
+          console.error('[AdminBlogList] Cache/sitemap error:', cacheError);
+        }
+        
         await loadPosts();
       } else {
         throw new Error(data?.error || 'Failed to delete');
