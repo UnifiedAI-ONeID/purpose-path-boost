@@ -162,6 +162,28 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
 
       toast.success(blogId ? 'Blog post updated successfully' : 'Blog post created successfully');
 
+      // If published, trigger cache bust and sitemap rebuild
+      if (data.published) {
+        try {
+          await supabase.functions.invoke('admin-cache-bust', {
+            headers: {
+              Authorization: `Bearer ${session.session.access_token}`,
+            },
+          });
+          
+          await supabase.functions.invoke('admin-sitemap-rebuild', {
+            headers: {
+              Authorization: `Bearer ${session.session.access_token}`,
+            },
+          });
+          
+          console.log('[BlogEditor] Cache invalidated and sitemap rebuilt');
+        } catch (cacheError) {
+          console.error('[BlogEditor] Cache/sitemap error:', cacheError);
+          // Don't show error to user as this is not critical
+        }
+      }
+
       // Handle social posting for new published posts
       if (!blogId && data.published && selectedPlatforms.length > 0) {
         try {
