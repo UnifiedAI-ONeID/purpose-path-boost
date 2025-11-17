@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, Video, MessageCircle, Loader2, ArrowLeft } from 'lucide-react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
@@ -20,7 +20,7 @@ export default function MobileBook() {
   const [calReady, setCalReady] = useState(false);
 
   useEffect(() => {
-    track('page_view', { page: 'mobile_book' });
+    trackEvent('page_view', { page: 'mobile_book' });
     
     // Initialize Cal.com
     const initializeCal = () => {
@@ -111,7 +111,7 @@ export default function MobileBook() {
   const handleSelectSession = (session: typeof sessionTypes[0]) => {
     console.log('[Mobile Book] Session selected:', session.title);
     
-    track('booking_initiated', {
+    trackEvent('booking_initiated', {
       session_type: session.eventType,
       price: session.price,
       duration: session.duration,
@@ -176,7 +176,7 @@ export default function MobileBook() {
     try {
       const packageData = COACHING_PACKAGES[selectedSession.packageId];
       
-      track('payment_initiated', {
+      trackEvent('payment_initiated', {
         session_type: selectedSession.eventType,
         amount: packageData.price,
       });
@@ -203,12 +203,12 @@ export default function MobileBook() {
       sessionStorage.setItem('booking_customer_email', customerEmail);
       sessionStorage.setItem('booking_cal_link', selectedSession.calLink);
 
-      track('payment_redirect', { session_type: selectedSession.eventType });
+      trackEvent('payment_redirect', { session_type: selectedSession.eventType });
       window.location.href = result.url;
     } catch (error) {
       console.error('Payment error:', error);
       toast.error('Payment failed. Please try again.');
-      track('payment_failed', {
+      trackEvent('payment_failed', {
         session_type: selectedSession?.eventType,
         error: error instanceof Error ? error.message : 'Unknown',
       });

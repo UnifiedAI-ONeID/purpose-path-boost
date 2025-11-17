@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { ChevronRight, Globe, Bell, Calendar, LogOut, User } from 'lucide-react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +17,7 @@ export default function MobileMe() {
   const [showBookingsSheet, setShowBookingsSheet] = useState(false);
 
   useEffect(() => {
-    track('page_view', { page: 'mobile_me' });
+    trackEvent('page_view', { page: 'mobile_me' });
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {

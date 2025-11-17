@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { ROUTES } from '@/nav/routes';
 import { ProgramSheet } from '@/components/ProgramSheet';
 import { A2HSPrompt } from '@/components/A2HSPrompt';
@@ -10,7 +10,7 @@ export default function MobileHome() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
 
   useEffect(() => {
-    track('page_view', { page: 'mobile_home' });
+    trackEvent('page_view', { page: 'mobile_home' });
     
     // Track visits for A2HS
     const visits = parseInt(localStorage.getItem('app_visits') || '0');

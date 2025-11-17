@@ -3,7 +3,7 @@ import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import ThemeToggle from '../components/ThemeToggle';
 import { useEffect } from 'react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
 
@@ -11,7 +11,7 @@ export default function About(){
   const { t } = useTranslation('about');
 
   useEffect(() => {
-    track('nav_click', { page: 'about' });
+    trackEvent('nav_click', { page: 'about' });
   }, []);
 
   return (
@@ -42,7 +42,7 @@ export default function About(){
           <SmartLink
             to={ROUTES.coaching} 
             className="inline-flex mt-4 items-center gap-2 px-5 py-3 rounded-xl bg-cta text-white shadow-soft hover:opacity-90 transition-smooth"
-            onClick={() => track('cta_click', { button: 'Book Free Call', location: 'about_page' })}
+            onClick={() => trackEvent('cta_click', { button: 'Book Free Call', location: 'about_page' })}
           >
             {t('cta')}
           </SmartLink>

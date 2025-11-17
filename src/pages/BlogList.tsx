@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -80,7 +80,7 @@ const BlogList = () => {
               size="sm"
               onClick={() => {
                 setSelectedCategory(category);
-                track('blog_category_click', { category });
+                trackEvent('blog_category_click', { category });
               }}
             >
               <Tag className="h-4 w-4 mr-2" />
@@ -133,7 +133,7 @@ const BlogList = () => {
                       asChild
                       variant="link"
                       className="p-0"
-                      onClick={() => track('blog_read', { slug: post.slug })}
+                      onClick={() => trackEvent('blog_read', { slug: post.slug })}
                     >
                       <SmartLink to={`${ROUTES.blogDetail.replace('[slug]', post.slug)}`}>
                         Read More
@@ -160,7 +160,7 @@ const BlogList = () => {
             asChild 
             variant="hero" 
             size="lg"
-            onClick={() => track('cta_click', { button: 'Blog CTA Book Session', location: 'blog_footer' })}
+            onClick={() => trackEvent('cta_click', { button: 'Blog CTA Book Session', location: 'blog_footer' })}
           >
             <SmartLink to={ROUTES.coaching}>Book a Free Session</SmartLink>
           </Button>

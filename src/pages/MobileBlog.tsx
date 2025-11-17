@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { BlogSheet } from '@/components/BlogSheet';
@@ -22,7 +22,7 @@ export default function MobileBlog() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    track('page_view', { page: 'mobile_blog' });
+    trackEvent('page_view', { page: 'mobile_blog' });
     fetchPosts();
   }, []);
 

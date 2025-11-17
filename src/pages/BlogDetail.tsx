@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useIsMobile } from '@/hooks/use-mobile';
 import BlogDetailMobile from '@/components/mobile/BlogDetailMobile';
@@ -69,7 +69,7 @@ const BlogDetail = () => {
       setPost(data);
       
       // Track blog read
-      track('blog_read', { slug: data.slug, category: data.category });
+      trackEvent('blog_read', { slug: data.slug, category: data.category });
     } catch (error) {
       console.error('Failed to load blog post:', error);
       toast.error('Failed to load blog post. Please try again.');
@@ -181,7 +181,7 @@ const BlogDetail = () => {
             asChild 
             variant="hero" 
             size="lg"
-            onClick={() => track('cta_click', { button: 'Blog Detail CTA Book Session', location: 'blog_detail_footer' })}
+            onClick={() => trackEvent('cta_click', { button: 'Blog Detail CTA Book Session', location: 'blog_detail_footer' })}
           >
             <SmartLink to={ROUTES.coaching}>Book a Free Session</SmartLink>
           </Button>

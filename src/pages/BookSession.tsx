@@ -11,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle } from 'lucide-react';
-import { track } from '@/analytics/events';
 import Cal, { getCalApi } from '@calcom/embed-react';
 import { useEffect } from 'react';
 import { trackEvent } from '@/lib/trackEvent';
@@ -47,7 +46,7 @@ const BookSession = () => {
   });
 
   useEffect(() => {
-    track('book_view');
+    trackEvent('book_view');
     
     (async function () {
       const cal = await getCalApi();
@@ -59,7 +58,7 @@ const BookSession = () => {
   }, []);
 
   const onSubmit = (data: BookingFormData) => {
-    track('book_start', {
+    trackEvent('book_start', {
       goal: data.goal.substring(0, 50),
       timeline: data.timeline,
       language: data.language,
