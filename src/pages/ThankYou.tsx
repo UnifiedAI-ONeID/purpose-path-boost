@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { CheckCircle, Calendar, Mail, Download } from 'lucide-react';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 
 const ThankYou = () => {
   useEffect(() => {
-    track('book_complete');
+    trackEvent('book_complete');
   }, []);
 
   return (

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, CreditCard } from 'lucide-react';
 import { COACHING_PACKAGES, type CoachingPackageId, createPaymentLink } from '@/lib/airwallex';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 import { toast } from 'sonner';
 import { isCN } from '@/lib/cn-env';
 
@@ -54,7 +54,7 @@ const Payment = () => {
     const currency = isCN ? 'CNY' : selectedPackage.currency;
     const amount = isCN ? selectedPackage.price * 7 : selectedPackage.price; // Rough CNY conversion
     
-    track('pay_click', {
+    trackEvent('pay_click', {
       package: packageId,
       amount,
       currency,
@@ -79,7 +79,7 @@ const Payment = () => {
       window.location.href = response.url;
     } catch (error) {
       console.error('Payment error:', error);
-      track('pay_fail', {
+      trackEvent('pay_fail', {
         package: packageId,
         error: error instanceof Error ? error.message : 'Unknown error',
       });

@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { track } from '@/analytics/events';
+import { trackEvent } from '@/lib/trackEvent';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -31,7 +31,7 @@ const Quiz = () => {
 
   // Track quiz page view
   useEffect(() => {
-    track('lm_view');
+    trackEvent('lm_view');
   }, []);
 
   const questions = Array.from({ length: 10 }, (_, i) => ({
@@ -107,8 +107,8 @@ const Quiz = () => {
       }
 
       // Track successful submission
-      track('lm_submit', { score });
-      track('quiz_complete', { score });
+      trackEvent('lm_submit', { score });
+      trackEvent('quiz_complete', { score });
       
       toast.success(t('results.success') || 'Success! Check your email for the 7-Day Clarity Sprint guide.');
       setShowForm(false);
