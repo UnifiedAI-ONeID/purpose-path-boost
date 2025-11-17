@@ -2,15 +2,43 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Home, ClipboardList, LayoutDashboard, GraduationCap } from 'lucide-react';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
+import { usePrefs } from '@/prefs/PrefsProvider';
 
 export default function PWALayout() {
   const location = useLocation();
+  const { lang } = usePrefs();
   
+  const getLabel = (key: string) => {
+    const translations = {
+      home: {
+        'en': 'Home',
+        'zh-CN': '首页',
+        'zh-TW': '首頁'
+      },
+      quiz: {
+        'en': 'Quiz',
+        'zh-CN': '测评',
+        'zh-TW': '測評'
+      },
+      programs: {
+        'en': 'Programs',
+        'zh-CN': '课程',
+        'zh-TW': '課程'
+      },
+      me: {
+        'en': 'Me',
+        'zh-CN': '我的',
+        'zh-TW': '我的'
+      }
+    };
+    return translations[key as keyof typeof translations]?.[lang] || translations[key as keyof typeof translations]?.['en'];
+  };
+
   const navItems = [
-    { to: '/pwa', icon: Home, label: 'Home' },
-    { to: '/pwa/quiz', icon: ClipboardList, label: 'Quiz' },
-    { to: '/pwa/coaching', icon: GraduationCap, label: 'Programs' },
-    { to: '/pwa/dashboard', icon: LayoutDashboard, label: 'Me' },
+    { to: '/pwa', icon: Home, label: getLabel('home') },
+    { to: '/pwa/quiz', icon: ClipboardList, label: getLabel('quiz') },
+    { to: '/pwa/coaching', icon: GraduationCap, label: getLabel('programs') },
+    { to: '/pwa/dashboard', icon: LayoutDashboard, label: getLabel('me') },
   ];
 
   return (
