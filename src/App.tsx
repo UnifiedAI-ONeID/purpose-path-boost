@@ -137,7 +137,9 @@ function AppRoutes() {
           { initSessionTracking },
           { injectAnalytics },
           { isChinaBuild },
-          { bootVersionGuard }
+          { bootVersionGuard },
+          { initPerformanceTracking },
+          { initCacheMonitoring }
         ] = await Promise.all([
           import('./pwa/registerSW'),
           import('./anim/boot'),
@@ -146,11 +148,19 @@ function AppRoutes() {
           import('./analytics/events'),
           import('./lib/loaders'),
           import('./lib/region'),
-          import('./lib/versionGuard')
+          import('./lib/versionGuard'),
+          import('./lib/pwa/performance'),
+          import('./lib/pwa/cacheMonitor')
         ]);
 
         // Register service worker for PWA
         registerSW();
+
+        // Initialize PWA performance tracking
+        initPerformanceTracking();
+
+        // Initialize cache monitoring
+        initCacheMonitoring();
 
         // Initialize global animation system
         bootAnimOnLoad();
