@@ -1,6 +1,13 @@
 export function registerSW() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
+  // Enforce HTTPS in production (allow localhost for development)
+  if (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+    console.warn('[PWA] Service Worker requires HTTPS. Redirecting...');
+    location.replace(location.href.replace('http:', 'https:'));
+    return;
+  }
+
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register('/sw.js');

@@ -48,9 +48,54 @@
   <body>
     <div class="card offline-card">
       <div class="offline-icon">🍃</div>
-      <h1>You're offline</h1>
-      <p class="text-muted offline-text">Please reconnect to continue with ZhenGrowth.</p>
-      <button class="btn btn-cta" onclick="location.reload()">Reload</button>
+      <h1 id="title">You're offline</h1>
+      <p class="text-muted offline-text" id="message">Please reconnect to continue with ZhenGrowth.</p>
+      <button class="btn btn-cta" onclick="location.reload()" id="reload">Reload</button>
     </div>
+    
+    <script>
+      // Detect language from localStorage or browser
+      (function() {
+        try {
+          const savedLang = localStorage.getItem('zg.lang');
+          const browserLang = navigator.language || navigator.userLanguage;
+          
+          let lang = savedLang || 'en';
+          if (!savedLang) {
+            if (browserLang.startsWith('zh-TW') || browserLang.includes('zh-HK')) {
+              lang = 'zh-TW';
+            } else if (browserLang.startsWith('zh')) {
+              lang = 'zh-CN';
+            }
+          }
+          
+          const translations = {
+            'en': {
+              title: "You're offline",
+              message: "Please reconnect to continue with ZhenGrowth.",
+              reload: "Reload"
+            },
+            'zh-CN': {
+              title: "您目前离线",
+              message: "请重新连接网络以继续使用 ZhenGrowth。",
+              reload: "重新加载"
+            },
+            'zh-TW': {
+              title: "您目前離線",
+              message: "請重新連接網路以繼續使用 ZhenGrowth。",
+              reload: "重新載入"
+            }
+          };
+          
+          const t = translations[lang] || translations['en'];
+          document.getElementById('title').textContent = t.title;
+          document.getElementById('message').textContent = t.message;
+          document.getElementById('reload').textContent = t.reload;
+          document.documentElement.lang = lang === 'zh-CN' ? 'zh-Hans' : lang === 'zh-TW' ? 'zh-Hant' : 'en';
+        } catch (e) {
+          console.warn('Failed to localize offline page:', e);
+        }
+      })();
+    </script>
   </body>
 </html>
