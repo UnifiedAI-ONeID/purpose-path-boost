@@ -1,9 +1,11 @@
 {
+  "id": "app.zhengrowth.pwa",
   "name": "ZhenGrowth",
   "short_name": "ZhenGrowth",
   "description": "Life & career coaching for Chinese-speaking professionals worldwide",
   "start_url": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait",
   "background_color": "#0b1f1f",
   "theme_color": "#0b1f1f",
@@ -27,13 +29,29 @@
       "purpose": "any"
     },
     { 
-      "src": "/app-icon-512.png", 
+      "src": "/app-icon-512-maskable.png", 
       "sizes": "512x512", 
       "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "categories": ["lifestyle", "education", "health"],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ZhenGrowth home screen"
+    },
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ZhenGrowth dashboard"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Take Quiz",
