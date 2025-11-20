@@ -83,8 +83,9 @@ export default function DeviceRouter() {
     
     const currentPath = location.pathname;
     
-    // Don't redirect if on excluded routes
-    if (EXCLUDED_ROUTES.some(route => currentPath.startsWith(route))) {
+    // Don't redirect if on excluded routes or landing pages
+    if (EXCLUDED_ROUTES.some(route => currentPath.startsWith(route)) || 
+        currentPath === '/pwa/home' || currentPath === '/pwa') {
       return;
     }
 
