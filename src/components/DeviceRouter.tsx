@@ -51,6 +51,7 @@ const ROUTE_MAPPINGS: { [key: string]: string } = {
  * Routes that should never be redirected (admin, auth, static pages, etc.)
  */
 const EXCLUDED_ROUTES = [
+  '/',           // Startup page handles its own routing
   '/admin',      // All admin routes must never be auto-redirected
   '/auth',       // Authentication page
   '/install',    // PWA installation page
