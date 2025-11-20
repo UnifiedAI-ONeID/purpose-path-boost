@@ -24,6 +24,11 @@ Deno.serve(async (req) => {
   try {
     const { event_id, ticket_id, name, email, language, coupon_code, currency } = await req.json();
 
+    // Get client IP for rate limiting
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+
     // Input validation
     if (!event_id || !ticket_id || !name || !email) {
       return jsonResponse({ error: 'Missing required fields' }, 200);
@@ -44,6 +49,19 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+
+    // Check rate limit (3 attempts per 5 minutes per IP and event)
+    const { data: rateLimitCheck } = await supabase.rpc('check_event_registration_rate_limit', {
+      p_identifier: clientIp,
+      p_identifier_type: 'ip',
+      p_event_id: event_id,
+      p_max_attempts: 3,
+      p_window_minutes: 5
+    });
+
+    if (rateLimitCheck && !rateLimitCheck.ok) {
+      return jsonResponse({ error: rateLimitCheck.error || 'Rate limit exceeded' }, 200);
+    }
 
     // Get ticket and event details
     const { data: ticket } = await supabase
