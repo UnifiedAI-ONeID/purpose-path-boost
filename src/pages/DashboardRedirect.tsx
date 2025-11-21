@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Loader2 } from 'lucide-react';
 import { isMobileDevice } from '@/lib/deviceDetect';
 

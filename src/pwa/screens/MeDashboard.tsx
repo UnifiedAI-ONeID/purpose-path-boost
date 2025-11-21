@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import SmartLink from '@/components/SmartLink';
 import { usePWA } from '../core/PWAProvider';
 import { GuestPrompt } from '../core/GuestPrompt';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import {
   User, Target, Calendar, TrendingUp, Award,
   Settings, LogOut, Sparkles, ArrowRight

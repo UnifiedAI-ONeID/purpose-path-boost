@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { trackEvent } from '@/lib/trackEvent';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { toast } from 'sonner';
 
 interface BlogPost {

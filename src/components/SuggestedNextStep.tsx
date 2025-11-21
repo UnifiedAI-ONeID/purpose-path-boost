@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import SmartLink from './SmartLink';
 import { usePrefs } from '../prefs/PrefsProvider';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';

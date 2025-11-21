@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/db'; import { dbClient as supabase } from '@/db";
 import MobileShell from "./MobileShell";
 import { Helmet } from "react-helmet-async";
 import { Share2, Copy, MessageCircle } from "lucide-react";

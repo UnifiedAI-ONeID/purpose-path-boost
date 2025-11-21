@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import MobileShell, { Section, MobileCard, Skeleton } from "./MobileShell";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/db'; import { dbClient as supabase } from '@/db";
 import { Calendar, MapPin } from "lucide-react";
 
 type Event = {

@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { toast } from 'sonner';
 
 const PLATFORMS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'x', 'youtube', 'wechat', 'red', 'zhihu', 'douyin'];

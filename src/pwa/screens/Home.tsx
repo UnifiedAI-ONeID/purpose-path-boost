@@ -27,7 +27,7 @@ export default function Home() {
     const device = getOrSetDevice();
     
     // Use Supabase function
-    import('@/integrations/supabase/client').then(({ supabase }) => {
+    import('@/db'; import { dbClient as supabase } from '@/db').then(({ supabase }) => {
       supabase.functions
         .invoke('pwa-boot', {
           body: { device, lang },

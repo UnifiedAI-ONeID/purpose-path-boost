@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 
 export default function UpcomingSessions({ profileId }: { profileId: string }) {
   const [data, setData] = useState<any>(null);

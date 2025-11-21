@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';

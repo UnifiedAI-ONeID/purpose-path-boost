@@ -3,7 +3,7 @@ import { trackEvent } from '@/lib/trackEvent';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { BlogSheet } from '@/components/BlogSheet';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Loader2 } from 'lucide-react';
 
 interface BlogPost {

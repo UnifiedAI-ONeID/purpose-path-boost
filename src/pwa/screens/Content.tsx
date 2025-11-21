@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import SmartLink from '@/components/SmartLink';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { GraduationCap, Play, Clock, CheckCircle, Lock } from 'lucide-react';
 import { usePWA } from '../core/PWAProvider';
 

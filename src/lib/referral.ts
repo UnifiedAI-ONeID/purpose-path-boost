@@ -3,7 +3,7 @@
  * Handles ref_code tracking for conversions and clicks
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 
 export async function trackReferral(ref_code: string, type: 'click' | 'conversion' = 'click') {
   if (!ref_code) return;

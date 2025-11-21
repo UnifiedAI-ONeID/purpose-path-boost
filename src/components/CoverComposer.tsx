@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { toast } from 'sonner';
 import { PLATFORM_DISPLAY_NAMES, PlatKey } from '@/lib/og/sizes';
 import { Loader2, Download, ExternalLink } from 'lucide-react';

@@ -1,10 +1,9 @@
+@import './tokens.css';
+@import './primitives.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Import design tokens */
-@import './tokens.css';
-@import './primitives.css';
 
 @layer base {
   * {

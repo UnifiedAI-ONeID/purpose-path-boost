@@ -5,7 +5,7 @@ import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
 import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { invokeApi } from '@/lib/api-client';
 
 interface Lesson {

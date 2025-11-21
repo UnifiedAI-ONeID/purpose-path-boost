@@ -60,7 +60,7 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
 
   // Save to database for admin dashboard
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
+    const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
     
     // Generate session ID if not exists (guarded for privacy modes)
     let sessionId = '';

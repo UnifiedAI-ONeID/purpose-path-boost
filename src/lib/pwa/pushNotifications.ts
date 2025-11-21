@@ -173,7 +173,7 @@ export async function sendSubscriptionToBackend(
   subscription: PushSubscription
 ): Promise<boolean> {
   try {
-    const { supabase } = await import('@/integrations/supabase/client');
+    const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
     
     const { data, error } = await supabase.functions.invoke('pwa-push-subscribe', {
       body: {

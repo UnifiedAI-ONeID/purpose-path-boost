@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { triggerHomeAnim } from '@/anim/animator';
-import { supabase } from '@/integrations/supabase/client';
+import { dbClient as supabase } from '@/db';
 
 export default function Startup() {
   const navigate = useNavigate();

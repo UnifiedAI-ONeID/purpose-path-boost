@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePWA } from '../core/PWAProvider';
 import { GuestPrompt } from '../core/GuestPrompt';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Target, Plus, Check, Calendar, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 

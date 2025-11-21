@@ -14,7 +14,7 @@ export default function Dashboard() {
     async function fetchDashboard() {
       try {
         // Get authenticated user session
-        const { supabase } = await import('@/integrations/supabase/client');
+        const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {

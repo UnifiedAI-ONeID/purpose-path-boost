@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import SmartLink from '@/components/SmartLink';
 import SEOHelmet from '@/components/SEOHelmet';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
 import { trackEvent } from '@/lib/trackEvent';

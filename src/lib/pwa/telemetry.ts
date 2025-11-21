@@ -3,7 +3,7 @@ export async function log(event: string, payload: any = {}) {
     const device_id = localStorage.getItem('zg.device');
     if (!device_id) return;
 
-    const { supabase } = await import('@/integrations/supabase/client');
+    const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
     await supabase.functions.invoke('pwa-telemetry', {
       body: { device_id, event, payload }
     });

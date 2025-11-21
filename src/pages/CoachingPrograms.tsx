@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import CoachingCard from '@/components/CoachingCard';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { trackEvent } from '@/lib/trackEvent';
 
 type ListResponse = {
