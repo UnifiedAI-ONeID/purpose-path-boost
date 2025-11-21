@@ -1,16 +1,13 @@
-import express from 'express';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-const app = express();
-const port = process.env.PORT || 3000;
+serve(async (req) => {
+  const { name } = await req.json()
+  const data = {
+    message: `Hello ${name}!`,
+  }
 
-app.get('/', (req, res) => {
-  res.send('Hello from ZhenGrowth API!');
-});
-
-app.get('/healthz', (req, res) => {
-  res.status(200).send('OK');
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server listening on port ${port}`);
-});
+  return new Response(
+    JSON.stringify(data),
+    { headers: { "Content-Type": "application/json" } },
+  )
+})
