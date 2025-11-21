@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/db'; import { dbClient as supabase } from '@/db";
 import MobileShell from "./MobileShell";
 import { Helmet } from "react-helmet-async";
 import { Share2, Copy, MessageCircle } from "lucide-react";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { blogService } from "@/services/blog";
 
 type Post = {
   id: string;
@@ -50,25 +50,29 @@ export default function BlogDetailMobile() {
     if (!slug) return;
 
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', slug)
-        .eq('published', true)
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await blogService.getPostBySlug(slug);
       
       if (!data) {
         setPost(null);
         return;
       }
       
-      setPost(data);
+      // Handle i18n content structure if present
+      // data.content might be object { en: "...", zh: "..." }
+      // Logic below assumes string. Ideally blogService handles this or we handle it here.
+      // For now assuming data.content is string or mapped by service.
+      // But my blogService just returned ...data.
+      // I'll do a quick check:
+      const content = typeof data.content === 'object' ? (data.content.en || '') : data.content;
+      const title = typeof data.title === 'object' ? (data.title.en || '') : data.title;
+      
+      const postData = { ...data, content, title };
+      
+      setPost(postData);
 
       // Build TOC from content
       const div = document.createElement('div');
-      div.innerHTML = data.content;
+      div.innerHTML = content;
       const headings = [...div.querySelectorAll('h2, h3')].slice(0, 12);
       setToc(headings.map((n, i) => ({ 
         id: `h-${i}`, 
@@ -76,21 +80,17 @@ export default function BlogDetailMobile() {
       })));
 
       // Load related posts
-      const { data: relatedData } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('published', true)
-        .eq('category', data.category)
-        .neq('slug', slug)
-        .limit(3);
-      
-      if (relatedData) setRelated(relatedData);
+      if (data.category) {
+        const relatedData = await blogService.getRelatedPosts(data.category, slug);
+        if (relatedData) setRelated(relatedData);
+      }
     } catch (err) {
       console.error('Failed to load post:', err);
     }
   }
 
   function tagHeadings(html: string) {
+    if (!html) return '';
     let i = 0;
     return html.replace(/<(h[2-3])>([^<]+)<\/h[2-3]>/g, (m, tag, text) => {
       const id = `h-${i++}`;
@@ -185,7 +185,7 @@ export default function BlogDetailMobile() {
         <h1 className="text-2xl leading-tight font-bold mb-2">{post.title}</h1>
         
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <span>{new Date(post.published_at).toLocaleDateString()}</span>
+          <span>{post.published_at ? new Date(post.published_at).toLocaleDateString() : ''}</span>
           <span>•</span>
           <span>{post.read_time} min read</span>
           <span>•</span>
