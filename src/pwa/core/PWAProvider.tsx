@@ -1,9 +1,10 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { authClient, AppUser } from '@/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
 
 interface PWAContextType {
-  user: User | null;
+  user: AppUser | null;
   isGuest: boolean;
   deviceId: string;
   profileId: string | null;
@@ -44,7 +45,7 @@ interface PWAProviderProps {
 }
 
 export function PWAProvider({ children }: PWAProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [bootData, setBootData] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -52,7 +53,6 @@ export function PWAProvider({ children }: PWAProviderProps) {
   const deviceId = getOrCreateDeviceId();
   const isInstalled = isPWAInstalled();
 
-  // Monitor online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -66,46 +66,59 @@ export function PWAProvider({ children }: PWAProviderProps) {
     };
   }, []);
 
-  // Initialize auth state
   useEffect(() => {
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
+    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+
+    if (authProvider === 'firebase') {
+      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
+        setUser(user);
+        if (user) {
+          fetchProfile(user.uid);
+        } else {
+          setProfileId(null);
+        }
         setLoading(false);
-      }
-    });
+      });
+      return () => unsubscribe();
+    } else {
+      authClient.getSession().then(({ data: { session } }: any) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfileId(null);
-      }
-    });
+      const { data: { subscription } } = authClient.onAuthStateChange((_event: any, session: any) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setProfileId(null);
+        }
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
-  // Periodic session verification (every 5 minutes)
   useEffect(() => {
     const interval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session && user) {
-        console.log('[PWA] Session expired, logging out');
-        setUser(null);
-        setProfileId(null);
+      const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+      if (authProvider === 'supabase') {
+        const { data: { session } } = await authClient.getSession();
+        if (!session && user) {
+          console.log('[PWA] Session expired, logging out');
+          setUser(null);
+          setProfileId(null);
+        }
       }
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [user]);
 
-  // Fetch profile ID
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -124,7 +137,6 @@ export function PWAProvider({ children }: PWAProviderProps) {
     }
   };
 
-  // Boot PWA with device tracking
   useEffect(() => {
     const bootPWA = async () => {
       try {

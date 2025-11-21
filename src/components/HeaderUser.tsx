@@ -1,6 +1,6 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { authClient, AppUser } from '@/auth';
 import { logout } from '@/lib/auth';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -11,40 +11,48 @@ import { invokeApi } from '@/lib/api-client';
 
 export default function HeaderUser() {
   const { lang } = usePrefs();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [open, setOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user || null);
-      
-      // Defer admin check to avoid blocking the auth callback
-      if (newSession?.user) {
-        setTimeout(() => {
-          checkAdminStatus();
-        }, 0);
-      } else {
-        setIsAdmin(false);
-      }
-    });
+    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+    if (authProvider === 'firebase') {
+      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
+        setUser(user);
+        if (user) {
+          setTimeout(() => {
+            checkAdminStatus();
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
+      });
+      return () => unsubscribe();
+    } else {
+      const { data: { subscription } } = authClient.onAuthStateChange((event: any, newSession: any) => {
+        setUser(newSession?.user || null);
+        if (newSession?.user) {
+          setTimeout(() => {
+            checkAdminStatus();
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
+      });
 
-    // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user || null);
-      if (session?.user) {
-        setTimeout(() => {
-          checkAdminStatus();
-        }, 0);
-      }
-    });
+      authClient.getSession().then(({ data: { session } }: any) => {
+        setUser(session?.user || null);
+        if (session?.user) {
+          setTimeout(() => {
+            checkAdminStatus();
+          }, 0);
+        }
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   async function checkAdminStatus() {
@@ -82,8 +90,9 @@ export default function HeaderUser() {
     );
   }
 
-  const avatar = user.user_metadata?.avatar_url || '/assets/brand/mark.svg';
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Account';
+  const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+  const avatar = authProvider === 'firebase' ? (user as any).photoURL : (user as any).user_metadata?.avatar_url || '/assets/brand/mark.svg';
+  const displayName = authProvider === 'firebase' ? (user as any).displayName : (user as any).user_metadata?.full_name || (user as any).email?.split('@')[0] || 'Account';
 
   return (
     <div ref={ref} className="relative">

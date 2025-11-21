@@ -18,6 +18,7 @@ export const Header = () => {
     { path: '/coaching', label: t('nav.coaching') },
     { path: '/events', label: t('nav.events') },
     { path: '/blog', label: t('nav.blog') },
+    { path: '/community', label: t('nav.community') },
     { path: '/contact', label: t('nav.contact') },
   ];
 
@@ -34,7 +35,7 @@ export const Header = () => {
             loading="eager"
             onError={(e) => {
               // Fallback to app icon if logo fails
-              e.currentTarget.src = '/app-icon-192.png';
+              (e.currentTarget as HTMLImageElement).src = '/app-icon-192.png';
             }}
           />
           <span className="text-2xl font-serif font-bold text-primary">ZhenGrowth</span>

@@ -26,6 +26,7 @@ import Contact from "./pages/Contact";
 import MobileMe from "./pages/MobileMe";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
+import CommunityPage from "./pages/Community";
 
 // Lazy load China-specific components
 const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
@@ -123,8 +124,7 @@ function AppRoutes() {
     const initializeApp = async () => {
       try {
         // Debug: detect multiple React copies
-        import('react').then((R:any)=>{
-          // eslint-disable-next-line no-console
+        import('react').then((R: any)=> {
           console.log('[React Debug] version', R.version, 'sameRef', R.useState === React.useState);
         });
 
@@ -180,12 +180,12 @@ function AppRoutes() {
           
           // Session tracking for China analytics
           if (typeof window !== 'undefined') {
-            let sessionStartTime = Date.now();
+            const sessionStartTime = Date.now();
             
             window.addEventListener('beforeunload', () => {
               const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
-              if (window._hmt) {
-                window._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
+              if ((window as any)._hmt) {
+                (window as any)._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
               }
             });
           }
@@ -281,6 +281,7 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/me" element={<RequireAuth><MeDashboard /></RequireAuth>} />
+          <Route path="/community" element={<RequireAuth><CommunityPage /></RequireAuth>} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/about" element={isMobile ? <MePage /> : <About />} />
         <Route path="/coaching" element={<CoachingPrograms />} />

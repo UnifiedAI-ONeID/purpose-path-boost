@@ -1,15 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { trackEvent } from '@/lib/trackEvent';
 import { ChevronRight, Globe, Bell, Calendar, LogOut, User } from 'lucide-react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { AppUser, authClient } from '@/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
 export default function MobileMe() {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const [showLanguageSheet, setShowLanguageSheet] = useState(false);
@@ -19,23 +18,27 @@ export default function MobileMe() {
   useEffect(() => {
     trackEvent('page_view', { page: 'mobile_me' });
     
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-    });
+    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+    if (authProvider === 'firebase') {
+      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
+        setUser(user);
+      });
+      return () => unsubscribe();
+    } else {
+      const { data: { subscription } } = authClient.onAuthStateChange((_: any, newSession: any) => {
+        setUser(newSession?.user ?? null);
+      });
 
-    // THEN get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
+      authClient.getSession().then(({ data: { session } }: any) => {
+        setUser(session?.user ?? null);
+      });
 
-    return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe();
+    }
   }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await authClient.signOut();
     toast.success('Signed out successfully');
     navigate('/auth');
   };
@@ -70,7 +73,7 @@ export default function MobileMe() {
             </div>
             <div>
               <h1 className="text-xl font-semibold text-fg">
-                {user?.email || 'Guest'}
+                {(user as any)?.email || 'Guest'}
               </h1>
               <p className="text-sm text-muted">
                 {user ? 'Manage your account' : 'Sign in to continue'}
@@ -116,7 +119,6 @@ export default function MobileMe() {
         </div>
       </div>
 
-      {/* Language Sheet */}
       {showLanguageSheet && (
         <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowLanguageSheet(false)}>
           <div 
@@ -144,7 +146,6 @@ export default function MobileMe() {
         </div>
       )}
 
-      {/* Notifications Sheet */}
       {showNotificationsSheet && (
         <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowNotificationsSheet(false)}>
           <div 
@@ -158,7 +159,6 @@ export default function MobileMe() {
         </div>
       )}
 
-      {/* Bookings Sheet */}
       {showBookingsSheet && (
         <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setShowBookingsSheet(false)}>
           <div 

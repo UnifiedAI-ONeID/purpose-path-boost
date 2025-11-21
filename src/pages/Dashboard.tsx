@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authClient, AppUser } from '@/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, TrendingUp, Award, LogOut, User as UserIcon } from 'lucide-react';
@@ -12,62 +13,73 @@ import Nudges from '@/components/Nudges';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (!session) {
+    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
+
+    if (authProvider === 'firebase') {
+      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
+        setUser(user);
+        if (user) {
+          fetchProfile(user.uid);
+        } else {
           navigate('/auth?returnTo=/dashboard');
         }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (!session) {
-        navigate('/auth?returnTo=/dashboard');
         setLoading(false);
-        return;
-      }
-      
-      try {
-        // Get profile ID for nudges
-        const { data: profile, error } = await supabase
-          .from('zg_profiles')
-          .select('id')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else if (profile) {
-          setProfileId(profile.id);
-        } else {
-          console.log('No profile found for user:', session.user.id);
+      });
+      return () => unsubscribe();
+    } else {
+      const { data: { subscription } } = authClient.onAuthStateChange(
+        (event: any, session: any) => {
+          setUser(session?.user ?? null);
+          if (!session) {
+            navigate('/auth?returnTo=/dashboard');
+          }
         }
-      } catch (err) {
-        console.error('Exception fetching profile:', err);
-      } finally {
-        setLoading(false);
-      }
-    });
+      );
 
-    return () => subscription.unsubscribe();
+      authClient.getSession().then(async ({ data: { session } }: any) => {
+        setUser(session?.user ?? null);
+        if (!session) {
+          navigate('/auth?returnTo=/dashboard');
+          setLoading(false);
+          return;
+        }
+        
+        fetchProfile(session.user.id);
+      });
+
+      return () => subscription.unsubscribe();
+    }
   }, [navigate]);
 
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('zg_profiles')
+        .select('id')
+        .eq('auth_user_id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else if (data) {
+        setProfileId(data.id);
+      } else {
+        console.log('No profile found for user:', userId);
+      }
+    } catch (err) {
+      console.error('Exception fetching profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await authClient.signOut();
     if (error) {
       toast.error('Error signing out');
     } else {
@@ -95,12 +107,10 @@ export default function Dashboard() {
         description="Track your coaching progress, manage bookings, and access your personalized growth journey."
       />
       
-      {/* In-app nudges */}
       {profileId && <Nudges profileId={profileId} />}
       
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,7 +119,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2">Welcome back!</h1>
-                <p className="text-muted-foreground">{user.email}</p>
+                <p className="text-muted-foreground">{(user as any).email}</p>
               </div>
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -118,7 +128,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -189,9 +198,7 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
-          {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Upcoming Sessions */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -215,7 +222,6 @@ export default function Dashboard() {
               </Card>
             </motion.div>
 
-            {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -255,7 +261,6 @@ export default function Dashboard() {
               </Card>
             </motion.div>
 
-            {/* Recent Activity */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
