@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, Copy, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { dbClient as supabase } from '@/db';
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -14,7 +15,6 @@ export default function Dashboard() {
     async function fetchDashboard() {
       try {
         // Get authenticated user session
-        const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {

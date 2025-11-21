@@ -5,6 +5,7 @@ import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { dbClient as supabase } from '@/db';
 
 function getOrSetDevice() {
   let id = localStorage.getItem('zg.device');
@@ -27,24 +28,22 @@ export default function Home() {
     const device = getOrSetDevice();
     
     // Use Supabase function
-    import('@/db'; import { dbClient as supabase } from '@/db').then(({ supabase }) => {
-      supabase.functions
-        .invoke('pwa-boot', {
-          body: { device, lang },
-          headers: { 'Accept-Language': lang, 'x-zg-device': device }
-        })
-        .then(({ data }) => {
-          if (data?.ok) setBoot(data);
-        });
-
-      // Track page view
-      supabase.functions.invoke('pwa-telemetry', {
-        body: {
-          device_id: device,
-          event: 'view_home',
-          payload: { source: 'pwa' }
-        }
+    supabase.functions
+      .invoke('pwa-boot', {
+        body: { device, lang },
+        headers: { 'Accept-Language': lang, 'x-zg-device': device }
+      })
+      .then(({ data }) => {
+        if (data?.ok) setBoot(data);
       });
+
+    // Track page view
+    supabase.functions.invoke('pwa-telemetry', {
+      body: {
+        device_id: device,
+        event: 'view_home',
+        payload: { source: 'pwa' }
+      }
     });
   }, [lang]);
 

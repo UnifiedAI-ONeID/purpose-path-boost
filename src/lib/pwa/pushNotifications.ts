@@ -1,4 +1,5 @@
 // Push Notifications for PWA
+import { dbClient as supabase } from '@/db';
 
 export type PermissionState = 'granted' | 'denied' | 'default';
 
@@ -173,8 +174,6 @@ export async function sendSubscriptionToBackend(
   subscription: PushSubscription
 ): Promise<boolean> {
   try {
-    const { supabase } = await import('@/db'; import { dbClient as supabase } from '@/db');
-    
     const { data, error } = await supabase.functions.invoke('pwa-push-subscribe', {
       body: {
         subscription: subscription.toJSON(),
