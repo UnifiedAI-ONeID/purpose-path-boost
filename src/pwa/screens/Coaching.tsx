@@ -28,7 +28,7 @@ export default function Coaching() {
   useEffect(() => {
     const tags = searchParams.get('tags') || '';
     
-    import('@/db'; import { dbClient as supabase } from '@/db').then(({ supabase }) => {
+    import('@/db').then(({ dbClient: supabase }) => {
       supabase.functions
         .invoke('pwa-coaching-recommend', {
           body: { lang, tags },
