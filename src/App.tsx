@@ -79,10 +79,12 @@ import FunnelManager from "./pages/admin/Funnel";
 import AdminCRM from "./pages/admin/CRM";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminSettings from "./pages/admin/Settings";
+import DataHealth from "./pages/admin/DataHealth"; // Import new page
 
 // PWA Core
 import { PWAProvider } from "./pwa/core/PWAProvider";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { ErrorBoundary } from "./components/ErrorBoundary"; // Import ErrorBoundary
 
 // Lazy load PWA screens and layout  
 const EnhancedPWALayout = lazy(() => import("./pwa/layouts/EnhancedPWALayout"));
@@ -242,6 +244,7 @@ function AppRoutes() {
         <Route path="/admin/payments" element={<ProtectedAdminRoute><AdminPayments /></ProtectedAdminRoute>} />
         <Route path="/admin/integrations" element={<ProtectedAdminRoute><AdminIntegrations /></ProtectedAdminRoute>} />
         <Route path="/admin/system" element={<ProtectedAdminRoute><AdminSystem /></ProtectedAdminRoute>} />
+        <Route path="/admin/health" element={<ProtectedAdminRoute><DataHealth /></ProtectedAdminRoute>} />
         
         {/* Legacy admin routes - keep for backward compatibility */}
         <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
@@ -319,12 +322,14 @@ const App = () => {
         <PrefsProvider>
           <PWAProvider>
             <I18nextProvider i18n={i18n}>
-              <BrowserRouter>
-                <RouteAnimHook />
-                <AppRoutes />
-                <Toaster />
-                <Sonner />
-              </BrowserRouter>
+              <ErrorBoundary>
+                <BrowserRouter>
+                  <RouteAnimHook />
+                  <AppRoutes />
+                  <Toaster />
+                  <Sonner />
+                </BrowserRouter>
+              </ErrorBoundary>
               <div id="zg-homeclick-layer" aria-hidden="true" />
             </I18nextProvider>
           </PWAProvider>

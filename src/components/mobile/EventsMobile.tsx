@@ -1,36 +1,60 @@
 import { useEffect, useRef, useState } from "react";
 import MobileShell, { Section, MobileCard, Skeleton } from "./MobileShell";
-import { supabase } from "@/db'; import { dbClient as supabase } from '@/db";
 import { Calendar, MapPin } from "lucide-react";
-
-type Event = {
-  id: string;
-  slug: string;
-  title: string;
-  start_at: string;
-  end_at: string;
-  cover_url?: string;
-  summary?: string;
-  tz?: string;
-};
+import { eventService, Event } from "@/services/events";
 
 export default function EventsMobile() {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const sentryRef = useRef<HTMLDivElement>(null);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
-    loadEvents(1, true);
-  }, [searchQuery]);
+    // Initial Load
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await eventService.getUpcomingEvents();
+        setAllEvents(data || []);
+        // Trigger initial pagination
+        setPage(1);
+      } catch (err) {
+        console.error('Failed to load events:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  useEffect(() => {
+    // Filter and Paginate
+    if (loading && page === 1) return; // Don't filter while initial loading
+
+    let filtered = allEvents;
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = allEvents.filter(e => {
+        const title = typeof e.title === 'string' ? e.title : (e.title?.en || '');
+        return title.toLowerCase().includes(q);
+      });
+    }
+
+    const slice = filtered.slice(0, page * PAGE_SIZE);
+    setEvents(slice);
+    setHasMore(slice.length < filtered.length);
+
+  }, [page, searchQuery, allEvents]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loading && hasMore) {
-          loadEvents(page + 1);
+          setPage(prev => prev + 1);
         }
       },
       { threshold: 0.1 }
@@ -41,47 +65,7 @@ export default function EventsMobile() {
     }
 
     return () => observer.disconnect();
-  }, [page, loading, hasMore]);
-
-  async function loadEvents(pageNum = 1, reset = false) {
-    if (loading) return;
-    
-    setLoading(true);
-
-    try {
-      let query = supabase
-        .from('events')
-        .select('id, slug, title, start_at, end_at, cover_url, summary, tz')
-        .eq('status', 'published')
-        .gte('end_at', new Date(Date.now() - 24 * 3600000).toISOString())
-        .order('start_at', { ascending: true })
-        .range((pageNum - 1) * 10, pageNum * 10 - 1);
-
-      if (searchQuery.trim()) {
-        query = query.ilike('title', `%${searchQuery.trim()}%`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const newEvents = data || [];
-      
-      if (reset) {
-        setEvents(newEvents);
-        setPage(1);
-      } else {
-        setEvents(prev => [...prev, ...newEvents]);
-        setPage(pageNum);
-      }
-
-      setHasMore(newEvents.length === 10);
-    } catch (err) {
-      console.error('Failed to load events:', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [loading, hasMore]);
 
   return (
     <MobileShell>
@@ -93,7 +77,7 @@ export default function EventsMobile() {
           value={searchQuery} 
           onChange={e => {
             setSearchQuery(e.target.value);
-            setHasMore(true);
+            setPage(1); // Reset pagination
           }}
         />
 
@@ -143,10 +127,12 @@ export default function EventsMobile() {
   );
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event }: { event: any }) {
   const startDate = new Date(event.start_at);
   const month = startDate.toLocaleString(undefined, { month: 'short' }).toUpperCase();
   const day = startDate.getDate();
+  const title = typeof event.title === 'string' ? event.title : (event.title?.en || 'Untitled');
+  const summary = typeof event.summary === 'string' ? event.summary : (event.summary?.en || '');
 
   return (
     <MobileCard href={`/events/${event.slug}`}>
@@ -159,10 +145,10 @@ function EventCard({ event }: { event: Event }) {
 
         {/* Content */}
         <div className="min-w-0 flex-1">
-          <div className="font-medium line-clamp-2 mb-1">{event.title}</div>
-          {event.summary && (
+          <div className="font-medium line-clamp-2 mb-1">{title}</div>
+          {summary && (
             <div className="text-sm text-muted-foreground line-clamp-2 mb-1">
-              {event.summary}
+              {summary}
             </div>
           )}
           <div className="flex items-center gap-1 text-xs text-muted-foreground">

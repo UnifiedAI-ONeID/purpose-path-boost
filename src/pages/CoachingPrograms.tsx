@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import CoachingCard from '@/components/CoachingCard';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { coachingService } from '@/services/coaching';
 import { trackEvent } from '@/lib/trackEvent';
 
 type ListResponse = {
@@ -14,7 +14,6 @@ type ListResponse = {
 export default function CoachingPrograms() {
   const { lang } = usePrefs();
   
-  // Use Edge Function instead of /api route
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +23,8 @@ export default function CoachingPrograms() {
     
     const loadCoaching = async () => {
       try {
-        const { data: result, error: err } = await supabase.functions.invoke('api-coaching-list', {
-          body: { locale: lang }
-        });
-        if (err) throw err;
-        setData(result);
+        const rows = await coachingService.getPrograms(lang);
+        setData({ ok: true, rows, lang });
       } catch (err: any) {
         setError(err.message);
       } finally {

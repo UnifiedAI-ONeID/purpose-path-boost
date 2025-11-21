@@ -1,0 +1,19 @@
+{
+  "name": "zg-migration-engine",
+  "version": "1.0.0",
+  "description": "Supabase to Firestore migration tools",
+  "scripts": {
+    "migrate:users": "ts-node scripts/migrate_users.ts",
+    "migrate:events": "ts-node scripts/migrate_events.ts",
+    "migrate:all": "ts-node scripts/run_all.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "dotenv": "^16.0.0",
+    "firebase-admin": "^11.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.0.0",
+    "typescript": "^4.0.0"
+  }
+}

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 import { Calendar, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -9,6 +8,7 @@ import ScrollReveal from '@/components/motion/ScrollReveal';
 import { toast } from 'sonner';
 import { SEOHelmet } from '@/components/SEOHelmet';
 import { trackEvent } from '@/lib/trackEvent';
+import { eventService } from '@/services/events';
 
 export default function EventsList() {
   const isMobile = useIsMobile();
@@ -20,15 +20,7 @@ export default function EventsList() {
     
     async function load() {
       try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('status', 'published')
-          .gte('end_at', new Date().toISOString())
-          .order('start_at', { ascending: true });
-        
-        if (error) throw error;
-        
+        const data = await eventService.getUpcomingEvents();
         setEvents(data || []);
       } catch (error) {
         console.error('Failed to load events:', error);
@@ -86,13 +78,13 @@ export default function EventsList() {
           {events.map((event, index) => (
             <ScrollReveal key={event.id} delay={index * 0.1}>
               <a
-                href={`/events/${event.slug}`}
+                href={`/events/${event.slug || event.id}`}
                 className="group block rounded-xl bg-card border border-border overflow-hidden hover:shadow-lg transition-smooth"
               >
                 <div className="aspect-video w-full overflow-hidden">
                   <img
                     src={event.cover_url || '/placeholder.svg'}
-                    alt={event.title}
+                    alt={typeof event.title === 'string' ? event.title : (event.title?.en || 'Event')}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -118,7 +110,7 @@ export default function EventsList() {
                   </div>
                   
                   <h2 className="text-xl font-semibold mb-2 group-hover:text-brand-accent transition-colors">
-                    {event.title}
+                    {typeof event.title === 'string' ? event.title : (event.title?.en || 'Untitled')}
                   </h2>
                   
                   {event.summary && (
@@ -127,8 +119,9 @@ export default function EventsList() {
                     </p>
                   )}
                   
-                  {event.is_paid && (
+                  {event.pricing && (
                     <div className="mt-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-accent/10 text-brand-accent">
+                      {/* Simplified check logic */}
                       Paid Event
                     </div>
                   )}

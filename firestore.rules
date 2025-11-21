@@ -3,45 +3,158 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isRegisteredUser(userId) {
-      return exists(/databases/$(database)/documents/users/$(userId));
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isCoachOrAdmin(userId) {
-      let userRole = get(/databases/$(database)/documents/users/$(userId)).data.role;
-      return userRole == 'coach' || userRole == 'admin';
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isOwner(authorId, userId) {
-      return authorId == userId;
+    function hasRole(role) {
+      return isSignedIn() && role in getUserData().roles;
     }
 
-    // Community Posts
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isCoach() {
+      return hasRole('coach');
+    }
+
+    function isCoachOrAdmin() {
+      return isAdmin() || isCoach();
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isCoachOrAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+      
+      // User Subcollections
+      match /goals/{goalId} {
+        allow read, write: if isOwner(userId) || isCoachOrAdmin();
+      }
+      match /sessions/{sessionId} {
+        allow read: if isOwner(userId) || isCoachOrAdmin();
+        allow write: if isCoachOrAdmin(); // Only coaches create sessions usually
+      }
+      match /receipts/{receiptId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isAdmin();
+      }
+      match /notifications/{nudgeId} {
+        allow read: if isOwner(userId);
+        allow write: if isAdmin() || isCoach(); // System sends nudges
+      }
+      match /funnel_progress/{id} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // --- Public Content (Events, Blog, Products, Lessons) ---
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /blog_posts/{slug} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /lessons/{lessonId} {
+      allow read: if true; // Or restricted to members? Assuming public for now or handled by app logic
+      allow write: if isAdmin();
+    }
+    
+    match /coaching_offers/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Commerce & Bookings ---
+    match /bookings/{bookingId} {
+      allow read: if isOwner(resource.data.userId) || isCoachOrAdmin();
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isOwner(resource.data.userId) || isCoachOrAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn(); // Payment webhook usually handles this server-side, but client might init
+      allow update: if isAdmin();
+    }
+    
+    match /registrations/{regId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+      allow update: if isAdmin();
+    }
+
+    // --- Leads & Funnels ---
+    match /leads/{leadId} {
+      allow create: if true; // Public capture
+      allow read, update: if isAdmin();
+    }
+    
+    match /referrals/{referralId} {
+      allow read: if isSignedIn(); // Maybe restricted?
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+    }
+
+    // --- Config ---
+    match /config/{docId} {
+      allow read: if true; // Many configs are public (calendar types, etc)
+      allow write: if isAdmin();
+    }
+    
+    match /config/calendar/types/{typeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /config/funnels/{funnelId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Community ---
     match /community_posts/{postId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && isRegisteredUser(request.auth.uid);
-      allow update, delete: if request.auth != null && (isOwner(resource.data.authorId, request.auth.uid) || isCoachOrAdmin(request.auth.uid));
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.authorId) || isCoachOrAdmin();
 
-      // Comments subcollection
       match /comments/{commentId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && isRegisteredUser(request.auth.uid);
-        allow update, delete: if request.auth != null && (isOwner(resource.data.authorId, request.auth.uid) || isCoachOrAdmin(request.auth.uid));
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(resource.data.authorId) || isCoachOrAdmin();
       }
 
-      // Likes subcollection
       match /likes/{userId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && request.auth.uid == userId;
-        allow delete: if request.auth != null && request.auth.uid == userId;
+        allow read: if isSignedIn();
+        allow create, delete: if isOwner(userId);
       }
     }
 
-    // Community Reports
     match /community_reports/{reportId} {
-      allow create: if request.auth != null && isRegisteredUser(request.auth.uid);
-      allow read, update: if request.auth != null && isCoachOrAdmin(request.auth.uid);
+      allow create: if isSignedIn();
+      allow read, update: if isCoachOrAdmin();
+    }
+    
+    // --- Admin System ---
+    match /admin_anomalies/{id} {
+      allow read: if isAdmin();
+      allow write: if isAdmin(); // System writes
     }
   }
 }

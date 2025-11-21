@@ -1,4 +1,3 @@
-
 import { authClient } from '@/auth';
 
 /**
@@ -24,15 +23,9 @@ export async function logout() {
  * Ensure user is authenticated or redirect to auth page
  */
 export async function ensureAuthedOrRedirect(returnTo: string): Promise<boolean> {
-  const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-  let user;
-
-  if (authProvider === 'firebase') {
-    user = authClient.currentUser;
-  } else {
-    const { data } = await authClient.getUser();
-    user = data.user;
-  }
+  // Firebase currentUser is sync but might need wait if called too early. 
+  // Assuming this is called after app init.
+  const user = authClient.currentUser;
 
   if (!user) {
     localStorage.setItem('zg.returnTo', returnTo);
@@ -47,12 +40,5 @@ export async function ensureAuthedOrRedirect(returnTo: string): Promise<boolean>
  * Check if user is authenticated
  */
 export async function isAuthenticated(): Promise<boolean> {
-  const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-
-  if (authProvider === 'firebase') {
-    return !!authClient.currentUser;
-  } else {
-    const { data: { session } } = await authClient.getSession();
-    return !!session;
-  }
+  return !!authClient.currentUser;
 }
