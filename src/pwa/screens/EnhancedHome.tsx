@@ -22,7 +22,7 @@ export default function EnhancedHome() {
   // Fetch quick stats for authenticated users
   useEffect(() => {
     if (!isGuest && isOnline) {
-      import('@/db'; import { dbClient as supabase } from '@/db').then(({ supabase }) => {
+      import('@/db').then(({ dbClient: supabase }) => {
         supabase.functions.invoke('pwa-me-summary').then(({ data }) => {
           if (data?.ok) setQuickStats(data);
         });
