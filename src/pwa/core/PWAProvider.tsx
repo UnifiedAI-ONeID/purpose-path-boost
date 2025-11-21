@@ -1,10 +1,11 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authClient, AppUser } from '@/auth';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface PWAContextType {
-  user: AppUser | null;
+  user: User | null;
   isGuest: boolean;
   deviceId: string;
   profileId: string | null;
@@ -45,7 +46,7 @@ interface PWAProviderProps {
 }
 
 export function PWAProvider({ children }: PWAProviderProps) {
-  const [user, setUser] = useState<AppUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [bootData, setBootData] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -67,68 +68,28 @@ export function PWAProvider({ children }: PWAProviderProps) {
   }, []);
 
   useEffect(() => {
-    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-
-    if (authProvider === 'firebase') {
-      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
-        setUser(user);
-        if (user) {
-          fetchProfile(user.uid);
-        } else {
-          setProfileId(null);
-        }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        fetchProfile(firebaseUser.uid);
+      } else {
+        setProfileId(null);
         setLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      authClient.getSession().then(({ data: { session } }: any) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
-      });
-
-      const { data: { subscription } } = authClient.onAuthStateChange((_event: any, session: any) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        } else {
-          setProfileId(null);
-        }
-      });
-
-      return () => subscription.unsubscribe();
-    }
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-      if (authProvider === 'supabase') {
-        const { data: { session } } = await authClient.getSession();
-        if (!session && user) {
-          console.log('[PWA] Session expired, logging out');
-          setUser(null);
-          setProfileId(null);
-        }
       }
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [user]);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('zg_profiles')
-        .select('id')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
+      // Assuming profile doc ID matches auth UID
+      const docRef = doc(db, 'users', userId);
+      const snap = await getDoc(docRef);
       
-      if (!error && data) {
-        setProfileId(data.id);
+      if (snap.exists()) {
+        setProfileId(snap.id);
+      } else {
+        setProfileId(null);
       }
     } catch (err) {
       console.error('[PWA] Failed to fetch profile:', err);
@@ -140,15 +101,20 @@ export function PWAProvider({ children }: PWAProviderProps) {
   useEffect(() => {
     const bootPWA = async () => {
       try {
-        const { data } = await supabase.functions.invoke('pwa-boot', {
-          body: { 
+        const res = await fetch('/api/pwa-boot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
             device: deviceId,
             lang: localStorage.getItem('zg.lang') || 'en'
-          }
+          })
         });
         
-        if (data?.ok) {
-          setBootData(data);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.ok) {
+            setBootData(data);
+          }
         }
       } catch (err) {
         console.error('[PWA] Boot failed:', err);

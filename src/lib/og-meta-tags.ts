@@ -1,6 +1,14 @@
 /**
  * Generates Open Graph and Twitter Card meta tags for a blog post
  */
+
+const STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+const STORAGE_BASE = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o`;
+
+function getStorageUrl(path: string): string {
+  return `${STORAGE_BASE}/${encodeURIComponent(path)}?alt=media`;
+}
+
 export function generateOGMetaTags(params: {
   title: string;
   description: string;
@@ -22,12 +30,10 @@ export function generateOGMetaTags(params: {
     type = 'website',
   } = params;
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   // Try generated images first, fallback to high-res app icon
-  const defaultImage = imageUrl || `${supabaseUrl}/storage/v1/object/public/social-images/${slug}/facebook.png`;
-  const twitterImage = imageUrl || `${supabaseUrl}/storage/v1/object/public/social-images/${slug}/x.png`;
-  const fallbackImage = 'https://zhengrowth.com/app-icon-512.png';
-
+  const defaultImage = imageUrl || getStorageUrl(`social-images/${slug}/facebook.png`);
+  const twitterImage = imageUrl || getStorageUrl(`social-images/${slug}/x.png`);
+  
   return {
     // Basic OG tags
     'og:title': title,
@@ -62,8 +68,7 @@ export function generateOGMetaTags(params: {
  * Helper to get OG image URL for a page
  */
 export function getOGImageUrl(slug: string, platform: 'facebook' | 'x' | 'linkedin' = 'facebook'): string {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  return `${supabaseUrl}/storage/v1/object/public/social-images/${slug}/${platform}.png`;
+  return getStorageUrl(`social-images/${slug}/${platform}.png`);
 }
 
 /**

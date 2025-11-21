@@ -4,6 +4,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const scripts = [
+  'scripts/migrate_auth.ts', // Run this first to ensure Auth UIDs exist
   'scripts/migrate_users.ts',
   'scripts/migrate_user_data.ts',
   'scripts/migrate_events.ts',

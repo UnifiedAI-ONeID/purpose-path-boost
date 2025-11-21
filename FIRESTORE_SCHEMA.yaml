@@ -1,0 +1,93 @@
+collections:
+  users:
+    path: /users/{uid}
+    description: User profiles and settings.
+    source: zg_profiles
+    fields:
+      email: string
+      name: string
+      avatar_url: string
+      roles: array<string> # merged from user_roles
+      created_at: timestamp
+      updated_at: timestamp
+      supabase_id: string # legacy ID
+      lang: string
+      timezone: string
+    subcollections:
+      goals:
+        path: /users/{uid}/goals/{goalId}
+        source: me_goals
+      sessions:
+        path: /users/{uid}/sessions/{sessionId}
+        source: me_sessions
+      receipts:
+        path: /users/{uid}/receipts/{receiptId}
+        source: me_receipts
+      notifications:
+        path: /users/{uid}/notifications/{nudgeId}
+        source: nudge_inbox
+      funnel_progress:
+        path: /users/{uid}/funnel_progress/{progressId}
+        source: user_funnel_progress
+
+  blog_posts:
+    path: /blog_posts/{postId}
+    source: blog_posts
+    indexes:
+      - slug
+      - published_at
+
+  events:
+    path: /events/{eventId}
+    source: events
+    subcollections:
+      registrations:
+        path: /events/{eventId}/registrations/{regId}
+        source: event_regs
+
+  products:
+    path: /products/{productId}
+    source: coaching_offers
+
+  lessons:
+    path: /lessons/{lessonId}
+    source: lessons
+
+  bookings:
+    path: /bookings/{bookingId}
+    source: cal_bookings
+
+  orders:
+    path: /orders/{orderId}
+    source: express_orders
+
+  leads:
+    path: /leads/{leadId}
+    source: leads
+
+  referrals:
+    path: /referrals/{referralId}
+    source: zg_referrals
+
+  config:
+    path: /config/{configId}
+    description: System configuration documents
+    documents:
+      calendar_types:
+        subcollection: types
+        source: cal_event_types
+      funnels:
+        subcollection: funnels
+        source: funnels
+      email_templates:
+        subcollection: email_templates
+        source: email_templates
+
+  # Community (Future - Phase 14)
+  community_posts:
+    path: /community_posts/{postId}
+    description: Community user posts
+  
+  community_reports:
+    path: /community_reports/{reportId}
+    description: Moderation reports

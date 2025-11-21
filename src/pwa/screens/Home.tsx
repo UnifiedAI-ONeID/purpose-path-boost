@@ -5,7 +5,6 @@ import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { dbClient as supabase } from '@/db';
 
 function getOrSetDevice() {
   let id = localStorage.getItem('zg.device');
@@ -27,24 +26,35 @@ export default function Home() {
   useEffect(() => {
     const device = getOrSetDevice();
     
-    // Use Supabase function
-    supabase.functions
-      .invoke('pwa-boot', {
-        body: { device, lang },
-        headers: { 'Accept-Language': lang, 'x-zg-device': device }
-      })
-      .then(({ data }) => {
-        if (data?.ok) setBoot(data);
-      });
+    // Call Cloud Run API
+    // In dev, this might need to point to localhost:8080 if proxied, or full URL
+    // Assuming /api proxy is set up in vite.config and firebase.json
+    fetch('/api/pwa-boot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': lang,
+        'x-zg-device': device
+      },
+      body: JSON.stringify({ device, lang })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data?.ok) setBoot(data);
+    })
+    .catch(err => console.error('Boot error:', err));
 
     // Track page view
-    supabase.functions.invoke('pwa-telemetry', {
-      body: {
+    fetch('/api/pwa-telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         device_id: device,
         event: 'view_home',
         payload: { source: 'pwa' }
-      }
-    });
+      })
+    }).catch(() => {}); // Silent fail
+
   }, [lang]);
 
   const heroTitle = boot?.hero

@@ -1,12 +1,12 @@
-import { dbClient as supabase } from '@/db';
-
 export async function log(event: string, payload: any = {}) {
   try {
     const device_id = localStorage.getItem('zg.device');
     if (!device_id) return;
 
-    await supabase.functions.invoke('pwa-telemetry', {
-      body: { device_id, event, payload }
+    await fetch('/api/pwa-telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id, event, payload })
     });
   } catch {
     // Silently fail

@@ -1,4 +1,3 @@
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
 
 interface MetricsEvent {
   name: string;
@@ -106,24 +105,28 @@ class MetricsTracker {
     }
 
     try {
+      const payload = JSON.stringify({ events });
+      const url = '/api/telemetry/log';
+
       if (sync && navigator.sendBeacon) {
         // Use sendBeacon for synchronous requests (on page unload)
-        const { data } = await supabase.functions.invoke('metrics-collect', {
-          body: { events },
-        });
-        
-        if (data?.ok) {
-          console.log(`[Metrics] Tracked ${events.length} events`);
-        }
+        const blob = new Blob([payload], { type: 'application/json' });
+        navigator.sendBeacon(url, blob);
       } else {
         // Regular async request
-        await supabase.functions.invoke('metrics-collect', {
-          body: { events },
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
         });
         console.log(`[Metrics] Tracked ${events.length} events`);
       }
     } catch (error) {
       console.error('[Metrics] Failed to track events:', error);
+      // Re-queue failed events if not unloading
+      if (!sync) {
+        this.queue = [...events, ...this.queue];
+      }
     }
   }
 

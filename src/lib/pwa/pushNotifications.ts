@@ -1,5 +1,4 @@
 // Push Notifications for PWA
-import { dbClient as supabase } from '@/db';
 
 export type PermissionState = 'granted' | 'denied' | 'default';
 
@@ -174,15 +173,17 @@ export async function sendSubscriptionToBackend(
   subscription: PushSubscription
 ): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke('pwa-push-subscribe', {
-      body: {
+    const res = await fetch('/api/pwa-push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         subscription: subscription.toJSON(),
         device_id: localStorage.getItem('zg.device')
-      }
+      })
     });
 
-    if (error) {
-      console.error('[Push] Failed to send subscription to backend:', error);
+    if (!res.ok) {
+      console.error('[Push] Failed to send subscription to backend');
       return false;
     }
 

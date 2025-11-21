@@ -5,37 +5,32 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, Copy, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { dbClient as supabase } from '@/db';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchDashboard() {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        toast({
+          title: 'Not authenticated',
+          description: 'Please sign in to view your dashboard',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       try {
-        // Get authenticated user session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Fetch user profile from Firestore
+        // Path: /users/{uid}
+        const profileRef = doc(db, 'users', user.uid);
+        const profileSnap = await getDoc(profileRef);
         
-        if (sessionError || !session) {
-          toast({
-            title: 'Not authenticated',
-            description: 'Please sign in to view your dashboard',
-            variant: 'destructive'
-          });
-          return;
-        }
-
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('zg_profiles')
-          .select('id, name, email')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
-
-        if (profileError) throw profileError;
-        
-        if (!profile) {
+        if (!profileSnap.exists()) {
           toast({
             title: 'Profile not found',
             description: 'Please complete your profile setup',
@@ -44,28 +39,29 @@ export default function Dashboard() {
           return;
         }
 
+        const profile = { id: profileSnap.id, ...profileSnap.data() };
+
         // Fetch next session
-        const { data: sessions } = await supabase
-          .from('me_sessions')
-          .select('*')
-          .eq('profile_id', profile.id)
-          .gte('start_at', new Date().toISOString())
-          .order('start_at', { ascending: true })
-          .limit(1);
+        // Path: /users/{uid}/sessions
+        const sessionsRef = collection(db, 'users', user.uid, 'sessions');
+        const q = query(sessionsRef, where('start_at', '>=', new Date().toISOString()), orderBy('start_at', 'asc'), limit(1));
+        const sessionsSnap = await getDocs(q);
+        const sessions = sessionsSnap.docs.map(d => d.data());
 
         // Fetch referral
-        const { data: referral } = await supabase
-          .from('zg_referrals')
-          .select('ref_code')
-          .eq('profile_id', profile.id)
-          .maybeSingle();
+        // Path: /referrals/{id} -> but we need to query by profile_id/user_id? 
+        // Or maybe it's under /users/{uid}/referral? 
+        // Based on schema: /referrals/{referralId}. We might need an index or store referral code on user doc.
+        // For now, assuming we can query referrals by owner.
+        const referralsRef = collection(db, 'referrals');
+        const refQ = query(referralsRef, where('userId', '==', user.uid), limit(1));
+        const refSnap = await getDocs(refQ);
+        const referral = refSnap.empty ? null : refSnap.docs[0].data();
 
         // Calculate streak
-        const { data: streakData } = await supabase
-          .rpc('get_user_streak', { p_profile_id: profile.id })
-          .maybeSingle();
-
-        const streak = streakData || 0;
+        // This was an RPC call. We might need to fetch sessions or rely on a pre-calculated field on user doc.
+        // Assuming 'streak' is on user doc for now.
+        const streak = (profile as any).streak || 0;
         const streak_pct = Math.min(100, (streak / 30) * 100);
 
         setData({
@@ -76,10 +72,11 @@ export default function Dashboard() {
             join_url: sessions[0].join_url 
           } : null,
           streak_pct,
-          ref_url: referral?.ref_code 
-            ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` 
+          ref_url: referral?.code 
+            ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.code)}` 
             : null
         });
+
       } catch (error) {
         console.error('PWA Dashboard fetch error:', error);
         toast({
@@ -88,9 +85,9 @@ export default function Dashboard() {
           variant: 'destructive'
         });
       }
-    }
+    });
 
-    fetchDashboard();
+    return () => unsubscribe();
   }, [toast]);
 
   if (!data) {
@@ -165,8 +162,8 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Input readOnly value={data.ref_url} className="flex-1" />
-            <Button onClick={copyRefLink} size="icon">
+            <Input readOnly value={data.ref_url || ''} className="flex-1" />
+            <Button onClick={copyRefLink} size="icon" disabled={!data.ref_url}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>

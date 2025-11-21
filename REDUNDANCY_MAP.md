@@ -1,58 +1,56 @@
-# Redundancy & Disposition Map
+# Redundancy & Migration Map
 
-## 1. Core Entities (Migrate & Consolidate)
+## 1. Consolidated Collections
 
-| Supabase Table | Disposition | Target Firestore Path | Notes |
-| :--- | :--- | :--- | :--- |
-| **`zg_profiles`** | **Migrate** | `/users/{uid}` | Canonical profile data. Use Auth UID as key. |
-| **`user_roles`** | **Consolidate** | `/users/{uid}` | Merge `role` field into user document. |
-| **`coaching_offers`** | **Migrate** | `/products/coaching/{offerId}` | |
-| **`events`** | **Migrate** | `/events/{eventId}` | |
-| **`blog_posts`** | **Migrate** | `/blog_posts/{slug}` | Use slug as ID if unique, else UUID. |
-| **`lessons`** | **Migrate** | `/lessons/{lessonId}` | |
-| **`cal_bookings`** | **Migrate** | `/bookings/{bookingId}` | |
-| **`cal_event_types`** | **Migrate** | `/config/calendar_types/{typeId}` | Configuration data. |
-| **`event_regs`** | **Migrate** | `/registrations/{regId}` | Primary registration record. |
-| **`event_tickets`** | **Consolidate** | `/registrations/{regId}` | Merge ticket details into registration doc if 1:1. |
-| **`express_orders`** | **Migrate** | `/orders/{orderId}` | |
-| **`me_goals`** | **Migrate** | `/users/{uid}/goals/{goalId}` | User-centric data. |
-| **`me_sessions`** | **Migrate** | `/users/{uid}/sessions/{sessionId}` | User-centric data. |
-| **`me_receipts`** | **Migrate** | `/users/{uid}/receipts/{receiptId}` | User-centric data. |
-| **`nudge_inbox`** | **Migrate** | `/users/{uid}/notifications/{nudgeId}` | |
-| **`leads`** | **Migrate** | `/leads/{leadId}` | |
-| **`funnels`** | **Migrate** | `/config/funnels/{funnelId}` | |
-| **`funnel_stages`** | **Consolidate** | `/config/funnels/{funnelId}` | Embed stages array in funnel doc. |
-| **`user_funnel_progress`**| **Migrate** | `/users/{uid}/funnel_progress/{funnelId}` | |
-| **`zg_referrals`** | **Migrate** | `/referrals/{referralId}` | |
-
-## 2. System / Logs / Archive (Do Not Migrate)
-
-| Supabase Table | Disposition | Notes |
+| Source Table(s) | Target Firestore Path | Merge Strategy |
 | :--- | :--- | :--- |
-| **`email_logs`** | **Archive** | Historical logs. Don't migrate to Firestore. |
-| **`email_queue`** | **Drop** | Transient queue. Use Firebase Extensions. |
-| **`email_templates`** | **Migrate** | `/config/email_templates/{templateId}` (Manual/Script) |
-| **`email_attachments`** | **Archive** | |
-| **`social_posts`** | **Evaluate** | If active, migrate to `/social_posts`. Else Archive. |
-| **`social_metrics`** | **Archive** | Use new analytics solution. |
-| **`analytics_events`** | **Archive** | High volume. Use GA4/BigQuery. |
-| **`zg_versions`** | **Migrate** | `/config/system/version` | Single doc for version tracking. |
-| **`v_funnel_weekly`** | **Ignore** | View. Rebuild logic in code. |
-| **`v_tag_performance`** | **Ignore** | View. Rebuild logic in code. |
+| `zg_profiles`, `user_roles` | `/users/{uid}` | Merge `role` from `user_roles` into profile doc. Use Firebase Auth `uid` as doc ID. |
+| `me_goals` | `/users/{uid}/goals/{goalId}` | Subcollection of user. |
+| `me_sessions` | `/users/{uid}/sessions/{sessionId}` | Subcollection of user. |
+| `me_receipts` | `/users/{uid}/receipts/{receiptId}` | Subcollection of user. |
+| `nudge_inbox` | `/users/{uid}/notifications/{nudgeId}` | Subcollection of user. |
+| `user_funnel_progress` | `/users/{uid}/funnel_progress/{progressId}` | Subcollection of user. |
+| `event_regs`, `event_tickets` | `/events/{eventId}/registrations/{regId}` | Consolidate tickets/regs into a subcollection of the event (or root `/registrations` if querying by user is more frequent). |
 
-## 3. Field-Level Redundancy
+## 2. Direct Migrations
 
-- **User Roles**:
-  - Source: `user_roles` table.
-  - Target: `roles` array in `/users/{uid}`.
-  - **Decision**: Drop `user_roles` table after merging.
+| Source Table | Target Firestore Path | Notes |
+| :--- | :--- | :--- |
+| `blog_posts` | `/blog_posts/{id}` | Keep slugs for SEO. |
+| `events` | `/events/{id}` | |
+| `coaching_offers` | `/products/{id}` | Renamed to generic `products` or keep `coaching_offers`. |
+| `lessons` | `/lessons/{id}` | |
+| `cal_bookings` | `/bookings/{id}` | |
+| `express_orders` | `/orders/{id}` | |
+| `leads` | `/leads/{id}` | |
+| `zg_referrals` | `/referrals/{id}` | |
+| `email_templates` | `/config/email/templates/{id}` | |
+| `funnels` | `/config/funnels/{id}` | |
+| `cal_event_types` | `/config/calendar/types/{id}` | |
 
-- **Event Tickets vs Registrations**:
-  - Source: `event_tickets` often links to `event_regs`.
-  - Target: Single `registration` document containing ticket info.
-  - **Decision**: Consolidate.
+## 3. Archived / Dropped (Not Migrating)
 
-- **Funnel Stages**:
-  - Source: `funnel_stages` (1:N with funnels).
-  - Target: `stages` array inside `funnel` document.
-  - **Decision**: Consolidate to reduce reads.
+| Source Table | Disposition | Reason |
+| :--- | :--- | :--- |
+| `analytics_events` | DROP / ARCHIVE | High volume, use GA4 going forward. |
+| `email_logs` | DROP | Ephemeral log data. |
+| `email_queue` | DROP | Processed state. |
+| `email_attachments` | DROP | Likely blob storage references; handle via Storage if needed. |
+| `v_*` (Views) | DROP | Reimplement as code/queries. |
+
+## 4. Field-Level Redundancy Removal
+
+- **User Profile**:
+  - `zg_profiles` is the single source of truth for `name`, `email`, `avatar_url`.
+  - Remove these fields from `cal_bookings` or `orders` if they are just snapshots (unless snapshot is required for invoice immutability).
+  - **Decision**: Keep snapshot data in `orders` for legal reasons. Remove from `me_sessions` if just for display (fetch from profile).
+
+## 5. ID Mapping Strategy
+
+- **Users**:
+  - If we can migrate Supabase Auth UIDs to Firebase Auth UIDs 1:1, great.
+  - If not, we need a mapping `supabase_uid` -> `firebase_uid`.
+  - **Plan**: Store `supabase_id` field in `/users/{uid}` doc for reference.
+
+- **Other Entities**:
+  - Reuse Supabase UUIDs as Firestore Document IDs to preserve relationships.

@@ -5,13 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import SmartLink from '@/components/SmartLink';
 import { usePWA } from '../core/PWAProvider';
 import { GuestPrompt } from '../core/GuestPrompt';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth } from '@/lib/firebase';
 import {
   User, Target, Calendar, TrendingUp, Award,
   Settings, LogOut, Sparkles, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { invokeApi } from '@/lib/api-client';
 
 export default function MeDashboard() {
   const { user, isGuest, profileId, isOnline } = usePWA();
@@ -29,9 +30,9 @@ export default function MeDashboard() {
 
   const fetchSummary = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('pwa-me-summary');
-      if (!error && data?.ok) {
-        setSummary(data);
+      const res = await invokeApi('api-me-summary');
+      if (res.ok) {
+        setSummary(res.data);
       }
     } catch (err) {
       console.error('[Dashboard] Fetch error:', err);
@@ -42,7 +43,7 @@ export default function MeDashboard() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await auth.signOut();
       toast.success('Signed out successfully');
       navigate('/pwa');
     } catch (err) {
@@ -88,6 +89,10 @@ export default function MeDashboard() {
     }
   ];
 
+  const joinedDate = user?.metadata?.creationTime 
+    ? new Date(user.metadata.creationTime).toLocaleDateString()
+    : 'Recently';
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
       {/* Profile Header */}
@@ -99,7 +104,7 @@ export default function MeDashboard() {
           <div className="flex-1">
             <h2 className="text-xl font-bold">{user?.email || 'User'}</h2>
             <p className="text-sm text-muted-foreground">
-              Member since {new Date(user?.created_at || Date.now()).toLocaleDateString()}
+              Member since {joinedDate}
             </p>
           </div>
           <Button

@@ -1,4 +1,5 @@
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const LS_KEY = 'zg.content.v';
 const CACHE_PREFIXES = [
@@ -15,65 +16,55 @@ const LS_PREFIXES = [
   'zg.pwa.',
   'zg.i18n.',
   'zg.offer.',
-  'supabase.',
+  'firebase.', // Changed from supabase.
 ];
 
 export function bootVersionGuard({ pollMs = 90000 }: { pollMs?: number } = {}) {
-  // 1) Realtime monitoring (instant updates)
+  // 1) Realtime monitoring (instant updates) via Firestore
   try {
-    supabase
-      .channel('content-versions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'zg_versions',
-          filter: 'key=eq.content',
-        },
-        async () => {
-          console.log('[VersionGuard] Content version updated via realtime');
-          await checkAndRefresh(true);
+    const docRef = doc(db, 'config', 'system'); // Assuming /config/system exists
+    onSnapshot(docRef, (doc) => {
+      if (doc.exists()) {
+        console.log('[VersionGuard] System config updated via realtime');
+        // Assuming version is in 'version' field
+        const version = doc.data().version;
+        if (version) {
+          handleVersionUpdate(Number(version));
         }
-      )
-      .subscribe();
+      }
+    });
   } catch (err) {
     console.warn('[VersionGuard] Realtime subscription failed:', err);
   }
 
-  // 2) Polling fallback
-  setInterval(() => checkAndRefresh(false), pollMs);
+  // 2) Polling fallback is less critical with Firestore offline support, but good for redundancy
+  // We can just fetch the doc periodically
+  setInterval(() => checkAndRefresh(), pollMs);
 
-  // 3) Initial check after a short delay
-  setTimeout(() => checkAndRefresh(false), 5000);
+  // 3) Initial check
+  setTimeout(() => checkAndRefresh(), 5000);
 
-  console.log('[VersionGuard] Initialized with polling every', pollMs, 'ms');
+  console.log('[VersionGuard] Initialized');
 }
 
 async function fetchVersion(): Promise<number> {
   try {
-    const { data, error } = await supabase.functions.invoke('api-version');
-    if (error) throw error;
-    return Number(data?.v || 1);
+    const docRef = doc(db, 'config', 'system');
+    const snap = await getDoc(docRef);
+    return Number(snap.data()?.version || 1);
   } catch (err) {
     console.warn('[VersionGuard] Failed to fetch version:', err);
     return Number(localStorage.getItem(LS_KEY) || 1);
   }
 }
 
-async function checkAndRefresh(force: boolean) {
-  // Skip if window/localStorage not available (SSR)
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return;
-  }
+async function handleVersionUpdate(remote: number) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
 
-  const remote = await fetchVersion();
   const local = Number(localStorage.getItem(LS_KEY) || 0);
+  console.log('[VersionGuard] Version check:', { local, remote });
 
-  console.log('[VersionGuard] Version check:', { local, remote, force });
-
-  // Only reload if there's an actual version change (not on initial load)
-  if ((force || remote > local) && local > 0) {
+  if (remote > local && local > 0) {
     console.log('[VersionGuard] Version mismatch - purging caches and reloading');
     localStorage.setItem(LS_KEY, String(remote));
 
@@ -84,13 +75,16 @@ async function checkAndRefresh(force: boolean) {
     }
 
     setTimeout(() => {
-      // Reload the page to ensure all modules are from the same build
       window.location.reload();
     }, 300);
   } else if (local === 0) {
-    // First load - just set version without reloading
     localStorage.setItem(LS_KEY, String(remote));
   }
+}
+
+async function checkAndRefresh() {
+  const remote = await fetchVersion();
+  await handleVersionUpdate(remote);
 }
 
 async function nukeCaches() {
@@ -123,7 +117,7 @@ async function nukeCaches() {
     console.warn('[VersionGuard] Failed to clear caches:', err);
   }
 
-  // 3) Clear localStorage namespaces (keep user prefs like theme/lang)
+  // 3) Clear localStorage namespaces
   try {
     const keysToRemove: string[] = [];
     for (const key of Object.keys(localStorage)) {
@@ -142,7 +136,7 @@ async function nukeCaches() {
     console.warn('[VersionGuard] Failed to clear localStorage:', err);
   }
 
-  // 4) Clear IndexedDB used by service worker
+  // 4) Clear IndexedDB
   try {
     const dbNames = ['workbox-expiration', 'keyval-store', 'zg-idb'];
     await Promise.all(
@@ -160,4 +154,3 @@ async function nukeCaches() {
     console.warn('[VersionGuard] Failed to clear IndexedDB:', err);
   }
 }
-
