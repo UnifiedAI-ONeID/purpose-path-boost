@@ -1,6 +1,6 @@
 
 import { auth as firebaseAuth } from '../firebase/config';
-import { supabase } from '../integrations/supabase/client';
+import { dbClient as supabase } from '../db';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User as FirebaseUser } from 'firebase/auth';
 

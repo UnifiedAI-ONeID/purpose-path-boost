@@ -1,5 +1,5 @@
-@import './tokens.css';
-@import './primitives.css';
+@import './styles/tokens.css';
+@import './styles/primitives.css';
 
 @tailwind base;
 @tailwind components;
