@@ -5,9 +5,24 @@ import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin
-// In Cloud Run, we can use applicationDefault() or just initializeApp() with no args if using default credentials
 if (!process.env.FIREBASE_ADMIN_INITIALIZED) {
-  initializeApp();
+  if (process.env.FIREBASE_ADMIN_SA_JSON) {
+    // Explicit Service Account (Good for local dev or specific identity)
+    try {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SA_JSON);
+      initializeApp({
+        credential: cert(serviceAccount)
+      });
+      console.log('Firebase Admin initialized with Service Account JSON');
+    } catch (e) {
+      console.error('Failed to parse FIREBASE_ADMIN_SA_JSON', e);
+      process.exit(1);
+    }
+  } else {
+    // Application Default Credentials (ADC) - Best for Cloud Run
+    initializeApp();
+    console.log('Firebase Admin initialized with ADC');
+  }
   process.env.FIREBASE_ADMIN_INITIALIZED = 'true';
 }
 
