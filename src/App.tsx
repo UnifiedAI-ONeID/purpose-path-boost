@@ -132,7 +132,6 @@ function AppRoutes() {
 
         // Import all initialization functions dynamically to avoid early execution
         const [
-          { registerSW },
           { bootAnimOnLoad },
           { normalizeEntryUrl },
           { initAnalytics },
@@ -143,7 +142,6 @@ function AppRoutes() {
           { initPerformanceTracking },
           { initCacheMonitoring }
         ] = await Promise.all([
-          import('./pwa/registerSW'),
           import('./anim/boot'),
           import('./nav/deeplink'),
           import('./lib/initAnalytics'),
@@ -155,9 +153,8 @@ function AppRoutes() {
           import('./lib/pwa/cacheMonitor')
         ]);
 
-        // Register service worker for PWA
-        registerSW();
-
+        // Register service worker (handled by vite-plugin-pwa in main.tsx, explicit call removed)
+        
         // Initialize PWA performance tracking
         initPerformanceTracking();
 
