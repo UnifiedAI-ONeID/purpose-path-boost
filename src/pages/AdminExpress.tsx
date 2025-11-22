@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminExpress(){
@@ -12,13 +13,30 @@ export default function AdminExpress(){
 
   async function loadOrders(){
     setLoading(true);
-    const { data } = await supabase
-      .from('express_orders')
-      .select('*')
-      .order('created_at',{ascending:false})
-      .limit(200);
-    setRows(data||[]);
-    setLoading(false);
+    try {
+      const ordersRef = collection(db, 'orders'); // Assuming migrated collection is 'orders'
+      const q = query(ordersRef, orderBy('createdAt', 'desc'), limit(200));
+      const snapshot = await getDocs(q);
+      
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          created_at: d.createdAt?.toDate?.() || d.createdAt,
+          name: d.customerDetails?.name || d.name,
+          email: d.customerDetails?.email || d.email,
+          status: d.status,
+          amount_cents: d.amount, // assuming amount in DB is cents/smallest unit
+          currency: d.currency,
+          notes: d.metadata?.notes || d.notes
+        };
+      });
+      setRows(data);
+    } catch (e) {
+      console.error("Failed to load orders:", e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
@@ -9,15 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { functions } from '@/firebase/config';
-import { httpsCallable } from 'firebase/functions';
+import { collection, addDoc, getDocs, doc, updateDoc, query, orderBy, limit, where } from 'firebase/firestore';
+import { db } from '@/firebase/config';
 import { toast } from 'sonner';
-
-// Function Callables
-const listCoupons = httpsCallable(functions, 'api-admin-coupons-list');
-const saveCoupon = httpsCallable(functions, 'api-admin-coupons-save');
-const simulateCoupon = httpsCallable(functions, 'api-admin-coupons-simulate');
 
 interface Coupon {
   id: string;
@@ -44,14 +37,31 @@ export default function CouponsManager() {
   }, [tab, search]);
 
   async function fetchCoupons() {
+    setLoading(true);
     try {
-      const result: any = await listCoupons({
-        tab,
-        q: search || undefined
-      });
+      const couponsRef = collection(db, 'coupons');
+      // Simple query for now, client side filtering for tab complexity might be easier given FS limitations
+      // or we build specific indexes. 
+      // Let's fetch all (usually not too many coupons) and filter.
+      const q = query(couponsRef, orderBy('code')); 
+      const snapshot = await getDocs(q);
+      let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Coupon));
 
-      const data = result.data;
-      setCoupons(data?.rows || []);
+      if (search) {
+        const s = search.toLowerCase();
+        data = data.filter(c => c.code.toLowerCase().includes(s) || c.name?.toLowerCase().includes(s));
+      }
+
+      const now = new Date();
+      if (tab === 'active') {
+        data = data.filter(c => c.active && (!c.valid_to || new Date(c.valid_to) > now));
+      } else if (tab === 'expired') {
+        data = data.filter(c => c.valid_to && new Date(c.valid_to) < now);
+      } else if (tab === 'scheduled') {
+        data = data.filter(c => c.valid_from && new Date(c.valid_from) > now);
+      }
+
+      setCoupons(data);
     } catch (error) {
       console.error('[CouponsManager] Fetch failed:', error);
       toast.error('Failed to load coupons');
@@ -60,15 +70,12 @@ export default function CouponsManager() {
     }
   }
 
-  async function handleDisable(code: string) {
+  async function handleDisable(couponId: string) {
     try {
-      const result: any = await saveCoupon({
-        code,
+      await updateDoc(doc(db, 'coupons', couponId), {
         active: false,
-        notes: 'Disabled via admin'
+        notes: 'Disabled via admin' // Should append ideally
       });
-
-      if (!result.data?.ok) throw new Error(result.data?.error || 'Failed to disable');
       
       toast.success('Coupon disabled');
       fetchCoupons();
@@ -139,7 +146,7 @@ export default function CouponsManager() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDisable(c.code)}
+                                onClick={() => handleDisable(c.id)}
                               >
                                 Disable
                               </Button>
@@ -166,15 +173,27 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
 }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(
-    initial || { percent_off: 20, applies_to_slug: 'all' }
+    initial || { percent_off: 20, applies_to_slug: 'all', active: true }
   );
-  const [simResult, setSimResult] = useState<any>(null);
 
   async function handleSave() {
     try {
-      const result: any = await saveCoupon(form);
+      const data = {
+        ...form,
+        code: form.code.toUpperCase(),
+        percent_off: Number(form.percent_off),
+        max_redemptions: form.max_redemptions ? Number(form.max_redemptions) : null,
+      };
 
-      if (!result.data?.ok) throw new Error(result.data?.error || 'Failed to save');
+      if (initial) {
+        await updateDoc(doc(db, 'coupons', initial.id), data);
+      } else {
+        await addDoc(collection(db, 'coupons'), {
+            ...data,
+            redeemed: 0,
+            createdAt: new Date()
+        });
+      }
       
       toast.success(initial ? 'Coupon updated' : 'Coupon created');
       setOpen(false);
@@ -185,17 +204,11 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
     }
   }
 
-  async function handleSimulate() {
-    try {
-      const result: any = await simulateCoupon({
-        base_cents: 7900,
-        percent_off: form.percent_off
-      });
-
-      setSimResult(result.data);
-    } catch (error) {
-      console.error('[CouponDialog] Simulate failed:', error);
-    }
+  function handleSimulate() {
+      // Local simulation
+      const price = 7900;
+      const discount = Math.round(price * (form.percent_off / 100));
+      toast.message(`Simulation: $79.00 -> $${((price - discount)/100).toFixed(2)}`);
   }
 
   return (
@@ -284,11 +297,6 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
               <Button variant="outline" size="sm" onClick={handleSimulate}>
                 Simulate $79.00
               </Button>
-              {simResult && (
-                <span className="text-sm">
-                  → ${(simResult.discounted_cents / 100).toFixed(2)}
-                </span>
-              )}
             </div>
           </Card>
 
