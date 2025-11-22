@@ -1,6 +1,6 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 
 export default function AdminBookings() {
   const [rows, setRows] = useState<any[]>([]);

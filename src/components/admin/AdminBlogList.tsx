@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BlogEditor } from '@/components/BlogEditor';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
 import { format } from 'date-fns';

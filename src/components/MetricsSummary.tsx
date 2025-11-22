@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, TrendingUp, Users, MousePointerClick, Calendar } from 'lucide-react';

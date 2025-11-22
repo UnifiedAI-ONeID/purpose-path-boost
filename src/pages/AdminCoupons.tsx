@@ -3,7 +3,7 @@ import AdminShell from '@/components/admin/AdminShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { toast } from 'sonner';
 
 interface Coupon {

@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
@@ -5,8 +6,15 @@ import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
 import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 import { toast } from 'sonner';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
-import { invokeApi } from '@/lib/api-client';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+// Function definitions
+const paywallCanWatch = httpsCallable(functions, 'api-paywall-can-watch');
+const paywallMarkWatch = httpsCallable(functions, 'api-paywall-mark-watch');
+const getLesson = httpsCallable(functions, 'api-lessons-get'); // Assuming there's a function for this
+const saveProgressFn = httpsCallable(functions, 'api-lessons-progress');
+const logEventFn = httpsCallable(functions, 'api-lessons-event');
 
 interface Lesson {
   slug: string;
@@ -54,9 +62,11 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   useEffect(() => {
     (async () => {
       try {
-        const { data: gateCheck } = await supabase.functions.invoke('api-paywall-can-watch', {
-          body: { profile_id: profileId, lesson_slug: slug }
+        const gateResult: any = await paywallCanWatch({
+          profile_id: profileId, 
+          lesson_slug: slug 
         });
+        const gateCheck = gateResult.data;
 
         if (!gateCheck?.access) {
           setShowUpsell(true);
@@ -65,9 +75,10 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
         }
 
         setHasAccess(true);
-        await supabase.functions.invoke('api-paywall-mark-watch', {
-          body: { profile_id: profileId, lesson_slug: slug }
-        });
+        paywallMarkWatch({
+          profile_id: profileId, 
+          lesson_slug: slug 
+        }).catch(console.error);
 
         if (gateCheck.plan_slug === 'free' && gateCheck.remaining === 1) {
           toast('Unlock your next 30 days', {
@@ -75,9 +86,12 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
           });
         }
 
-        const response = await invokeApi('/api/lessons/get', {
-          body: { slug, profile_id: profileId }
+        const lessonResult: any = await getLesson({
+          slug, 
+          profile_id: profileId 
         });
+        const response = lessonResult.data;
+        
         if (response.ok) {
           setData({ lesson: response.lesson, progress: response.progress });
           setDuration(response.lesson?.duration_sec || 0);
@@ -202,14 +216,12 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   }, [currentTime, duration, milestones]);
 
   const saveProgress = async (completed = false) => {
-    await supabase.functions.invoke('api-lessons-progress', {
-      body: {
-        profile_id: profileId,
-        lesson_slug: slug,
-        last_position_sec: Math.round(currentTime),
-        watched_seconds: Math.round(duration || data?.lesson?.duration_sec || 0),
-        completed,
-      }
+    saveProgressFn({
+      profile_id: profileId,
+      lesson_slug: slug,
+      last_position_sec: Math.round(currentTime),
+      watched_seconds: Math.round(duration || data?.lesson?.duration_sec || 0),
+      completed,
     }).catch(console.error);
   };
 
@@ -222,13 +234,11 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
   };
 
   const trackEvent = (ev: string) => {
-    supabase.functions.invoke('api-lessons-event', {
-      body: {
-        profile_id: profileId,
-        lesson_slug: slug,
-        ev,
-        at_sec: Math.round(currentTime),
-      }
+    logEventFn({
+      profile_id: profileId,
+      lesson_slug: slug,
+      ev,
+      at_sec: Math.round(currentTime),
     }).catch(console.error);
   };
 

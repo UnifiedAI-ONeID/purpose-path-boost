@@ -1,5 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth } from '@/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
@@ -10,29 +12,18 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setAuthenticated(!!session);
-      if (!session && event !== 'INITIAL_SESSION') {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setAuthenticated(true);
+      } else {
+        setAuthenticated(false);
         navigate(`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
       }
+      setChecking(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, [navigate, location]);
-
-  async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate(`/auth?returnTo=${encodeURIComponent(location.pathname + location.search)}`);
-    } else {
-      setAuthenticated(true);
-    }
-    
-    setChecking(false);
-  }
 
   if (checking) {
     return (

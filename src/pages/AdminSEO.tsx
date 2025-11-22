@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { AlertCircle, AlertTriangle, Info, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { invokeApi } from '@/lib/api-client';
 
 type Alert = {

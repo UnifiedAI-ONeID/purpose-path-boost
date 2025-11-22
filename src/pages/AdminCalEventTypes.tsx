@@ -1,7 +1,7 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { Button } from '@/components/ui/button';
 import { Calendar, ExternalLink, RefreshCw } from 'lucide-react';
 

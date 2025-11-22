@@ -1,7 +1,9 @@
 /**
  * Edge Function caller utility
- * Provides type-safe API calls to Supabase Edge Functions
+ * Migrated to Firebase Cloud Functions (Callable)
  */
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 export async function fx<T = any>(
   name: string,
@@ -9,20 +11,22 @@ export async function fx<T = any>(
   payload?: any,
   params?: Record<string, string>
 ) {
-  const qs = params ? ('?' + new URLSearchParams(params)) : '';
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${name}${qs}`;
+  // console.warn(`[MIGRATION] fx('${name}') called. Redirecting to Firebase Functions.`);
   
-  const init: RequestInit = {
-    method,
-    headers: { 'content-type': 'application/json' }
-  };
-  
-  if (method === 'POST' && payload) {
-    init.body = JSON.stringify(payload);
-  }
+  try {
+    const fn = httpsCallable(functions, name);
+    
+    // Combine payload and params into a single object for the callable
+    const data = {
+      ...(payload || {}),
+      ...(params || {}),
+      _method: method // Pass original method context if needed by the function
+    };
 
-  const r = await fetch(url, init);
-  if (!r.ok) throw new Error(`${name} ${r.status}`);
-  
-  return r.json() as Promise<T>;
+    const result = await fn(data);
+    return result.data as T;
+  } catch (error) {
+    console.error(`[Edge] Function '${name}' failed:`, error);
+    throw error;
+  }
 }

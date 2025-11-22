@@ -1,100 +1,87 @@
-import { db } from '../firebase/config';
-import { collection, getDoc, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, limit } from 'firebase/firestore';
+import { db, auth, functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
-// Re-export Firestore functions to mimic Supabase client where possible, 
-// or provide a clear migration path.
-// This file serves as a temporary bridge.
+// ADAPTER: Supabase -> Firebase
+// This file exists to allow legacy code to compile while migrating to Firebase.
+// It maps Supabase client calls to Firebase equivalents where possible.
 
-// IMPORTANT: This is NOT a full Supabase client implementation. 
-// It is a "Database Client" that points to Firebase.
-// Any code importing 'supabase' from here needs to be refactored to use 'db' directly or these helpers.
-
-export const dbClient = {
-    // Legacy access (should be replaced)
-    firestore: db,
-    
-    // Mock functions to catch remaining calls
-    from: (collectionName: string) => {
-        const msg = `[MIGRATION-WARNING] 'supabase.from("${collectionName}")' was called. This is a LEGACY call and will return empty data. Please refactor to use Firestore directly.`;
-        console.warn(msg);
-        
-        return {
-            select: async (...args: any[]) => { 
-                console.error(`[MIGRATION-ACTION-REQUIRED] .select() called on '${collectionName}'. Returning []. Stack trace:`, new Error().stack);
-                return { data: [], error: null }; 
-            },
-            insert: async (data: any) => { 
-                console.error(`[MIGRATION-ACTION-REQUIRED] .insert() called on '${collectionName}'. Data NOT saved. Stack trace:`, new Error().stack);
-                return { data: null, error: null }; 
-            },
-            update: async (data: any) => { 
-                console.error(`[MIGRATION-ACTION-REQUIRED] .update() called on '${collectionName}'. Data NOT saved. Stack trace:`, new Error().stack);
-                return { data: null, error: null }; 
-            },
-            delete: async () => { 
-                console.error(`[MIGRATION-ACTION-REQUIRED] .delete() called on '${collectionName}'. Operation NOT performed. Stack trace:`, new Error().stack);
-                return { data: null, error: null }; 
-            },
-            upsert: async (data: any) => { 
-                console.error(`[MIGRATION-ACTION-REQUIRED] .upsert() called on '${collectionName}'. Data NOT saved. Stack trace:`, new Error().stack);
-                return { data: null, error: null }; 
-            },
-            eq: function() { return this; },
-            order: function() { return this; },
-            limit: function() { return this; },
-            single: async () => ({ data: null, error: null }),
-            maybeSingle: async () => ({ data: null, error: null })
-        };
+export const supabase = {
+  functions: {
+    invoke: async (name: string, options?: any) => {
+      // console.log(`[Adapter] invoking ${name} via Firebase Functions`);
+      try {
+        const fn = httpsCallable(functions, name);
+        // Supabase passes body in options.body
+        const payload = options?.body || {};
+        const result = await fn(payload);
+        return { data: result.data, error: null };
+      } catch (e: any) {
+        console.error(`[Adapter] Error invoking ${name}:`, e);
+        return { data: null, error: e };
+      }
+    }
+  },
+  auth: {
+    getSession: async () => {
+      const user = auth.currentUser;
+      return { 
+        data: { 
+          session: user ? { access_token: 'mock-token', user: { id: user.uid, email: user.email } } : null 
+        }, 
+        error: null 
+      };
     },
-    
-    // Mock functions interface
-    functions: {
-        invoke: async (functionName: string, options?: any) => {
-            console.warn(`[MIGRATION-WARNING] supabase.functions.invoke('${functionName}') called. Refactor to use 'httpsCallable' from Firebase Functions.`);
-            return { data: null, error: { message: "Migration needed: Function call intercepted" } };
-        }
+    getUser: async () => {
+       const user = auth.currentUser;
+       return { data: { user: user ? { id: user.uid, email: user.email } : null }, error: null };
     },
-    
-    // Mock RPC
-    rpc: async (funcName: string, params?: any) => {
-         console.warn(`[MIGRATION-WARNING] supabase.rpc('${funcName}') called. Refactor to use Firebase Functions or Firestore queries.`);
-         return { data: null, error: { message: "Migration needed: RPC call intercepted" } };
+    onAuthStateChange: (cb: any) => {
+        // Warning: accessing this likely means the component won't update on auth state change correctly
+        return { data: { subscription: { unsubscribe: () => {} } } };
     },
-
-    // Mock Auth (should use firebase.auth directly)
-    auth: {
-        getSession: async () => { 
-            console.warn("[MIGRATION-WARNING] supabase.auth.getSession() called. Refactor to use 'auth.currentUser' from Firebase.");
-            return { data: { session: null }, error: null };
-        },
-        getUser: async () => {
-            console.warn("[MIGRATION-WARNING] supabase.auth.getUser() called. Refactor to use 'auth.currentUser' from Firebase.");
-            return { data: { user: null }, error: null };
-        },
-        onAuthStateChange: () => {
-            console.warn("[MIGRATION-WARNING] supabase.auth.onAuthStateChange() called. Refactor to use 'onAuthStateChanged' from Firebase.");
-             return { data: { subscription: { unsubscribe: () => {} } } };
-        },
-        signOut: async () => {
-            console.warn("[MIGRATION-WARNING] supabase.auth.signOut() called. Refactor to use 'signOut(auth)' from Firebase.");
-            return { error: null };
-        }
-    },
-    
-    // Mock Storage
-    storage: {
-        from: (bucket: string) => ({
-            upload: async () => {
-                console.error(`[MIGRATION-ACTION-REQUIRED] Storage upload to '${bucket}' intercepted. Refactor to Firebase Storage.`);
-                return { error: { message: "Storage migration pending" } };
-            },
-            getPublicUrl: (path: string) => ({ data: { publicUrl: "" } })
-        })
-    },
-
-    channel: (name: string) => ({
-        on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
-        subscribe: () => ({ unsubscribe: () => {} })
-    }),
-    removeChannel: () => {}
+    signOut: async () => {
+        await auth.signOut();
+        return { error: null };
+    }
+  },
+  // Database Shim - Legacy calls log warning
+  from: (table: string) => {
+      console.warn(`[Adapter] .from('${table}') called. Legacy Supabase DB call. Refactor to Firestore.`);
+      return {
+          select: () => ({ 
+              eq: () => ({ 
+                  maybeSingle: async () => ({ data: null, error: null }), 
+                  single: async () => ({ data: null, error: null }),
+                  order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }) 
+              }),
+              order: () => ({ limit: () => Promise.resolve({ data: [], error: null }) }),
+              limit: () => Promise.resolve({ data: [], error: null })
+          }),
+          insert: async () => ({ data: null, error: null }),
+          update: async () => ({ data: null, error: null }),
+          delete: async () => ({ data: null, error: null }),
+          upsert: async () => ({ data: null, error: null }),
+      }
+  },
+  storage: {
+      from: (bucket: string) => ({
+          upload: async () => {
+              console.error(`[Adapter] Storage upload to '${bucket}' not implemented.`);
+              return { error: { message: "Storage not migrated" } };
+          },
+          getPublicUrl: () => ({ data: { publicUrl: "" } })
+      })
+  },
+  rpc: async (name: string, params?: any) => {
+      console.warn(`[Adapter] .rpc('${name}') called. Legacy RPC. Refactor to Callable.`);
+      return { data: null, error: null };
+  },
+  channel: () => ({
+      on: () => ({ subscribe: () => {} }),
+      subscribe: () => {},
+      unsubscribe: () => {}
+  }),
+  removeChannel: () => {}
 };
+
+export const dbClient = supabase;

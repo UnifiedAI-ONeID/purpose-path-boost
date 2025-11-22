@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

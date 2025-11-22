@@ -1,39 +1,13 @@
 /// <reference types="vite/client" />
-/// <reference types="vite-plugin-pwa/client" />
-
-declare module 'virtual:pwa-register' {
-  export interface RegisterSWOptions {
-    immediate?: boolean;
-    onNeedRefresh?: () => void;
-    onOfflineReady?: () => void;
-    onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;
-    onRegisterError?: (error: any) => void;
-  }
-
-  export function registerSW(options?: RegisterSWOptions): (reloadPage?: boolean) => Promise<void>;
-}
-
-interface Window {
-  umami?: (eventName: string, eventData?: Record<string, any>) => void;
-  posthog?: {
-    capture: (eventName: string, properties?: Record<string, any>) => void;
-    identify: (userId: string, properties?: Record<string, any>) => void;
-  };
-  _hmt?: any[]; // Baidu Tongji
-  AMap?: any; // AMap (高德地图)
-  Cal?: any; // Cal.com
-}
 
 interface ImportMetaEnv {
-  readonly VITE_SITE_URL: string;
-  readonly VITE_POSTHOG_KEY?: string;
-  readonly VITE_UMAMI_WEBSITE_ID?: string;
-  readonly VITE_TRANSLATE_API: string;
-  readonly VITE_HCAPTCHA_SITE_KEY?: string;
-  readonly VITE_SUPABASE_URL?: string;
-  readonly VITE_SUPABASE_PUBLISHABLE_KEY?: string;
-  readonly VITE_REGION?: 'global' | 'china';
-  readonly VITE_SEO_INDEX?: string;
+  readonly VITE_FIREBASE_API_KEY: string;
+  readonly VITE_FIREBASE_AUTH_DOMAIN: string;
+  readonly VITE_FIREBASE_PROJECT_ID: string;
+  readonly VITE_FIREBASE_STORAGE_BUCKET: string;
+  readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
+  readonly VITE_FIREBASE_APP_ID: string;
+  // Add other env vars here
 }
 
 interface ImportMeta {

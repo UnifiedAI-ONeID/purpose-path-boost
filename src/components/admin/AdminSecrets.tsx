@@ -1,10 +1,14 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+
+const manageSecrets = httpsCallable(functions, 'manage-secrets');
 
 const FIELDS = [
   { key: 'AIRWALLEX_CLIENT_ID', label: 'Airwallex Client ID' },
@@ -28,29 +32,9 @@ export default function AdminSecrets() {
     try {
       const qs = FIELDS.map(f => f.key).join(',');
       
-      // Use direct fetch with query params since supabase.functions.invoke doesn't easily support GET with query params
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Not authenticated');
-        return;
-      }
+      const result: any = await manageSecrets({ keys: qs, action: 'list' });
+      const data = result.data;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-secrets?keys=${qs}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to load secrets');
-      }
-
-      const data = await response.json();
       const map: Record<string, boolean> = {};
       (data || []).forEach((it: any) => map[it.key] = true);
       setExists(map);
@@ -73,11 +57,7 @@ export default function AdminSecrets() {
     setSaving(s => ({ ...s, [k]: true }));
     
     try {
-      const { error } = await supabase.functions.invoke('manage-secrets', {
-        body: { key: k, value: vals[k] },
-      });
-
-      if (error) throw error;
+      await manageSecrets({ key: k, value: vals[k], action: 'set' });
 
       toast.success('Secret saved successfully');
       setVals(v => ({ ...v, [k]: '' }));

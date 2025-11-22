@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
@@ -9,8 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
+
+// Function Callables
+const listCoupons = httpsCallable(functions, 'api-admin-coupons-list');
+const saveCoupon = httpsCallable(functions, 'api-admin-coupons-save');
+const simulateCoupon = httpsCallable(functions, 'api-admin-coupons-simulate');
 
 interface Coupon {
   id: string;
@@ -38,24 +45,12 @@ export default function CouponsManager() {
 
   async function fetchCoupons() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const params = new URLSearchParams();
-      params.set('tab', tab);
-      if (search) params.set('q', search);
-
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-admin-coupons-list?${params}`;
-      const response = await fetch(url, {
-        headers: { 
-          Authorization: `Bearer ${sessionData.session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+      const result: any = await listCoupons({
+        tab,
+        q: search || undefined
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to fetch');
-      
+      const data = result.data;
       setCoupons(data?.rows || []);
     } catch (error) {
       console.error('[CouponsManager] Fetch failed:', error);
@@ -67,16 +62,13 @@ export default function CouponsManager() {
 
   async function handleDisable(code: string) {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { data, error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body: { code, active: false, notes: 'Disabled via admin' },
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+      const result: any = await saveCoupon({
+        code,
+        active: false,
+        notes: 'Disabled via admin'
       });
 
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || 'Failed to disable');
+      if (!result.data?.ok) throw new Error(result.data?.error || 'Failed to disable');
       
       toast.success('Coupon disabled');
       fetchCoupons();
@@ -180,16 +172,9 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
 
   async function handleSave() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
+      const result: any = await saveCoupon(form);
 
-      const { data, error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body: form,
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-      });
-
-      if (error) throw error;
-      if (!data?.ok) throw new Error(data?.error || 'Failed to save');
+      if (!result.data?.ok) throw new Error(result.data?.error || 'Failed to save');
       
       toast.success(initial ? 'Coupon updated' : 'Coupon created');
       setOpen(false);
@@ -202,16 +187,12 @@ function CouponDialog({ initial, onSaved, trigger = 'New Coupon' }: {
 
   async function handleSimulate() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { data, error } = await supabase.functions.invoke('api-admin-coupons-simulate', {
-        body: { base_cents: 7900, percent_off: form.percent_off },
-        headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+      const result: any = await simulateCoupon({
+        base_cents: 7900,
+        percent_off: form.percent_off
       });
 
-      if (error) throw error;
-      setSimResult(data);
+      setSimResult(result.data);
     } catch (error) {
       console.error('[CouponDialog] Simulate failed:', error);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 
 export function useAdminAuth() {
   const [ok, setOk] = useState<boolean | null>(null);

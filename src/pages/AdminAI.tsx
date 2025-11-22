@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { invokeApi } from '@/lib/api-client';
 
 type Health = { ok:boolean; ai_enabled:boolean; has_key:boolean; cn_mode:boolean; timeout_ms:number; cache_ttl_s:number };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Activity, TrendingUp, Eye, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';

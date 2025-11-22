@@ -1,7 +1,11 @@
+
 import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Play } from 'lucide-react';
-import { invokeApi } from '@/lib/api-client';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+const getContinueWatching = httpsCallable(functions, 'api-lessons-continue');
 
 interface ContinueWatchingItem {
   slug: string;
@@ -26,11 +30,12 @@ export function ContinueWatchingBar({ profileId, onOpenLesson }: ContinueWatchin
     (async () => {
       setIsLoading(true);
       try {
-        const response = await invokeApi('/api/lessons/continue', {
-          body: { profile_id: profileId }
-        });
-        if (response.ok) {
-          setItem(response.item || null);
+        // Call Firebase Function
+        const result: any = await getContinueWatching({ profile_id: profileId });
+        const data = result.data;
+        
+        if (data.ok) {
+          setItem(data.item || null);
         }
       } catch (error) {
         console.error('Failed to fetch continue watching:', error);

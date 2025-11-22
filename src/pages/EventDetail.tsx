@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { supabase } from '@/db';
 import { invokeApi } from '@/lib/api-client';
 import { sanitizeHtml } from '@/lib/sanitize';
 

@@ -1,13 +1,23 @@
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+// Define callable (don't await here, create reference)
+const apiTelemetryLog = httpsCallable(functions, 'api-telemetry-log');
 
 export async function log(event: string, props: any = {}) {
   try {
-    await supabase.functions.invoke('api-telemetry-log', {
-      body: { event, props, ts: Date.now() }
+    // Fire and forget
+    apiTelemetryLog({
+      event, 
+      props, 
+      ts: Date.now() 
+    }).catch(err => {
+        if (import.meta.env.DEV) console.error('Telemetry error:', err);
     });
   } catch (error) {
     // Silently fail
-    console.error('Telemetry error:', error);
+    console.error('Telemetry setup error:', error);
   }
 }
 
