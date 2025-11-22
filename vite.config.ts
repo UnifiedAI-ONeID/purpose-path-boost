@@ -18,44 +18,80 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'ZhenGrowth',
-        short_name: 'ZhenGrowth',
-        description: 'Grow with Clarity, Confidence, and Purpose',
-        theme_color: '#0b1f1f',
-        background_color: '#0b1f1f',
-        display: 'standalone',
-        start_url: '/',
+        id: "app.zhengrowth.pwa",
+        name: "ZhenGrowth",
+        short_name: "ZhenGrowth",
+        description: "Life & career coaching for Chinese-speaking professionals worldwide",
+        start_url: "/",
+        display: "standalone",
+        display_override: ["window-controls-overlay", "standalone"],
+        orientation: "portrait",
+        background_color: "#0b1f1f",
+        theme_color: "#0b1f1f",
         icons: [
+          { 
+            src: "/app-icon-192.png", 
+            sizes: "192x192", 
+            type: "image/png",
+            purpose: "any"
+          },
+          { 
+            src: "/app-icon-192-maskable.png", 
+            sizes: "192x192", 
+            type: "image/png",
+            purpose: "maskable"
+          },
+          { 
+            src: "/app-icon-512.png", 
+            sizes: "512x512", 
+            type: "image/png",
+            purpose: "any"
+          },
+          { 
+            src: "/app-icon-512.png", // Use 512 maskable if available, fallback to same
+            sizes: "512x512", 
+            type: "image/png",
+            purpose: "maskable"
+          }
+        ],
+        categories: ["lifestyle", "education", "health"],
+        screenshots: [
           {
-            src: 'app-icon.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
+            src: "/screenshots/mobile-home.png",
+            sizes: "540x720",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "ZhenGrowth home screen"
           },
           {
-            src: 'app-icon.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
+            src: "/screenshots/desktop-dashboard.png",
+            sizes: "1280x720",
+            type: "image/png",
+            form_factor: "wide",
+            label: "ZhenGrowth dashboard"
+          }
+        ],
+        shortcuts: [
+          {
+            name: "Take Quiz",
+            short_name: "Quiz",
+            description: "60-second self-assessment",
+            url: "/pwa/quiz",
+            icons: [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
           },
           {
-            src: 'icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'icon-512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
+            name: "Book Coaching",
+            short_name: "Book",
+            description: "Schedule a session",
+            url: "/pwa/coaching",
+            icons: [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
           }
         ]
       },
       workbox: {
-        cleanupOutdatedCaches: true, // Important for clearing old caches
+        cleanupOutdatedCaches: true, 
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,webp,mp4}'],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB limit
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, 
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -64,11 +100,10 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 365 days
+                maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
-          },
-          // Removed Supabase caching rule
+          }
         ]
       }
     })
@@ -112,7 +147,6 @@ export default defineConfig(({ mode }) => ({
       resolveExtensions: ['.js', '.jsx', '.ts', '.tsx'],
     }
   },
-  // Force React to be bundled (prevent duplicate instances)
   ssr: {
     noExternal: ['react', 'react-dom'],
   },

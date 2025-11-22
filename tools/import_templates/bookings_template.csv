@@ -1,0 +1,3 @@
+bookingId,userId,eventTypeId,startTime,endTime,status,guestEmail
+book_001,user_123,evt_type_A,2023-10-10T14:00:00Z,2023-10-10T15:00:00Z,confirmed,
+book_002,user_123,evt_type_B,2023-10-12T09:00:00Z,2023-10-12T10:00:00Z,cancelled,guest@external.com

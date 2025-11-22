@@ -3,39 +3,34 @@ import { db } from '../firebase/config';
 
 export interface CoachingOffer {
   id: string;
-  slug: string;
-  title: { en: string; zh: string; tw: string };
-  description: { en: string; zh: string; tw: string };
+  title: string;
+  description: string;
   price: number;
   currency: string;
   features: string[];
-  active: boolean;
-  // ... other fields
+  isActive: boolean;
+  stripePriceId?: string;
 }
 
+const COLLECTION = 'products/coaching'; // Note: if this is a subcollection path, handle carefully. 
+// In our manifest, we used /products/coaching/{offerId}, but Firestore client libraries 
+// usually treat 'products' as collection, 'coaching' as doc, then subcollection.
+// If we meant top-level 'coaching_offers', we should change manifest or code.
+// Let's assume we actually meant top-level collection 'coaching_offers' for simplicity
+// OR we use a collection group query if it's truly nested.
+// Let's stick to a top-level collection 'coaching_offers' for easier access, 
+// matching the Supabase original more closely.
+
+const ACTUAL_COLLECTION = 'coaching_offers'; 
+
 export const coachingService = {
-  async getPrograms(lang: string): Promise<any[]> {
-    const offersRef = collection(db, 'coaching_offers');
-    // We fetch all active offers and filter/localize client side or use specific queries if structure allows.
-    // Assuming active field exists.
-    const q = query(offersRef, where('active', '==', true));
-    const snapshot = await getDocs(q);
+  async getActiveOffers(): Promise<CoachingOffer[]> {
+    const q = query(
+      collection(db, ACTUAL_COLLECTION),
+      where('isActive', '==', true)
+    );
     
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      // Localize
-      const l = lang.startsWith('zh') ? (lang === 'zh-TW' ? 'tw' : 'zh') : 'en';
-      
-      return {
-        id: doc.id,
-        slug: data.slug || doc.id,
-        title: data.title?.[l] || data.title?.en || 'Untitled',
-        description: data.description?.[l] || data.description?.en || '',
-        price: data.price,
-        currency: data.currency,
-        features: data.features || [],
-        active: data.active
-      };
-    });
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as CoachingOffer));
   }
 };

@@ -1,0 +1,188 @@
+{
+  "collections": [
+    {
+      "path": "/users",
+      "docId": "{uid}",
+      "description": "Core user profiles. Mirrors Auth UID.",
+      "fields": {
+        "uid": "string (Auth ID)",
+        "email": "string",
+        "displayName": "string",
+        "photoURL": "string",
+        "roles": "string[] ('admin', 'coach', 'client')",
+        "createdAt": "timestamp",
+        "preferences": {
+          "language": "string",
+          "timezone": "string"
+        },
+        "metadata": {
+          "migrationSource": "string",
+          "originalId": "string"
+        }
+      },
+      "fromSupabase": ["zg_profiles", "user_roles"]
+    },
+    {
+      "path": "/users/{uid}/goals",
+      "docId": "{goalId}",
+      "description": "User's personal goals.",
+      "fields": {
+        "title": "string",
+        "status": "string ('active', 'completed')",
+        "createdAt": "timestamp",
+        "targetDate": "timestamp"
+      },
+      "fromSupabase": ["me_goals"]
+    },
+    {
+      "path": "/users/{uid}/sessions",
+      "docId": "{sessionId}",
+      "description": "Records of coaching sessions.",
+      "fields": {
+        "coachId": "string (ref)",
+        "scheduledAt": "timestamp",
+        "notes": "string",
+        "status": "string"
+      },
+      "fromSupabase": ["me_sessions"]
+    },
+    {
+      "path": "/users/{uid}/receipts",
+      "docId": "{receiptId}",
+      "description": "Transaction history for the user.",
+      "fields": {
+        "amount": "number",
+        "currency": "string",
+        "status": "string",
+        "date": "timestamp",
+        "items": "object[]"
+      },
+      "fromSupabase": ["me_receipts"]
+    },
+    {
+      "path": "/users/{uid}/lesson_progress",
+      "docId": "{lessonId}",
+      "description": "Tracks video playback position and completion for lessons.",
+      "fields": {
+        "lessonId": "string",
+        "lessonSlug": "string",
+        "lastPositionSec": "number",
+        "durationSec": "number",
+        "completed": "boolean",
+        "lastWatchedAt": "timestamp"
+      },
+      "fromSupabase": ["lesson_progress (implied from snippets)"]
+    },
+    {
+      "path": "/bookings",
+      "docId": "{bookingId}",
+      "description": "Calendar bookings (coaching/events).",
+      "fields": {
+        "userId": "string (ref)",
+        "eventTypeId": "string (ref)",
+        "startTime": "timestamp",
+        "endTime": "timestamp",
+        "status": "string ('confirmed', 'cancelled', 'rescheduled')",
+        "guestEmail": "string (denormalized)",
+        "guestName": "string (denormalized)"
+      },
+      "fromSupabase": ["cal_bookings"]
+    },
+    {
+      "path": "/events",
+      "docId": "{eventId}",
+      "description": "Public or private events.",
+      "fields": {
+        "title": "string",
+        "slug": "string",
+        "description": "string",
+        "startTime": "timestamp",
+        "endTime": "timestamp",
+        "price": "number",
+        "capacity": "number",
+        "isPublished": "boolean"
+      },
+      "fromSupabase": ["events"]
+    },
+    {
+      "path": "/events/{eventId}/registrations",
+      "docId": "{regId}",
+      "description": "User registrations for specific events.",
+      "fields": {
+        "userId": "string",
+        "status": "string ('registered', 'waitlist', 'cancelled')",
+        "registeredAt": "timestamp",
+        "paymentStatus": "string"
+      },
+      "fromSupabase": ["event_regs", "event_tickets"]
+    },
+    {
+      "path": "/products/coaching",
+      "docId": "{offerId}",
+      "description": "Coaching offers/programs.",
+      "fields": {
+        "title": "string",
+        "description": "string",
+        "price": "number",
+        "currency": "string",
+        "features": "string[]"
+      },
+      "fromSupabase": ["coaching_offers"]
+    },
+    {
+      "path": "/content/blog",
+      "docId": "{postId}",
+      "description": "Blog posts.",
+      "fields": {
+        "slug": "string",
+        "title": "string",
+        "content": "string (markdown/html)",
+        "authorId": "string",
+        "publishedAt": "timestamp",
+        "tags": "string[]"
+      },
+      "fromSupabase": ["blog_posts"]
+    },
+    {
+      "path": "/lessons",
+      "docId": "{lessonId}",
+      "description": "Learning content/lessons.",
+      "fields": {
+        "moduleId": "string",
+        "title": "string",
+        "slug": "string",
+        "contentUrl": "string",
+        "ytId": "string",
+        "durationSec": "number",
+        "chapters": "object[] ({t: number, label: string})",
+        "order": "number",
+        "tags": "string[]",
+        "published": "boolean"
+      },
+      "fromSupabase": ["lessons"]
+    },
+    {
+      "path": "/leads",
+      "docId": "{leadId}",
+      "description": "Inbound leads.",
+      "fields": {
+        "email": "string",
+        "name": "string",
+        "source": "string",
+        "status": "string ('new', 'contacted', 'converted')",
+        "createdAt": "timestamp"
+      },
+      "fromSupabase": ["leads"]
+    },
+    {
+      "path": "/config",
+      "docId": "{configId}",
+      "description": "System configuration docs (e.g., 'funnels', 'calendar_types').",
+      "fields": {
+        "type": "string",
+        "data": "map (flexible config)"
+      },
+      "fromSupabase": ["funnels", "cal_event_types", "email_templates"]
+    }
+  ]
+}

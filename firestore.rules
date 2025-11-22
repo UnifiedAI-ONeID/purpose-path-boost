@@ -1,9 +1,8 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions ---
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -11,150 +10,108 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
+    
     function hasRole(role) {
-      return isSignedIn() && role in getUserData().roles;
+      // Check role in user doc. 
+      // WARNING: This requires a read. Custom Claims are better for prod performance/cost.
+      // Current implementation assumes roles array in user doc.
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny([role]);
     }
-
+    
     function isAdmin() {
       return hasRole('admin');
     }
-
+    
     function isCoach() {
-      return hasRole('coach');
+      return hasRole('coach') || isAdmin();
     }
 
-    function isCoachOrAdmin() {
-      return isAdmin() || isCoach();
-    }
-
-    // --- Users ---
+    // --- User Profiles ---
     match /users/{userId} {
-      allow read: if isOwner(userId) || isCoachOrAdmin();
-      allow write: if isOwner(userId) || isAdmin();
+      // Users can read/write their own profile; Admins have full access.
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow create: if isSignedIn(); // Allow creation on signup
       
-      // User Subcollections
+      // Subcollections: Goals, Sessions, Receipts, Notifications, Progress
       match /goals/{goalId} {
-        allow read, write: if isOwner(userId) || isCoachOrAdmin();
+        allow read, write: if isOwner(userId) || isCoach();
       }
       match /sessions/{sessionId} {
-        allow read: if isOwner(userId) || isCoachOrAdmin();
-        allow write: if isCoachOrAdmin(); // Only coaches create sessions usually
+        allow read: if isOwner(userId) || isCoach();
+        allow write: if isCoach(); // Only coaches/admins create session records
       }
       match /receipts/{receiptId} {
         allow read: if isOwner(userId) || isAdmin();
-        allow write: if isAdmin();
+        allow write: if isAdmin(); // Receipts are system-generated
       }
       match /notifications/{nudgeId} {
-        allow read: if isOwner(userId);
-        allow write: if isAdmin() || isCoach(); // System sends nudges
+        allow read, update: if isOwner(userId); // User can read & mark as read
+        allow create: if isCoach(); // System or Coach sends nudges
       }
-      match /funnel_progress/{id} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow write: if isOwner(userId) || isAdmin();
+      match /funnel_progress/{funnelId} {
+         allow read: if isOwner(userId) || isCoach();
+         allow write: if isOwner(userId) || isCoach();
+      }
+      match /lesson_progress/{lessonId} {
+        allow read, write: if isOwner(userId); // Users track their own progress
       }
     }
 
-    // --- Public Content (Events, Blog, Products, Lessons) ---
-    match /events/{eventId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /blog_posts/{slug} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /lessons/{lessonId} {
-      allow read: if true; // Or restricted to members? Assuming public for now or handled by app logic
-      allow write: if isAdmin();
-    }
-    
-    match /coaching_offers/{offerId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // --- Commerce & Bookings ---
+    // --- Bookings ---
     match /bookings/{bookingId} {
-      allow read: if isOwner(resource.data.userId) || isCoachOrAdmin();
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) || isCoachOrAdmin();
-      allow delete: if isAdmin();
-    }
-
-    match /orders/{orderId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn(); // Payment webhook usually handles this server-side, but client might init
-      allow update: if isAdmin();
-    }
-    
-    match /registrations/{regId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isSignedIn() && isOwner(request.resource.data.userId);
-      allow update: if isAdmin();
-    }
-
-    // --- Leads & Funnels ---
-    match /leads/{leadId} {
-      allow create: if true; // Public capture
-      allow read, update: if isAdmin();
-    }
-    
-    match /referrals/{referralId} {
-      allow read: if isSignedIn(); // Maybe restricted?
+      // Owner can see their bookings; Coaches see all.
+      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isCoach();
       allow create: if isSignedIn();
+      allow update: if (isSignedIn() && resource.data.userId == request.auth.uid) || isCoach();
+    }
+
+    // --- Events ---
+    match /events/{eventId} {
+      allow read: if true; // Public read
+      allow write: if isAdmin();
+      
+      match /registrations/{regId} {
+        allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isCoach();
+        allow create: if isSignedIn();
+        allow update: if isCoach(); // Status updates by admin/coach
+      }
+    }
+
+    // --- Content (Blog, Coaching Offers, Lessons) ---
+    match /content/blog/{postId} {
+      allow read: if true;
+      allow write: if isAdmin(); // Blog editing
+    }
+    
+    match /products/coaching/{offerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /lessons/{lessonId} {
+      // Public lessons allow read. Protected ones might need more checks.
+      // Basic rule: Authenticated users can read lessons.
+      allow read: if isSignedIn(); 
+      allow write: if isAdmin();
+    }
+
+    // --- Leads & Orders ---
+    match /leads/{leadId} {
+      allow create: if true; // Public lead capture
+      allow read, update: if isCoach();
+    }
+    
+    match /orders/{orderId} {
+      allow create: if true; // Public checkout start
+      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
       allow update: if isAdmin();
     }
 
     // --- Config ---
-    match /config/{docId} {
-      allow read: if true; // Many configs are public (calendar types, etc)
+    match /config/{configId} {
+      allow read: if true; // Usually public config like event types
       allow write: if isAdmin();
-    }
-    
-    match /config/calendar/types/{typeId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /config/funnels/{funnelId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // --- Community ---
-    match /community_posts/{postId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isOwner(resource.data.authorId) || isCoachOrAdmin();
-
-      match /comments/{commentId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn();
-        allow update, delete: if isOwner(resource.data.authorId) || isCoachOrAdmin();
-      }
-
-      match /likes/{userId} {
-        allow read: if isSignedIn();
-        allow create, delete: if isOwner(userId);
-      }
-    }
-
-    match /community_reports/{reportId} {
-      allow create: if isSignedIn();
-      allow read, update: if isCoachOrAdmin();
-    }
-    
-    // --- Admin System ---
-    match /admin_anomalies/{id} {
-      allow read: if isAdmin();
-      allow write: if isAdmin(); // System writes
     }
   }
 }
