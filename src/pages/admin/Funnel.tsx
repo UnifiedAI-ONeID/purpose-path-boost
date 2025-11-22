@@ -1,5 +1,13 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db, storage, auth } from '@/firebase/config';
+import { 
+    collection, getDocs, getCountFromServer, query, orderBy, 
+    doc, updateDoc, addDoc, serverTimestamp, where 
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +17,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from 'sonner';
 import { Upload, Mail, Users, TrendingUp, Send } from 'lucide-react';
 import AdminShell from '@/components/admin/AdminShell';
+
+// Assuming functions are deployed and named this way
+const sendTestEmailFn = httpsCallable(functions, 'funnel-send-email');
+const processQueueFn = httpsCallable(functions, 'funnel-process-queue');
 
 export default function FunnelManager() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -24,44 +36,50 @@ export default function FunnelManager() {
   }, []);
 
   async function loadData() {
+    setLoading(true);
     try {
       // Load funnel stages
-      const { data: stagesData } = await supabase
-        .from('funnel_stages')
-        .select('*')
-        .order('order_index');
+      const stagesQuery = query(collection(db, 'funnel_stages'), orderBy('order_index'));
+      const stagesSnapshot = await getDocs(stagesQuery);
+      const stagesData = stagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setStages(stagesData);
       
-      if (stagesData) setStages(stagesData);
+      const stageMap = new Map(stagesData.map(s => [s.id, s.name]));
 
-      // Load email templates
-      const { data: templatesData } = await supabase
-        .from('email_templates')
-        .select('*, funnel_stages(name), email_attachments(*)');
-      
-      if (templatesData) setTemplates(templatesData);
+      // Load email templates and their attachments
+      const templatesSnapshot = await getDocs(collection(db, 'email_templates'));
+      const templatesData = await Promise.all(templatesSnapshot.docs.map(async (doc) => {
+        const template = { id: doc.id, ...doc.data() };
+        
+        const attachmentsQuery = query(collection(db, 'email_attachments'), where('template_id', '==', template.id));
+        const attachmentsSnapshot = await getDocs(attachmentsQuery);
+        const attachments = attachmentsSnapshot.docs.map(attDoc => ({ id: attDoc.id, ...attDoc.data() }));
+        
+        return {
+          ...template,
+          stage_name: stageMap.get(template.stage_id) || 'Manual only',
+          email_attachments: attachments
+        };
+      }));
+      setTemplates(templatesData);
 
       // Load stats
-      const { count: usersCount } = await supabase
-        .from('user_funnel_progress')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: sentCount } = await supabase
-        .from('email_logs')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: pendingCount } = await supabase
-        .from('email_queue')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
+      const usersCount = (await getCountFromServer(collection(db, 'user_funnel_progress'))).data().count;
+      const sentCount = (await getCountFromServer(collection(db, 'email_logs'))).data().count;
+      const pendingQuery = query(collection(db, 'email_queue'), where('status', '==', 'pending'));
+      const pendingCount = (await getCountFromServer(pendingQuery)).data().count;
+      
       setStats({
-        totalUsers: usersCount || 0,
-        emailsSent: sentCount || 0,
-        pendingEmails: pendingCount || 0,
+        totalUsers: usersCount,
+        emailsSent: sentCount,
+        pendingEmails: pendingCount,
       });
+
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Failed to load funnel data');
+    } finally {
+        setLoading(false);
     }
   }
 
@@ -82,27 +100,19 @@ export default function FunnelManager() {
       };
 
       if (selectedTemplate) {
-        // Update existing
-        const { error } = await supabase
-          .from('email_templates')
-          .update(templateData)
-          .eq('id', selectedTemplate.id);
-
-        if (error) throw error;
+        // Update
+        const templateRef = doc(db, 'email_templates', selectedTemplate.id);
+        await updateDoc(templateRef, { ...templateData, updated_at: serverTimestamp() });
         toast.success('Template updated successfully');
       } else {
-        // Create new
-        const { error } = await supabase
-          .from('email_templates')
-          .insert(templateData);
-
-        if (error) throw error;
+        // Create
+        await addDoc(collection(db, 'email_templates'), { ...templateData, created_at: serverTimestamp(), updated_at: serverTimestamp() });
         toast.success('Template created successfully');
       }
 
       setShowTemplateDialog(false);
       setSelectedTemplate(null);
-      loadData();
+      await loadData(); // Refresh data
     } catch (error: any) {
       console.error('Error saving template:', error);
       toast.error(error.message || 'Failed to save template');
@@ -117,29 +127,24 @@ export default function FunnelManager() {
 
     setUploadingFile(true);
     try {
-      const filePath = `${templateId}/${Date.now()}_${file.name}`;
+      const storagePath = `email-attachments/${templateId}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, storagePath);
       
-      const { error: uploadError } = await supabase.storage
-        .from('email-attachments')
-        .upload(filePath, file);
+      // Upload to Firebase Storage
+      await uploadBytes(storageRef, file);
 
-      if (uploadError) throw uploadError;
-
-      // Save attachment metadata
-      const { error: metadataError } = await supabase
-        .from('email_attachments')
-        .insert({
-          template_id: templateId,
-          filename: file.name,
-          storage_path: filePath,
-          content_type: file.type,
-          size_bytes: file.size,
-        });
-
-      if (metadataError) throw metadataError;
+      // Save attachment metadata to Firestore
+      await addDoc(collection(db, 'email_attachments'), {
+        template_id: templateId,
+        filename: file.name,
+        storage_path: storagePath,
+        content_type: file.type,
+        size_bytes: file.size,
+        created_at: serverTimestamp(),
+      });
 
       toast.success('File uploaded successfully');
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast.error(error.message || 'Failed to upload file');
@@ -151,23 +156,20 @@ export default function FunnelManager() {
   async function handleSendTestEmail(templateId: string) {
     setLoading(true);
     try {
-      const { data: profile } = await supabase
-        .from('zg_profiles')
-        .select('id, email')
-        .eq('auth_user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error("You must be logged in to send a test.");
 
-      if (!profile) throw new Error('Profile not found');
+        const profileQuery = query(collection(db, 'zg_profiles'), where('auth_user_id', '==', currentUser.uid), limit(1));
+        const profileSnapshot = await getDocs(profileQuery);
+        if (profileSnapshot.empty) throw new Error("Your user profile could not be found.");
+        
+        const profile = {id: profileSnapshot.docs[0].id, ...profileSnapshot.docs[0].data()};
 
-      const { error } = await supabase.functions.invoke('funnel-send-email', {
-        body: {
-          profileId: profile.id,
-          templateId: templateId,
-          toEmail: profile.email,
-        },
-      });
-
-      if (error) throw error;
+        await sendTestEmailFn({
+            profileId: profile.id,
+            templateId: templateId,
+            toEmail: profile.email,
+        });
 
       toast.success('Test email sent to your address');
     } catch (error: any) {
@@ -181,12 +183,10 @@ export default function FunnelManager() {
   async function processQueue() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('funnel-process-queue');
-      
-      if (error) throw error;
-
+      const result: any = await processQueueFn();
+      const data = result.data;
       toast.success(`Processed ${data.totalProcessed} emails (${data.emailsSent} sent, ${data.emailsFailed} failed)`);
-      loadData();
+      await loadData();
     } catch (error: any) {
       console.error('Error processing queue:', error);
       toast.error(error.message || 'Failed to process queue');
@@ -204,105 +204,40 @@ export default function FunnelManager() {
             <p className="text-muted-foreground">Manage email campaigns and user journeys</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={processQueue} disabled={loading}>
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Process Queue
-            </Button>
+            <Button onClick={processQueue} disabled={loading}><TrendingUp className="h-4 w-4 mr-2" />Process Queue</Button>
             <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
               <DialogTrigger asChild>
-                <Button onClick={() => { setSelectedTemplate(null); setShowTemplateDialog(true); }}>
-                  <Mail className="h-4 w-4 mr-2" />
-                  New Template
-                </Button>
+                <Button onClick={() => { setSelectedTemplate(null); setShowTemplateDialog(true); }}><Mail className="h-4 w-4 mr-2" />New Template</Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>{selectedTemplate ? 'Edit' : 'Create'} Email Template</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>{selectedTemplate ? 'Edit' : 'Create'} Email Template</DialogTitle></DialogHeader>
                 <form onSubmit={handleSaveTemplate} className="space-y-4">
-                  <div>
-                    <Label>Template Name</Label>
-                    <Input name="name" defaultValue={selectedTemplate?.name} required />
-                  </div>
-                  <div>
-                    <Label>Funnel Stage</Label>
+                  <div><Label>Template Name</Label><Input name="name" defaultValue={selectedTemplate?.name} required /></div>
+                  <div><Label>Funnel Stage</Label>
                     <select name="stage_id" className="w-full border rounded-md p-2" defaultValue={selectedTemplate?.stage_id || ''}>
                       <option value="">No stage (manual only)</option>
-                      {stages.map(stage => (
-                        <option key={stage.id} value={stage.id}>{stage.name}</option>
-                      ))}
+                      {stages.map(stage => <option key={stage.id} value={stage.id}>{stage.name}</option>)}
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>From Name</Label>
-                      <Input name="from_name" defaultValue={selectedTemplate?.from_name || 'ZhenGrowth'} />
-                    </div>
-                    <div>
-                      <Label>From Email</Label>
-                      <Input name="from_email" type="email" defaultValue={selectedTemplate?.from_email || 'hello@zhengrowth.com'} />
-                    </div>
+                    <div><Label>From Name</Label><Input name="from_name" defaultValue={selectedTemplate?.from_name || 'ZhenGrowth'} /></div>
+                    <div><Label>From Email</Label><Input name="from_email" type="email" defaultValue={selected_template?.from_email || 'hello@zhengrowth.com'} /></div>
                   </div>
-                  <div>
-                    <Label>Subject Line</Label>
-                    <Input name="subject" defaultValue={selectedTemplate?.subject} required />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Variables: {`{{name}}, {{email}}`}
-                    </p>
-                  </div>
-                  <div>
-                    <Label>HTML Body</Label>
-                    <Textarea name="html_body" rows={12} defaultValue={selectedTemplate?.html_body} required />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Use HTML and variables like {`{{name}}, {{email}}`}
-                    </p>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setShowTemplateDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Template'}
-                    </Button>
-                  </div>
+                  <div><Label>Subject Line</Label><Input name="subject" defaultValue={selectedTemplate?.subject} required /><p className="text-xs text-muted-foreground mt-1">Variables: {`{{name}}, {{email}}`}</p></div>
+                  <div><Label>HTML Body</Label><Textarea name="html_body" rows={12} defaultValue={selectedTemplate?.html_body} required /><p className="text-xs text-muted-foreground mt-1">Use HTML and variables like {`{{name}}, {{email}}`}</p></div>
+                  <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setShowTemplateDialog(false)}>Cancel</Button><Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Template'}</Button></div>
                 </form>
               </DialogContent>
             </Dialog>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Users in Funnel</p>
-                <p className="text-2xl font-bold">{stats.totalUsers}</p>
-              </div>
-              <Users className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Emails Sent</p>
-                <p className="text-2xl font-bold">{stats.emailsSent}</p>
-              </div>
-              <Send className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </Card>
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Emails</p>
-                <p className="text-2xl font-bold">{stats.pendingEmails}</p>
-              </div>
-              <Mail className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </Card>
+          <Card className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Users in Funnel</p><p className="text-2xl font-bold">{stats.totalUsers}</p></div><Users className="h-8 w-8 text-muted-foreground" /></div></Card>
+          <Card className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Emails Sent</p><p className="text-2xl font-bold">{stats.emailsSent}</p></div><Send className="h-8 w-8 text-muted-foreground" /></div></Card>
+          <Card className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Pending Emails</p><p className="text-2xl font-bold">{stats.pendingEmails}</p></div><Mail className="h-8 w-8 text-muted-foreground" /></div></Card>
         </div>
 
-        {/* Email Templates */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Email Templates</h2>
           <div className="grid gap-4">
@@ -311,34 +246,22 @@ export default function FunnelManager() {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{template.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Stage: {template.funnel_stages?.name || 'Manual only'}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Stage: {template.stage_name}</p>
                     <p className="text-sm mt-2"><strong>Subject:</strong> {template.subject}</p>
-                    {template.email_attachments && template.email_attachments.length > 0 && (
+                    {template.email_attachments.length > 0 && (
                       <div className="mt-2">
                         <p className="text-xs text-muted-foreground">Attachments:</p>
                         <ul className="text-xs">
-                          {template.email_attachments.map((att: any) => (
-                            <li key={att.id}>📎 {att.filename} ({(att.size_bytes / 1024).toFixed(1)} KB)</li>
-                          ))}
+                          {template.email_attachments.map((att: any) => <li key={att.id}>📎 {att.filename} ({(att.size_bytes / 1024).toFixed(1)} KB)</li>)}
                         </ul>
                       </div>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => handleSendTestEmail(template.id)} disabled={loading}>
-                      Send Test
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setSelectedTemplate(template); setShowTemplateDialog(true); }}>
-                      Edit
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleSendTestEmail(template.id)} disabled={loading}>Send Test</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setSelectedTemplate(template); setShowTemplateDialog(true); }}>Edit</Button>
                     <label className="cursor-pointer">
-                      <Button size="sm" variant="outline" asChild disabled={uploadingFile}>
-                        <span>
-                          <Upload className="h-4 w-4" />
-                        </span>
-                      </Button>
+                      <Button size="sm" variant="outline" asChild disabled={uploadingFile}><span><Upload className="h-4 w-4" /></span></Button>
                       <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, template.id)} />
                     </label>
                   </div>

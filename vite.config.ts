@@ -53,6 +53,7 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true, // Important for clearing old caches
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,webp,mp4}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MB limit
         runtimeCaching: [
@@ -67,18 +68,7 @@ export default defineConfig(({ mode }) => ({
               }
             }
           },
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              }
-            }
-          }
+          // Removed Supabase caching rule
         ]
       }
     })
@@ -131,7 +121,6 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
         }
       }
     }

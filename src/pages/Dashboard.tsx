@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authClient, AppUser } from '@/auth';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth, db } from '@/firebase/config';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, BookOpen, TrendingUp, Award, LogOut, User as UserIcon } from 'lucide-react';
@@ -13,61 +14,30 @@ import Nudges from '@/components/Nudges';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<AppUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
 
   useEffect(() => {
-    const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-
-    if (authProvider === 'firebase') {
-      const unsubscribe = authClient.onAuthStateChanged((user: AppUser | null) => {
-        setUser(user);
-        if (user) {
-          fetchProfile(user.uid);
-        } else {
-          navigate('/auth?returnTo=/dashboard');
-        }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (user) {
+        fetchProfile(user.uid);
+      } else {
         setLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      const { data: { subscription } } = authClient.onAuthStateChange(
-        (event: any, session: any) => {
-          setUser(session?.user ?? null);
-          if (!session) {
-            navigate('/auth?returnTo=/dashboard');
-          }
-        }
-      );
-
-      authClient.getSession().then(async ({ data: { session } }: any) => {
-        setUser(session?.user ?? null);
-        if (!session) {
-          navigate('/auth?returnTo=/dashboard');
-          setLoading(false);
-          return;
-        }
-        
-        fetchProfile(session.user.id);
-      });
-
-      return () => subscription.unsubscribe();
-    }
+        navigate('/auth?returnTo=/dashboard');
+      }
+    });
+    return () => unsubscribe();
   }, [navigate]);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('zg_profiles')
-        .select('id')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
+      const q = query(collection(db, 'zg_profiles'), where('auth_user_id', '==', userId), limit(1));
+      const snapshot = await getDocs(q);
       
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else if (data) {
-        setProfileId(data.id);
+      if (!snapshot.empty) {
+        setProfileId(snapshot.docs[0].id);
       } else {
         console.log('No profile found for user:', userId);
       }
@@ -79,12 +49,12 @@ export default function Dashboard() {
   };
 
   const handleSignOut = async () => {
-    const { error } = await authClient.signOut();
-    if (error) {
-      toast.error('Error signing out');
-    } else {
+    try {
+      await signOut(auth);
       toast.success('Signed out successfully');
       navigate('/');
+    } catch (error) {
+      toast.error('Error signing out');
     }
   };
 
@@ -119,7 +89,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold mb-2">Welcome back!</h1>
-                <p className="text-muted-foreground">{(user as any).email}</p>
+                <p className="text-muted-foreground">{user.email}</p>
               </div>
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />

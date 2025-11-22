@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,14 +23,12 @@ export default function AdminEvents() {
 
   async function loadEvents() {
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('start_at', { ascending: false });
-
-      if (error) throw error;
-      setEvents(data || []);
+      const q = query(collection(db, 'events'), orderBy('start_at', 'desc'));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEvents(data);
     } catch (e: any) {
+      console.error("Failed to load events:", e);
       toast.error('Failed to load events');
     } finally {
       setLoading(false);
@@ -93,11 +93,11 @@ export default function AdminEvents() {
                   {filtered.map(event => (
                     <TableRow key={event.id}>
                       <TableCell className="whitespace-nowrap">
-                        {new Date(event.start_at).toLocaleDateString('en-US', {
+                        {event.start_at ? new Date(event.start_at).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric'
-                        })}
+                        }) : 'TBD'}
                       </TableCell>
                       <TableCell className="font-medium">{event.title}</TableCell>
                       <TableCell>

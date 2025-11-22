@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, query, orderBy, limit, onSnapshot, DocumentData } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -11,7 +13,17 @@ interface Lead {
   email: string;
   stage?: string;
   source?: string;
-  created_at: string;
+  created_at: { seconds: number; nanoseconds: number; } | string; // Firestore timestamp or string
+}
+
+function formatTimestamp(ts: Lead['created_at']): string {
+    if (typeof ts === 'string') {
+        return new Date(ts).toLocaleDateString();
+    }
+    if (ts && typeof ts.seconds === 'number') {
+        return new Date(ts.seconds * 1000).toLocaleDateString();
+    }
+    return 'Invalid date';
 }
 
 export default function Leads() {
@@ -19,48 +31,29 @@ export default function Leads() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadLeads();
+    const q = query(
+      collection(db, 'leads'),
+      orderBy('created_at', 'desc'),
+      limit(200)
+    );
 
-    // Set up realtime subscription
-    const channel = supabase
-      .channel('leads-admin')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'leads' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setRows((cur) => [payload.new as Lead, ...cur]);
-          } else if (payload.eventType === 'UPDATE') {
-            setRows((cur) => 
-              cur.map((r) => r.id === payload.new.id ? payload.new as Lead : r)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setRows((cur) => cur.filter((r) => r.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  async function loadLeads() {
-    try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-      setRows(data || []);
-    } catch (error) {
-      console.error('[Admin Leads] Failed to load:', error);
-    } finally {
+    // Set up realtime subscription with onSnapshot
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const leadsData: Lead[] = [];
+      querySnapshot.forEach((doc: DocumentData) => {
+        leadsData.push({ id: doc.id, ...doc.data() } as Lead);
+      });
+      
+      setRows(leadsData);
       setLoading(false);
-    }
-  }
+    }, (error) => {
+      console.error('[Admin Leads] Snapshot error:', error);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, []);
 
   if (loading) {
     return <AdminShell><div className="p-6">Loading leads...</div></AdminShell>;
@@ -90,7 +83,7 @@ export default function Leads() {
                   <StatusBadge status={row.stage || 'new'} />
                 </TableCell>
                 <TableCell>{row.source || '-'}</TableCell>
-                <TableCell>{new Date(row.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>{formatTimestamp(row.created_at)}</TableCell>
               </TableRow>
             ))}
           </TableBody>

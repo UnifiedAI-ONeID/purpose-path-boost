@@ -1,5 +1,7 @@
+
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Card } from './ui/card';
 import SocialMetricsInsights from './SocialMetricsInsights';
 
@@ -31,13 +33,10 @@ export default function SocialAnalytics() {
 
   async function loadMetrics() {
     try {
-      const { data, error } = await supabase
-        .from('social_metrics')
-        .select('*')
-        .order('captured_at');
-      
-      if (error) throw error;
-      setRows(data || []);
+      const q = query(collection(db, 'social_metrics'), orderBy('captured_at', 'asc'));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRows(data);
     } catch (error) {
       console.error('Error loading metrics:', error);
     } finally {

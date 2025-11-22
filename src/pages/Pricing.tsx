@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import SmartLink from '@/components/SmartLink';
 import SEOHelmet from '@/components/SEOHelmet';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth, db } from '@/firebase/config';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
 import { trackEvent } from '@/lib/trackEvent';
@@ -47,32 +49,40 @@ export default function Pricing() {
     if (h) setHighlight(h);
   }, []);
 
-  async function startCheckout(slug: string) {
+  async function startCheckout(slug: string, coupon?: string) {
     setLoading(slug);
     
     // Track checkout initiation
     trackEvent('checkout_started', {
       plan_slug: slug,
       interval: cycle === 'm' ? 'month' : 'year',
-      lang
+      lang,
+      coupon
     });
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = auth.currentUser;
       if (!user) {
         toast.error('Please sign in first');
+        // Store intent
+        sessionStorage.setItem('checkout_intent', JSON.stringify({ slug, cycle, coupon }));
         window.location.href = '/auth?redirect=/pricing';
         return;
       }
 
       // Get profile_id
-      const { data: profile, error: profileError } = await supabase
-        .from('zg_profiles')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
+      let profileId = null;
+      try {
+        const q = query(collection(db, 'zg_profiles'), where('auth_user_id', '==', user.uid), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            profileId = snapshot.docs[0].id;
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
 
-      if (profileError || !profile) {
+      if (!profileId) {
         toast.error('Profile not found');
         return;
       }
@@ -80,9 +90,10 @@ export default function Pricing() {
       const data = await invokeApi('/api/billing/create-agreement', {
         method: 'POST',
         body: {
-          profile_id: profile.id,
+          profile_id: profileId,
           plan_slug: slug,
-          interval: cycle === 'm' ? 'month' : 'year'
+          interval: cycle === 'm' ? 'month' : 'year',
+          coupon
         }
       });
       
@@ -116,57 +127,12 @@ export default function Pricing() {
         if (data.ok) {
           toast.success(`Coupon applied! ${data.discount_pct}% off`);
           // Add coupon to checkout
-          startCheckoutWithCoupon(slug, code);
+          startCheckout(slug, code);
         } else {
           toast.error(data.error || 'Invalid coupon');
         }
       })
       .catch(() => toast.error('Failed to validate coupon'));
-  }
-
-  async function startCheckoutWithCoupon(slug: string, coupon: string) {
-    setLoading(slug);
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Please sign in first');
-        window.location.href = '/auth?redirect=/pricing';
-        return;
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('zg_profiles')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
-
-      if (profileError || !profile) {
-        toast.error('Profile not found');
-        return;
-      }
-
-      const data = await invokeApi('/api/billing/create-agreement', {
-        method: 'POST',
-        body: {
-          profile_id: profile.id,
-          plan_slug: slug,
-          interval: cycle === 'm' ? 'month' : 'year',
-          coupon
-        }
-      });
-      
-      if (data.redirect_url) {
-        window.location.href = data.redirect_url;
-      } else {
-        toast.error('Failed to create checkout session');
-      }
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Something went wrong');
-    } finally {
-      setLoading(null);
-    }
   }
 
   return (

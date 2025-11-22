@@ -1,6 +1,22 @@
+
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { auth } from '@/firebase/config';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  doc,
+  updateDoc,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  setDoc
+} from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Target, TrendingUp, Share2, Plus, Loader2 } from 'lucide-react';
@@ -18,20 +34,47 @@ import InsightsMini from '@/components/dashboard/InsightsMini';
 import HabitsScore from '@/components/dashboard/HabitsScore';
 import NextBestAction from '@/components/dashboard/NextBestAction';
 import NpsQuick from '@/components/dashboard/NpsQuick';
+import { onAuthStateChanged } from 'firebase/auth';
+
+type Profile = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  tz?: string | null;
+  preferred_currency?: string | null;
+};
+
+type Session = {
+  id: string;
+  title: string;
+  start_at: string;
+  end_at: string;
+  join_url: string;
+};
+
+type Goal = {
+  id: string;
+  title: string;
+  status: 'active' | 'done' | 'paused';
+  progress: number;
+  due_date?: string;
+};
+
+type Receipt = {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  created_at: string;
+  description?: string;
+};
 
 type Summary = {
   ok: boolean;
-  profile: { 
-    id: string; 
-    name?: string | null; 
-    email?: string | null;
-    avatar_url?: string | null;
-    tz?: string | null;
-    preferred_currency?: string | null;
-  } | null;
-  next: { id: string; title: string; start_at: string; end_at: string; join_url: string } | null;
-  goals: any[];
-  receipts: any[];
+  profile: Profile | null;
+  next: Session | null;
+  goals: Goal[];
+  receipts: Receipt[];
   streak: number;
   ref_url: string | null;
 };
@@ -40,110 +83,113 @@ export default function MeDashboard() {
   const { lang } = usePrefs();
   const [data, setData] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const { data: analyticsData, loading: analyticsLoading } = useUserAnalytics(data?.profile?.id);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const { data: analyticsData } = useUserAnalytics(profileId);
 
   useEffect(() => {
-    fetchSummary();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await fetchSummary(user.uid);
+      } else {
+        setLoading(false);
+        setData(null); // Clear data on logout
+      }
+    });
+
+    return () => unsubscribe();
   }, [lang]);
 
-  async function fetchSummary() {
+  async function fetchSummary(authUserId: string) {
     setLoading(true);
     try {
-      // Get authenticated user session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      // 1. Fetch user profile
+      const profileQuery = query(collection(db, 'zg_profiles'), where('auth_user_id', '==', authUserId), limit(1));
+      const profileSnapshot = await getDocs(profileQuery);
+
+      if (profileSnapshot.empty) {
+        throw new Error('Profile not found.');
+      }
       
-      if (sessionError || !session) {
-        throw new Error('Not authenticated');
-      }
+      const profileDoc = profileSnapshot.docs[0];
+      const profile = { id: profileDoc.id, ...profileDoc.data() } as Profile;
+      setProfileId(profile.id);
 
-      // Fetch user profile first to get profile_id
-      const { data: profile, error: profileError } = await supabase
-        .from('zg_profiles')
-        .select('id, name, email, avatar_url, tz, preferred_currency')
-        .eq('auth_user_id', session.user.id)
-        .single();
+      // 2. Fetch next session
+      const sessionsQuery = query(
+        collection(db, 'me_sessions'),
+        where('profile_id', '==', profile.id),
+        where('start_at', '>=', new Date().toISOString()),
+        orderBy('start_at', 'asc'),
+        limit(1)
+      );
+      const sessionsSnapshot = await getDocs(sessionsQuery);
+      const nextSession = sessionsSnapshot.empty ? null : { id: sessionsSnapshot.docs[0].id, ...sessionsSnapshot.docs[0].data() } as Session;
 
-      if (profileError) throw profileError;
+      // 3. Fetch goals
+      const goalsQuery = query(
+        collection(db, 'me_goals'),
+        where('profile_id', '==', profile.id),
+        orderBy('updated_at', 'desc'),
+        limit(5)
+      );
+      const goalsSnapshot = await getDocs(goalsQuery);
+      const goals = goalsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Goal[];
 
-      // Fetch next session
-      const { data: sessions } = await supabase
-        .from('me_sessions')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .gte('start_at', new Date().toISOString())
-        .order('start_at', { ascending: true })
-        .limit(1);
-
-      // Fetch goals
-      const { data: goals } = await supabase
-        .from('me_goals')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-
-      // Fetch receipts
-      const { data: receipts } = await supabase
-        .from('me_receipts')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      // Fetch referral - create if doesn't exist
-      let { data: referral } = await supabase
-        .from('zg_referrals')
-        .select('ref_code')
-        .eq('profile_id', profile.id)
-        .maybeSingle();
-
-      // Initialize referral code if it doesn't exist
-      if (!referral) {
+      // 4. Fetch receipts
+      const receiptsQuery = query(
+        collection(db, 'me_receipts'),
+        where('profile_id', '==', profile.id),
+        orderBy('created_at', 'desc'),
+        limit(5)
+      );
+      const receiptsSnapshot = await getDocs(receiptsQuery);
+      const receipts = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Receipt[];
+      
+      // 5. Fetch or create referral code
+      const referralRef = doc(db, 'zg_referrals', profile.id);
+      let referralSnap = await getDoc(referralRef);
+      if (!referralSnap.exists()) {
         const refCode = `REF${profile.id.substring(0, 8).toUpperCase()}`;
-        const { data: newReferral, error: refError } = await supabase
-          .from('zg_referrals')
-          .insert([{ profile_id: profile.id, ref_code: refCode }])
-          .select('ref_code')
-          .single();
-        
-        if (!refError && newReferral) {
-          referral = newReferral;
-        }
+        await setDoc(referralRef, { profile_id: profile.id, ref_code: refCode, created_at: serverTimestamp() });
+        referralSnap = await getDoc(referralRef);
       }
+      const referral = referralSnap.data();
+      const ref_url = referral?.ref_code ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` : null;
 
-      // Calculate streak using RPC
-      const { data: streakData } = await supabase
-        .rpc('get_user_streak', { p_profile_id: profile.id })
-        .maybeSingle();
+      // 6. Streak (placeholder - requires Cloud Function)
+      // For now, we'll just return a placeholder.
+      const streak = 0; // TODO: Replace with a call to a Cloud Function
 
       setData({
         ok: true,
         profile,
-        next: sessions?.[0] || null,
-        goals: goals || [],
-        receipts: receipts || [],
-        streak: streakData || 0,
-        ref_url: referral?.ref_code 
-          ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` 
-          : null
+        next: nextSession,
+        goals,
+        receipts,
+        streak,
+        ref_url
       });
+
     } catch (error) {
       console.error('Failed to fetch summary:', error);
-      toast.error('Failed to load dashboard');
+      toast.error('Failed to load dashboard. You might need to complete your profile.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function updateGoal(goalId: string, updates: any) {
+  async function updateGoal(goalId: string, updates: Partial<Goal>) {
     try {
-      const { error } = await supabase
-        .from('me_goals')
-        .update(updates)
-        .eq('id', goalId);
+      const goalRef = doc(db, 'me_goals', goalId);
+      await updateDoc(goalRef, { ...updates, updated_at: serverTimestamp() });
+      
+      // Optimistic update
+      setData(prevData => {
+        if (!prevData) return null;
+        const newGoals = prevData.goals.map(g => g.id === goalId ? { ...g, ...updates } : g);
+        return { ...prevData, goals: newGoals };
+      });
 
-      if (error) throw error;
-      fetchSummary();
       toast.success('Goal updated');
     } catch (error) {
       console.error('Failed to update goal:', error);
@@ -152,19 +198,49 @@ export default function MeDashboard() {
   }
 
   async function createGoal(title: string, due_date?: string) {
-    if (!data?.profile?.id) return;
+    if (!profileId) return;
 
     try {
-      const { error } = await supabase
-        .from('me_goals')
-        .insert([{ profile_id: data.profile.id, title, due_date }]);
-
-      if (error) throw error;
-      fetchSummary();
+      const newGoal = {
+        profile_id: profileId,
+        title,
+        due_date: due_date || null,
+        status: 'active',
+        progress: 0,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      };
+      const docRef = await addDoc(collection(db, 'me_goals'), newGoal);
+      
+      // Optimistic update
+      setData(prevData => {
+        if (!prevData) return null;
+        const addedGoal = { ...newGoal, id: docRef.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+        return { ...prevData, goals: [addedGoal as Goal, ...prevData.goals] };
+      });
+      
       toast.success('Goal created');
     } catch (error) {
       console.error('Failed to create goal:', error);
       toast.error('Failed to create goal');
+    }
+  }
+
+  async function updateProfile(updates: Partial<Profile>) {
+    if (!profileId) return;
+    try {
+        const profileRef = doc(db, 'zg_profiles', profileId);
+        await updateDoc(profileRef, updates);
+        
+        setData(prev => prev ? {
+            ...prev,
+            profile: prev.profile ? { ...prev.profile, ...updates } : null
+        } : null);
+
+        toast.success('Profile updated!');
+    } catch (error) {
+        console.error('Failed to update profile:', error);
+        toast.error('Failed to save profile changes.');
     }
   }
 
@@ -187,11 +263,11 @@ export default function MeDashboard() {
           <Card className="max-w-md">
             <CardHeader>
               <CardTitle>Welcome to Your Dashboard</CardTitle>
-              <CardDescription>Book a discovery call to get started on your growth journey</CardDescription>
+              <CardDescription>Please log in or sign up to get started on your growth journey.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild className="w-full">
-                <a href="/coaching">Explore Coaching</a>
+                <a href="/auth">Login or Sign Up</a>
               </Button>
             </CardContent>
           </Card>
@@ -200,7 +276,7 @@ export default function MeDashboard() {
     );
   }
 
-  const next = data.next;
+  const { profile, next, goals, receipts, streak, ref_url } = data;
 
   return (
     <>
@@ -209,150 +285,73 @@ export default function MeDashboard() {
         description="Track your personal growth journey and manage your coaching sessions."
       />
       
-      {/* In-app nudges */}
-      {data.profile && <Nudges profileId={data.profile.id} />}
+      {profileId && <Nudges profileId={profileId} />}
       
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4 pb-20">
         <div className="container mx-auto max-w-6xl">
-          {/* Analytics Overview */}
+
           {analyticsData && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6"
-            >
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
               <InsightsMini analytics={analyticsData} />
             </motion.section>
           )}
 
-          {/* Habits Score & Next Action */}
           {analyticsData && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="grid md:grid-cols-2 gap-6 mb-6"
-            >
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid md:grid-cols-2 gap-6 mb-6">
               <HabitsScore score={analyticsData.habits} />
               <NextBestAction analytics={analyticsData} />
             </motion.section>
           )}
 
-          {/* AI Suggested Next Step */}
-          {data.profile && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-6"
-            >
-              <SuggestedNextStep profileId={data.profile.id} />
+          {profileId && (
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-6">
+              <SuggestedNextStep profileId={profileId} />
             </motion.section>
           )}
 
-          {/* Next Session */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6"
-          >
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {lang === 'zh-CN' ? '下次会话' : lang === 'zh-TW' ? '下次會話' : 'Next Session'}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Next Session</CardTitle></CardHeader>
               <CardContent>
                 {next ? (
                   <div>
                     <div className="text-lg font-medium mb-2">{next.title}</div>
-                    <div className="text-sm text-muted-foreground mb-4">
-                      {new Date(next.start_at).toLocaleString(lang)}
-                    </div>
+                    <div className="text-sm text-muted-foreground mb-4">{new Date(next.start_at).toLocaleString(lang)}</div>
                     <div className="flex gap-2">
-                      <Button asChild>
-                        <a href={next.join_url} target="_blank" rel="noreferrer">
-                          {lang === 'zh-CN' ? '加入' : lang === 'zh-TW' ? '加入' : 'Join'}
-                        </a>
-                      </Button>
-                      <Button variant="outline" asChild>
-                        <a href="/coaching">
-                          {lang === 'zh-CN' ? '管理' : lang === 'zh-TW' ? '管理' : 'Manage'}
-                        </a>
-                      </Button>
+                      <Button asChild><a href={next.join_url} target="_blank" rel="noreferrer">Join</a></Button>
+                      <Button variant="outline" asChild><a href="/coaching">Manage</a></Button>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center py-8">
                     <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      {lang === 'zh-CN' ? '没有预定的会话' : lang === 'zh-TW' ? '沒有預定的會話' : 'No session scheduled'}
-                    </p>
-                    <Button asChild>
-                      <a href="/coaching">
-                        {lang === 'zh-CN' ? '预约会话' : lang === 'zh-TW' ? '預約會話' : 'Book a Session'}
-                      </a>
-                    </Button>
+                    <p className="text-muted-foreground mb-4">No session scheduled</p>
+                    <Button asChild><a href="/coaching">Book a Session</a></Button>
                   </div>
                 )}
               </CardContent>
             </Card>
           </motion.section>
-
-          {/* Streak & Referral */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mb-6"
-          >
+          
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="mb-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  {lang === 'zh-CN' ? '保持你的连续性' : lang === 'zh-TW' ? '保持你的連續性' : 'Keep Your Streak'}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" />Keep Your Streak</CardTitle></CardHeader>
               <CardContent>
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">
-                      {lang === 'zh-CN' ? '活跃天数' : lang === 'zh-TW' ? '活躍天數' : 'Active Days'}
-                    </span>
-                    <span className="font-semibold">{data.streak} {lang === 'zh-CN' ? '天' : lang === 'zh-TW' ? '天' : 'days'}</span>
+                    <span className="text-sm text-muted-foreground">Active Days</span>
+                    <span className="font-semibold">{streak} days</span>
                   </div>
                   <div className="h-3 rounded-full bg-muted overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(100, (data.streak / 30) * 100)}%` }}
-                      transition={{ duration: 1, ease: 'easeOut' }}
-                      className="h-full bg-gradient-to-r from-primary to-primary/60"
-                    />
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(100, (streak / 30) * 100)}%` }} transition={{ duration: 1, ease: 'easeOut' }} className="h-full bg-gradient-to-r from-primary to-primary/60" />
                   </div>
                 </div>
-
-                {data.ref_url && (
+                {ref_url && (
                   <div>
-                    <div className="text-sm font-medium mb-2">
-                      {lang === 'zh-CN' ? '邀请朋友' : lang === 'zh-TW' ? '邀請朋友' : 'Invite a Friend'}
-                    </div>
+                    <div className="text-sm font-medium mb-2">Invite a Friend</div>
                     <div className="flex gap-2">
-                      <input
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 flex-1"
-                        readOnly
-                        value={data.ref_url}
-                        onClick={(e) => e.currentTarget.select()}
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          navigator.clipboard.writeText(data.ref_url!);
-                          toast.success('Copied to clipboard!');
-                        }}
-                      >
+                      <Input readOnly value={ref_url} onClick={(e) => e.currentTarget.select()} />
+                      <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(ref_url); toast.success('Copied!'); }}>
                         <Share2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -362,87 +361,37 @@ export default function MeDashboard() {
             </Card>
           </motion.section>
 
-          {/* Goals */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="mb-6"
-          >
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {lang === 'zh-CN' ? '你的目标' : lang === 'zh-TW' ? '你的目標' : 'Your Goals'}
-              </h2>
-              <Button
-                size="sm"
-                onClick={() => {
-                  const title = prompt(lang === 'zh-CN' ? '输入目标标题' : lang === 'zh-TW' ? '輸入目標標題' : 'Enter goal title');
-                  if (title) createGoal(title);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {lang === 'zh-CN' ? '添加目标' : lang === 'zh-TW' ? '添加目標' : 'Add Goal'}
+              <h2 className="text-xl font-semibold flex items-center gap-2"><Target className="h-5 w-5" />Your Goals</h2>
+              <Button size="sm" onClick={() => { const title = prompt('Enter goal title'); if (title) createGoal(title); }}>
+                <Plus className="mr-2 h-4 w-4" />Add Goal
               </Button>
             </div>
-
             <div className="grid gap-3 md:grid-cols-2">
-              {data.goals.map((goal) => (
-                <GoalCard key={goal.id} goal={goal} onUpdate={updateGoal} lang={lang} />
-              ))}
-              {!data.goals.length && (
-                <Card className="md:col-span-2">
-                  <CardContent className="text-center py-8">
-                    <p className="text-muted-foreground">
-                      {lang === 'zh-CN' ? '还没有目标' : lang === 'zh-TW' ? '還沒有目標' : 'No goals yet'}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              {goals.map((goal) => <GoalCard key={goal.id} goal={goal} onUpdate={updateGoal} lang={lang} />)}
+              {!goals.length && <Card className="md:col-span-2"><CardContent className="text-center py-8"><p className="text-muted-foreground">No goals yet.</p></CardContent></Card>}
             </div>
           </motion.section>
 
-          {/* NPS Survey */}
-          {data.profile && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="mb-6"
-            >
-              <NpsQuick profileId={data.profile.id} />
+          {profileId && (
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mb-6">
+              <NpsQuick profileId={profileId} />
             </motion.section>
           )}
 
-          {/* Receipts */}
-          {data.receipts.length > 0 && (
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              className="mb-6"
-            >
-              <h2 className="text-xl font-semibold mb-4">
-                {lang === 'zh-CN' ? '最近付款' : lang === 'zh-TW' ? '最近付款' : 'Recent Payments'}
-              </h2>
+          {receipts.length > 0 && (
+            <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mb-6">
+              <h2 className="text-xl font-semibold mb-4">Recent Payments</h2>
               <div className="grid gap-2">
-                {data.receipts.map((receipt) => (
-                  <Card key={receipt.id}>
+                {receipts.map((r) => (
+                  <Card key={r.id}>
                     <CardContent className="flex items-center justify-between p-4">
                       <div>
-                        <div className="font-medium">
-                          {new Intl.NumberFormat(lang, {
-                            style: 'currency',
-                            currency: receipt.currency
-                          }).format(receipt.amount_cents / 100)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(receipt.created_at).toLocaleDateString(lang)}
-                        </div>
+                        <div className="font-medium">{new Intl.NumberFormat(lang, { style: 'currency', currency: r.currency }).format(r.amount_cents / 100)}</div>
+                        <div className="text-sm text-muted-foreground">{new Date(r.created_at).toLocaleDateString(lang)}</div>
                       </div>
-                      {receipt.description && (
-                        <div className="text-sm text-muted-foreground">{receipt.description}</div>
-                      )}
+                      {r.description && <div className="text-sm text-muted-foreground">{r.description}</div>}
                     </CardContent>
                   </Card>
                 ))}
@@ -450,136 +399,38 @@ export default function MeDashboard() {
             </motion.section>
           )}
 
-          {/* Account Settings */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-          >
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
             <Card>
-              <CardHeader>
-                <CardTitle>
-                  {lang === 'zh-CN' ? '账户设置' : lang === 'zh-TW' ? '帳戶設定' : 'Account Settings'}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Account Settings</CardTitle></CardHeader>
               <CardContent className="space-y-6">
-                <AvatarUploader
-                  profileId={data.profile.id}
-                  initialUrl={data.profile.avatar_url}
-                  onUpdate={(url) => {
-                    setData(prev => prev ? {
-                      ...prev,
-                      profile: { ...prev.profile, avatar_url: url }
-                    } : null);
-                  }}
-                />
-
+                <AvatarUploader profileId={profile.id} initialUrl={profile.avatar_url} onUpdate={(url) => updateProfile({ avatar_url: url })} />
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">
-                      {lang === 'zh-CN' ? '名称' : lang === 'zh-TW' ? '名稱' : 'Name'}
-                    </Label>
-                  <Input
-                    id="name"
-                    defaultValue={data.profile.name || ''}
-                    onBlur={async (e) => {
-                      if (!data.profile?.id) return;
-                      try {
-                        const { error } = await supabase
-                          .from('zg_profiles')
-                          .update({ name: e.target.value })
-                          .eq('id', data.profile.id);
-                        
-                        if (error) throw error;
-                        toast.success(
-                          lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
-                        );
-                      } catch (error) {
-                        toast.error(
-                          lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
-                        );
-                      }
-                    }}
-                    />
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" defaultValue={profile.name || ''} onBlur={(e) => updateProfile({ name: e.target.value })} />
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>
-                        {lang === 'zh-CN' ? '时区' : lang === 'zh-TW' ? '時區' : 'Timezone'}
-                      </Label>
-                      <Select
-                        defaultValue={data.profile.tz || 'UTC'}
-                        onValueChange={async (value) => {
-                          if (!data.profile?.id) return;
-                          try {
-                            const { error } = await supabase
-                              .from('zg_profiles')
-                              .update({ tz: value })
-                              .eq('id', data.profile.id);
-                            
-                            if (error) throw error;
-                            toast.success(
-                              lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
-                            );
-                          } catch (error) {
-                            toast.error(
-                              lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
-                            );
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                      <Label>Timezone</Label>
+                      <Select defaultValue={profile.tz || 'UTC'} onValueChange={(v) => updateProfile({ tz: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="UTC">UTC</SelectItem>
                           <SelectItem value="America/New_York">New York</SelectItem>
                           <SelectItem value="America/Los_Angeles">Los Angeles</SelectItem>
                           <SelectItem value="Europe/London">London</SelectItem>
                           <SelectItem value="Asia/Shanghai">Shanghai</SelectItem>
-                          <SelectItem value="Asia/Hong_Kong">Hong Kong</SelectItem>
-                          <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div>
-                      <Label>
-                        {lang === 'zh-CN' ? '货币' : lang === 'zh-TW' ? '貨幣' : 'Currency'}
-                      </Label>
-                      <Select
-                        defaultValue={data.profile.preferred_currency || 'USD'}
-                        onValueChange={async (value) => {
-                          if (!data.profile?.id) return;
-                          try {
-                            const { error } = await supabase
-                              .from('zg_profiles')
-                              .update({ preferred_currency: value })
-                              .eq('id', data.profile.id);
-                            
-                            if (error) throw error;
-                            toast.success(
-                              lang === 'zh-CN' ? '已保存' : lang === 'zh-TW' ? '已儲存' : 'Saved'
-                            );
-                          } catch (error) {
-                            toast.error(
-                              lang === 'zh-CN' ? '保存失败' : lang === 'zh-TW' ? '儲存失敗' : 'Failed to save'
-                            );
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
+                      <Label>Currency</Label>
+                      <Select defaultValue={profile.preferred_currency || 'USD'} onValueChange={(v) => updateProfile({ preferred_currency: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="USD">USD</SelectItem>
                           <SelectItem value="CAD">CAD</SelectItem>
                           <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="GBP">GBP</SelectItem>
-                          <SelectItem value="HKD">HKD</SelectItem>
-                          <SelectItem value="SGD">SGD</SelectItem>
-                          <SelectItem value="CNY">CNY</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -589,33 +440,15 @@ export default function MeDashboard() {
             </Card>
           </motion.section>
 
-          {/* Subscription Management */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mb-6"
-          >
+          <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mb-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {lang === 'zh-CN' ? '订阅管理' : lang === 'zh-TW' ? '訂閱管理' : 'Subscription'}
-                </CardTitle>
-                <CardDescription>
-                  {lang === 'zh-CN' ? '管理您的订阅计划' : lang === 'zh-TW' ? '管理您的訂閱計劃' : 'Manage your subscription plan'}
-                </CardDescription>
+                <CardTitle>Subscription</CardTitle>
+                <CardDescription>Manage your subscription plan</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button asChild variant="outline" className="w-full">
-                  <a href="/pricing">
-                    {lang === 'zh-CN' ? '查看所有计划' : lang === 'zh-TW' ? '查看所有方案' : 'View All Plans'}
-                  </a>
-                </Button>
-                <Button asChild variant="ghost" className="w-full">
-                  <a href="/account/cancel">
-                    {lang === 'zh-CN' ? '取消订阅' : lang === 'zh-TW' ? '取消訂閱' : 'Cancel Subscription'}
-                  </a>
-                </Button>
+                <Button asChild variant="outline" className="w-full"><a href="/pricing">View All Plans</a></Button>
+                <Button asChild variant="ghost" className="w-full"><a href="/account/cancel">Cancel Subscription</a></Button>
               </CardContent>
             </Card>
           </motion.section>
@@ -625,54 +458,36 @@ export default function MeDashboard() {
   );
 }
 
-function GoalCard({
-  goal,
-  onUpdate,
-  lang
-}: {
-  goal: any;
-  onUpdate: (id: string, updates: any) => void;
-  lang: string;
-}) {
+function GoalCard({ goal, onUpdate, lang }: { goal: Goal; onUpdate: (id: string, updates: Partial<Goal>) => void; lang: string; }) {
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="font-medium flex-1">{goal.title}</div>
-          <select
-            className="h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            value={goal.status}
-            onChange={(e) => onUpdate(goal.id, { status: e.target.value })}
-          >
-            <option value="active">{lang === 'zh-CN' ? '活跃' : lang === 'zh-TW' ? '活躍' : 'Active'}</option>
-            <option value="done">{lang === 'zh-CN' ? '完成' : lang === 'zh-TW' ? '完成' : 'Done'}</option>
-            <option value="paused">{lang === 'zh-CN' ? '暂停' : lang === 'zh-TW' ? '暫停' : 'Paused'}</option>
-          </select>
+          <Select value={goal.status} onValueChange={(status: Goal['status']) => onUpdate(goal.id, { status })}>
+            <SelectTrigger className="w-[100px] h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-
         <div>
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-muted-foreground">
-              {lang === 'zh-CN' ? '进度' : lang === 'zh-TW' ? '進度' : 'Progress'}
-            </span>
+            <span className="text-muted-foreground">Progress</span>
             <span className="font-medium">{goal.progress}%</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={goal.progress}
+          <Input 
+            type="range" 
+            min={0} 
+            max={100} 
+            value={goal.progress} 
             onChange={(e) => onUpdate(goal.id, { progress: Number(e.target.value) })}
             className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
           />
         </div>
-
-        {goal.due_date && (
-          <div className="text-xs text-muted-foreground mt-2">
-            {lang === 'zh-CN' ? '截止日期' : lang === 'zh-TW' ? '截止日期' : 'Due'}:{' '}
-            {new Date(goal.due_date).toLocaleDateString(lang)}
-          </div>
-        )}
+        {goal.due_date && <div className="text-xs text-muted-foreground mt-2">Due: {new Date(goal.due_date).toLocaleDateString(lang)}</div>}
       </CardContent>
     </Card>
   );

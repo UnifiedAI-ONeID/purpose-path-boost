@@ -1,4 +1,6 @@
 // Unified analytics event tracking for Umami + PostHog
+import { db } from '@/firebase/config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export type EventName =
   // Lead Magnet
@@ -58,10 +60,8 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
     console.log(`[Analytics] ${eventName}`, properties);
   }
 
-  // Save to database for admin dashboard
+  // Save to Firestore for admin dashboard
   try {
-    const { dbClient: supabase } = await import('@/db');
-    
     // Generate session ID if not exists (guarded for privacy modes)
     let sessionId = '';
     try {
@@ -78,14 +78,19 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
       try { sessionStorage.setItem('analytics_session_id', sessionId); } catch {}
     }
 
-    await supabase.from('analytics_events').insert({
+    // Fire and forget - don't await this to avoid blocking UI
+    addDoc(collection(db, 'analytics_events'), {
       event_name: eventName,
       properties: properties || {},
       session_id: sessionId,
       page_url: window.location.href,
       referrer: document.referrer || null,
       user_agent: navigator.userAgent,
+      created_at: serverTimestamp()
+    }).catch(err => {
+        if (import.meta.env.DEV) console.error('[Analytics] Firestore write failed:', err);
     });
+
   } catch (error) {
     // Fail silently - analytics shouldn't break the app
     if (import.meta.env.DEV) {

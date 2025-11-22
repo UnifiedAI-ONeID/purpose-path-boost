@@ -1,10 +1,15 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { auth, functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import AdminShell from '@/components/admin/AdminShell';
 import { trackEvent } from '@/lib/trackEvent';
+
+// Define function callable
+const dashboardAdminMetrics = httpsCallable(functions, 'dashboard-admin-metrics');
 
 interface KpiData {
   mrr: number;
@@ -36,27 +41,13 @@ export default function Overview() {
 
   async function loadData() {
     try {
-      console.log('[Admin Overview] Starting to load data');
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData?.session) {
-        console.log('[Admin Overview] No session found');
+      if (!auth.currentUser) {
+        console.log('[Admin Overview] No user logged in');
         return;
       }
 
-      console.log('[Admin Overview] Calling dashboard-admin-metrics');
-      const { data, error } = await supabase.functions.invoke('dashboard-admin-metrics', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
-        }
-      });
-
-      if (error) {
-        console.error('[Admin Overview] Error loading metrics:', error);
-        throw error;
-      }
-      
-      console.log('[Admin Overview] Loaded metrics:', data);
+      const result: any = await dashboardAdminMetrics();
+      const data = result.data;
       
       setKpi(data?.kpi || {});
       setAlerts(data?.alerts || []);

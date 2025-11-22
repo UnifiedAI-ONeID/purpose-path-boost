@@ -1,9 +1,11 @@
+
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import SmartLink from '@/components/SmartLink';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { GraduationCap, Play, Clock, CheckCircle, Lock } from 'lucide-react';
 import { usePWA } from '../core/PWAProvider';
 
@@ -16,6 +18,7 @@ interface Lesson {
   tags: string[];
   progress?: number;
   completed?: boolean;
+  order_index?: number;
 }
 
 export default function Content() {
@@ -31,16 +34,16 @@ export default function Content() {
 
   const fetchLessons = async () => {
     try {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('slug, title_en, summary_en, duration_sec, poster_url, tags, published')
-        .eq('published', true)
-        .order('order_index')
-        .limit(20);
-
-      if (!error && data) {
-        setLessons(data);
-      }
+      const q = query(
+        collection(db, 'lessons'),
+        where('published', '==', true),
+        orderBy('order_index', 'asc'),
+        limit(20)
+      );
+      
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Lesson[];
+      setLessons(data);
     } catch (err) {
       console.error('[Content] Fetch error:', err);
     } finally {

@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, doc, getDocs, getDoc, query, where, orderBy, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -89,57 +91,54 @@ export default function AdminEventEdit() {
 
   async function loadEvent() {
     try {
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
-
-      if (eventError) throw eventError;
-      if (!eventData) {
+      const q = query(collection(db, 'events'), where('slug', '==', slug), where('status', '!=', 'deleted'));
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
         toast.error('Event not found');
         navigate('/admin/events');
         return;
       }
-      
+
+      const eventDoc = snapshot.docs[0];
+      const eventData = eventDoc.data();
+      const eventId = eventDoc.id;
+
       setEvent({
+        id: eventId,
         ...eventData,
         start_at: eventData.start_at ? new Date(eventData.start_at).toISOString().slice(0, 16) : '',
         end_at: eventData.end_at ? new Date(eventData.end_at).toISOString().slice(0, 16) : ''
-      });
+      } as Event);
 
       // Load tickets
-      const { data: ticketsData } = await supabase
-        .from('event_tickets')
-        .select('*')
-        .eq('event_id', eventData.id)
-        .order('price_cents');
-      
-      setTickets(ticketsData || []);
+      const ticketsQ = query(collection(db, 'event_tickets'), where('event_id', '==', eventId), orderBy('price_cents'));
+      const ticketsSnap = await getDocs(ticketsQ);
+      const ticketsData = ticketsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Ticket[];
+      setTickets(ticketsData);
+
+      // Map tickets for lookup
+      const ticketMap = new Map(ticketsData.map(t => [t.id, t.name]));
 
       // Load registrations
-      const { data: regsData } = await supabase
-        .from('event_regs')
-        .select(`
-          id,
-          created_at,
-          name,
-          email,
-          status,
-          amount_cents,
-          currency,
-          checked_in_at,
-          event_tickets!inner(name)
-        `)
-        .eq('event_id', eventData.id)
-        .order('created_at', { ascending: false });
+      const regsQ = query(collection(db, 'event_regs'), where('event_id', '==', eventId), orderBy('created_at', 'desc'));
+      const regsSnap = await getDocs(regsQ);
+      
+      const regsData = regsSnap.docs.map(d => {
+        const data = d.data();
+        const ticketId = data.ticket_id;
+        return {
+            id: d.id,
+            ...data,
+            ticket_name: ticketMap.get(ticketId) || 'N/A',
+            created_at: data.created_at?.seconds ? new Date(data.created_at.seconds * 1000).toISOString() : data.created_at
+        };
+      }) as Registration[];
 
-      setRegistrations((regsData || []).map((r: any) => ({
-        ...r,
-        ticket_name: r.event_tickets?.name || 'N/A'
-      })));
+      setRegistrations(regsData);
       
     } catch (e: any) {
+      console.error("Failed to load event:", e);
       toast.error('Failed to load event');
     } finally {
       setLoading(false);
@@ -159,31 +158,32 @@ export default function AdminEventEdit() {
         start_at: new Date(event.start_at).toISOString(),
         end_at: new Date(event.end_at).toISOString()
       };
+      // Remove ID from data payload
+      delete (eventData as any).id;
 
       if (isNew) {
-        const { data, error } = await supabase
-          .from('events')
-          .insert([eventData])
-          .select()
-          .maybeSingle();
-
-        if (error) throw error;
-        if (!data) throw new Error('Failed to create event');
+        const docRef = await addDoc(collection(db, 'events'), {
+            ...eventData,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp()
+        });
         
         toast.success('Event created successfully');
-        navigate(`/admin/events/${data.slug}`);
+        // Since we use slug in URL, navigate to it. Ideally we should check slug uniqueness first.
+        navigate(`/admin/events/${eventData.slug}`);
       } else {
-        const { error } = await supabase
-          .from('events')
-          .update(eventData)
-          .eq('slug', slug);
-
-        if (error) throw error;
+        if (!event.id) throw new Error("Missing event ID");
+        const eventRef = doc(db, 'events', event.id);
+        await updateDoc(eventRef, {
+            ...eventData,
+            updated_at: serverTimestamp()
+        });
         
         toast.success('Event updated successfully');
         await loadEvent();
       }
     } catch (e: any) {
+      console.error("Failed to save event:", e);
       toast.error(e.message || 'Failed to save event');
     } finally {
       setSaving(false);
@@ -196,42 +196,37 @@ export default function AdminEventEdit() {
       return;
     }
 
-    const newTicket: Ticket = {
+    const newTicket = {
       event_id: event.id,
       name: 'General Admission',
       price_cents: 0,
       currency: 'USD',
       base_currency: 'USD',
       base_price_cents: 0,
-      qty: 100
+      qty: 100,
+      created_at: serverTimestamp()
     };
 
     try {
-      const { error } = await supabase
-        .from('event_tickets')
-        .insert([newTicket]);
-
-      if (error) throw error;
+      await addDoc(collection(db, 'event_tickets'), newTicket);
       
       toast.success('Ticket added');
       await loadEvent();
     } catch (e: any) {
+      console.error("Failed to add ticket:", e);
       toast.error('Failed to add ticket');
     }
   }
 
   async function handleCheckIn(regId: string) {
     try {
-      const { error } = await supabase
-        .from('event_regs')
-        .update({ checked_in_at: new Date().toISOString() })
-        .eq('id', regId);
-
-      if (error) throw error;
+      const regRef = doc(db, 'event_regs', regId);
+      await updateDoc(regRef, { checked_in_at: new Date().toISOString() });
       
       toast.success('Checked in successfully');
       await loadEvent();
     } catch (e: any) {
+      console.error("Failed to check in:", e);
       toast.error('Failed to check in');
     }
   }
@@ -395,12 +390,12 @@ export default function AdminEventEdit() {
                         {ticket.qty} spots
                       </div>
                     </div>
-                    {ticket.id && (
+                    {ticket.id && event.id && (
                       <>
                         <FxOverridesEditor ticketId={ticket.id} />
                         <FxAuditTicket ticketId={ticket.id} />
                         <PriceTesting 
-                          eventId={event.id!}
+                          eventId={event.id}
                           ticketId={ticket.id} 
                           basePrice={ticket.base_price_cents || ticket.price_cents}
                           baseCurrency={ticket.base_currency || ticket.currency}

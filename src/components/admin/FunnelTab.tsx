@@ -1,5 +1,8 @@
+
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
+import { startOfWeek, format, parseISO } from 'date-fns';
 
 type Row = {
   week_start: string;
@@ -24,21 +27,66 @@ function Spark({ data }: { data: number[] }) {
 
 export default function FunnelTab() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    const { data, error } = await supabase.from('v_funnel_weekly').select('*');
-    if (!error && data) setRows(data as any);
+    setLoading(true);
+    try {
+      // Fetch all leads (optimized: only necessary fields)
+      // In a large app, this should be a Cloud Function or an aggregated collection
+      const q = query(collection(db, 'leads'), orderBy('created_at', 'asc'));
+      const snapshot = await getDocs(q);
+
+      const weeklyStats = new Map<string, { leads: number; booked: number; won: number }>();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const createdAt = data.created_at instanceof Object && 'seconds' in data.created_at 
+            ? new Date(data.created_at.seconds * 1000) 
+            : new Date(data.created_at); // Handle both Timestamp and string
+            
+        const weekStart = format(startOfWeek(createdAt), 'yyyy-MM-dd');
+
+        if (!weeklyStats.has(weekStart)) {
+          weeklyStats.set(weekStart, { leads: 0, booked: 0, won: 0 });
+        }
+
+        const stat = weeklyStats.get(weekStart)!;
+        stat.leads++;
+        
+        // Assuming stage determines booked/won status
+        // Adjust logic based on your actual data model
+        const stage = (data.stage || '').toLowerCase();
+        if (['booked', 'won', 'client', 'active'].some(s => stage.includes(s))) {
+            stat.booked++;
+        }
+        if (['won', 'client'].some(s => stage.includes(s))) {
+            stat.won++;
+        }
+      });
+
+      const calculatedRows: Row[] = Array.from(weeklyStats.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([week_start, stats]) => ({
+          week_start,
+          leads: stats.leads,
+          booked: stats.booked,
+          won: stats.won,
+          cvr_booked_pct: stats.leads ? Math.round((stats.booked / stats.leads) * 100) : 0,
+          cvr_won_pct: stats.booked ? Math.round((stats.won / stats.booked) * 100) : 0,
+          cvr_lead_to_client_pct: stats.leads ? Math.round((stats.won / stats.leads) * 100) : 0,
+        }));
+
+      setRows(calculatedRows);
+    } catch (error) {
+      console.error("Failed to load funnel data:", error);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     load();
-    const sub = supabase
-      .channel('funnel_live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, load)
-      .subscribe();
-    return () => {
-      supabase.removeChannel(sub);
-    };
   }, []);
 
   const leadsSer = rows.map(r => r.leads);
@@ -56,6 +104,8 @@ export default function FunnelTab() {
       l2c: cur.cvr_lead_to_client_pct
     };
   }, [rows]);
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Loading funnel analytics...</div>;
 
   return (
     <section className="space-y-6">
@@ -92,7 +142,7 @@ export default function FunnelTab() {
           <tbody>
             {rows.map(r => (
               <tr key={r.week_start} className="border-t">
-                <td className="py-2 px-3 whitespace-nowrap">{new Date(r.week_start).toLocaleDateString()}</td>
+                <td className="py-2 px-3 whitespace-nowrap">{r.week_start}</td>
                 <td className="py-2 px-3">{r.leads}</td>
                 <td className="py-2 px-3">{r.booked}</td>
                 <td className="py-2 px-3">{r.won}</td>

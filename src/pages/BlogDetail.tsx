@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -49,27 +51,43 @@ const BlogDetail = () => {
   const loadPost = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', slug)
-        .eq('published', true)
-        .maybeSingle();
+      const q = query(
+        collection(db, 'blog_posts'),
+        where('slug', '==', slug),
+        where('published', '==', true),
+        limit(1)
+      );
 
-      if (error) {
-        throw error;
-      }
+      const snapshot = await getDocs(q);
 
-      if (!data) {
+      if (snapshot.empty) {
         toast.error('Blog post not found');
         setPost(null);
         return;
       }
 
-      setPost(data);
+      const doc = snapshot.docs[0];
+      const d = doc.data();
+      
+      // Format dates safely
+      const created_at = d.created_at?.seconds 
+        ? new Date(d.created_at.seconds * 1000).toISOString() 
+        : d.created_at || new Date().toISOString();
+      const published_at = d.published_at?.seconds 
+        ? new Date(d.published_at.seconds * 1000).toISOString() 
+        : d.published_at;
+
+      const postData = { 
+        id: doc.id, 
+        ...d,
+        created_at,
+        published_at
+      } as BlogPost;
+
+      setPost(postData);
       
       // Track blog read
-      trackEvent('blog_read', { slug: data.slug, category: data.category });
+      trackEvent('blog_read', { slug: postData.slug, category: postData.category });
     } catch (error) {
       console.error('Failed to load blog post:', error);
       toast.error('Failed to load blog post. Please try again.');

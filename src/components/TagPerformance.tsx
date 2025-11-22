@@ -1,7 +1,10 @@
+
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
+import { startOfWeek, format } from 'date-fns';
 
 type Row = {
   tag: string;
@@ -53,9 +56,66 @@ export default function TagPerformance() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const { data } = await supabase.from('v_tag_performance').select('*');
-      setRows((data || []) as Row[]);
-      setLoading(false);
+      try {
+        // Fetch all posts which contain tags and potentially metrics
+        // In a real scenario, we might need to join with social_metrics collection
+        const postsSnapshot = await getDocs(query(collection(db, 'social_posts')));
+        
+        const tagStats = new Map<string, any>(); // Key: tag_weekstart
+
+        postsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const tags = data.tags || [];
+            if (!Array.isArray(tags)) return;
+
+            const createdAt = data.created_at?.seconds ? new Date(data.created_at.seconds * 1000) : new Date();
+            const weekStart = format(startOfWeek(createdAt), 'yyyy-MM-dd');
+
+            // Metrics (assuming they are on the post object for now, or default to 0)
+            const imp = data.impressions || 0;
+            const eng = (data.likes || 0) + (data.comments || 0) + (data.shares || 0);
+            const clicks = data.clicks || 0;
+            const views = data.video_views || 0;
+
+            tags.forEach((tag: string) => {
+                const key = `${tag}_${weekStart}`;
+                if (!tagStats.has(key)) {
+                    tagStats.set(key, { 
+                        tag, 
+                        week_start: weekStart, 
+                        post_count: 0, 
+                        impressions: 0, 
+                        engagements: 0, 
+                        clicks: 0, 
+                        video_views: 0 
+                    });
+                }
+                const stat = tagStats.get(key);
+                stat.post_count++;
+                stat.impressions += imp;
+                stat.engagements += eng;
+                stat.clicks += clicks;
+                stat.video_views += views;
+            });
+        });
+
+        const calculatedRows: Row[] = Array.from(tagStats.values()).map(stat => {
+            const imp = stat.impressions;
+            const eng = stat.engagements;
+            const clk = stat.clicks;
+            return {
+                ...stat,
+                er_pct: imp ? +((eng / imp) * 100).toFixed(2) : 0,
+                ctr_pct: imp && clk ? +((clk / imp) * 100).toFixed(2) : null
+            };
+        });
+
+        setRows(calculatedRows);
+      } catch (error) {
+        console.error("Error fetching tag performance:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);

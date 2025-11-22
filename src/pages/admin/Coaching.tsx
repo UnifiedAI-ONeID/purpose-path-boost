@@ -1,39 +1,57 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
 
+type Offer = {
+  id: string;
+  title_en: string;
+  slug: string;
+  base_price_cents: number;
+  billing_type: 'one_time' | 'subscription';
+  active: boolean;
+  sort: number;
+};
+
 export default function Coaching() {
-  const [offers, setOffers] = useState<any[]>([]);
-  const { toast } = useToast();
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   useEffect(() => {
     loadOffers();
   }, []);
 
   async function loadOffers() {
-    const { data } = await supabase
-      .from('coaching_offers')
-      .select('*')
-      .order('sort');
-    
-    setOffers(data || []);
+    try {
+      const q = query(collection(db, 'coaching_offers'), orderBy('sort'));
+      const querySnapshot = await getDocs(q);
+      const offersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Offer[];
+      setOffers(offersData);
+    } catch (error) {
+      console.error("Failed to load coaching offers: ", error);
+      toast.error("Failed to load coaching offers.");
+    }
   }
 
-  async function toggleActive(offer: any) {
+  async function toggleActive(offer: Offer) {
     try {
-      await supabase
-        .from('coaching_offers')
-        .update({ active: !offer.active })
-        .eq('id', offer.id);
+      const offerRef = doc(db, 'coaching_offers', offer.id);
+      await updateDoc(offerRef, { active: !offer.active });
       
-      toast({ title: 'Updated', description: `${offer.title_en} ${!offer.active ? 'activated' : 'deactivated'}` });
-      loadOffers();
+      toast.success(`${offer.title_en} ${!offer.active ? 'activated' : 'deactivated'}`);
+      
+      // Optimistic update
+      setOffers(prevOffers => 
+        prevOffers.map(o => o.id === offer.id ? { ...o, active: !o.active } : o)
+      );
+
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to update offer', variant: 'destructive' });
+      console.error("Failed to update offer: ", error);
+      toast.error('Failed to update offer');
     }
   }
 

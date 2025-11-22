@@ -1,3 +1,4 @@
+
 import { useMemo, useState } from 'react';
 import { buildCaption } from '@/lib/captions/templates';
 import { SocialPlatform } from '@/lib/utm';
@@ -5,8 +6,12 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db, functions } from '@/firebase/config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
+
+const triggerSocialWorker = httpsCallable(functions, 'social-worker');
 
 const PLATFORMS: SocialPlatform[] = ['linkedin', 'facebook', 'instagram', 'x', 'youtube', 'wechat', 'red', 'zhihu', 'douyin'];
 
@@ -50,23 +55,26 @@ export default function CaptionBuilder({ post }: CaptionBuilderProps) {
 
     setLoading(true);
     try {
-      const rows = targets.map(p => ({
-        blog_slug: post.slug,
-        platform: p,
-        status: 'queued',
-        message: custom[p] ?? previews[p],
-        media: post.cover ? [{ type: 'image', url: post.cover }] : null,
-        tags: post.tags || [],
-        primary_tag: (post.tags && post.tags[0]) || null,
-      }));
+      const promises = targets.map(async (p) => {
+        const postData = {
+            blog_slug: post.slug,
+            platform: p,
+            status: 'queued',
+            message: custom[p] ?? previews[p],
+            media: post.cover ? [{ type: 'image', url: post.cover }] : null,
+            tags: post.tags || [],
+            primary_tag: (post.tags && post.tags[0]) || null,
+            created_at: serverTimestamp()
+        };
+        return addDoc(collection(db, 'social_posts'), postData);
+      });
 
-      const { error } = await supabase.from('social_posts').insert(rows);
-      if (error) throw error;
+      await Promise.all(promises);
 
-      toast.success(`Queued ${rows.length} post(s) for cross-posting`);
+      toast.success(`Queued ${promises.length} post(s) for cross-posting`);
       
       // Trigger worker
-      supabase.functions.invoke('social-worker').catch(console.error);
+      triggerSocialWorker().catch(console.error);
     } catch (error: any) {
       console.error('Error queueing posts:', error);
       toast.error(error.message || 'Failed to queue posts');

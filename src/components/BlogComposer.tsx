@@ -1,7 +1,13 @@
+
 import { useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db, functions } from '@/firebase/config';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+
+// Define function callable
+const triggerSocialWorker = httpsCallable(functions, 'social-worker');
 
 interface BlogComposerProps {
   post: {
@@ -44,39 +50,34 @@ export default function BlogComposer({ post }: BlogComposerProps) {
 
     setLoading(true);
     try {
-      // Get generated cover images for this post
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const baseImageUrl = `${supabaseUrl}/storage/v1/object/public/social-images/${post.slug}`;
+      // TODO: Update image URL logic for Firebase Storage
+      // For now, using a placeholder pattern or the provided image_url
+      const baseImageUrl = post.image_url || '';
       
-      const rows = targets.map(p => {
-        // Map platform to image filename
-        let imagePath = '';
-        if (p === 'linkedin') imagePath = `${baseImageUrl}/linkedin.png`;
-        else if (p === 'facebook') imagePath = `${baseImageUrl}/facebook.png`;
-        else if (p === 'x') imagePath = `${baseImageUrl}/x.png`;
-        else if (p === 'instagram') imagePath = `${baseImageUrl}/ig_portrait.png`;
-        else if (p === 'wechat' || p === 'red' || p === 'zhihu' || p === 'douyin') {
-          imagePath = `${baseImageUrl}/ig_square.png`; // Use square for Chinese platforms
-        }
-
-        return {
+      const promises = targets.map(async (p) => {
+        let imagePath = baseImageUrl; // Simplified for now
+        
+        const postData = {
           blog_slug: post.slug,
           platform: p,
           message: `${post.title}\n\n${post.excerpt || ''}`,
-          media: imagePath ? [{ type: 'image', url: imagePath }] : (post.image_url ? [{ type: 'image', url: post.image_url }] : []),
+          media: imagePath ? [{ type: 'image', url: imagePath }] : [],
           tags: post.tags || [],
           primary_tag: (post.tags && post.tags[0]) || null,
+          created_at: serverTimestamp(),
+          status: 'pending'
         };
+
+        return addDoc(collection(db, 'social_posts'), postData);
       });
 
-      const { error } = await supabase.from('social_posts').insert(rows);
+      await Promise.all(promises);
 
-      if (error) throw error;
-
-      toast.success(`Queued ${rows.length} post(s) for publishing`);
+      toast.success(`Queued ${promises.length} post(s) for publishing`);
       
       // Trigger worker to process queue
-      supabase.functions.invoke('social-worker').catch(console.error);
+      triggerSocialWorker().catch(console.error);
+
     } catch (error: any) {
       console.error('Error queueing posts:', error);
       toast.error(error.message || 'Failed to queue posts');

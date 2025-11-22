@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminCalBookings() {
@@ -8,13 +10,25 @@ export default function AdminCalBookings() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('cal_bookings')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(200);
-      setRows(data || []);
-      setLoading(false);
+      try {
+        const q = query(collection(db, 'cal_bookings'), orderBy('created_at', 'desc'), limit(200));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => {
+            const d = doc.data();
+            return {
+                ...d,
+                // Safely handle timestamps if they are Firestore objects
+                created_at: d.created_at?.seconds ? new Date(d.created_at.seconds * 1000).toISOString() : d.created_at,
+                start_at: d.start_at?.seconds ? new Date(d.start_at.seconds * 1000).toISOString() : d.start_at,
+                end_at: d.end_at?.seconds ? new Date(d.end_at.seconds * 1000).toISOString() : d.end_at,
+            };
+        });
+        setRows(data);
+      } catch (err) {
+        console.error("Failed to load bookings", err);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, []);
 
@@ -45,7 +59,7 @@ export default function AdminCalBookings() {
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.cal_uid} className="border-t border-border">
+              <tr key={r.cal_uid || r.id} className="border-t border-border">
                 <td className="py-2 px-3">{new Date(r.created_at).toLocaleString()}</td>
                 <td className="py-2 px-3">
                   {r.name} <span className="text-muted">({r.email})</span>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
@@ -6,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { trackEvent } from '@/lib/trackEvent';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface BlogPost {
@@ -33,18 +35,30 @@ const BlogList = () => {
   const loadBlogPosts = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('id, slug, title, excerpt, category, published_at, created_at, read_time')
-        .eq('published', true)
-        .order('published_at', { ascending: false });
+      // Note: This query requires a composite index on 'published' and 'published_at'
+      // If index is missing, Firestore will throw an error in console with a link to create it
+      const q = query(
+        collection(db, 'blog_posts'),
+        where('published', '==', true),
+        orderBy('published_at', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data();
+        // Convert Firestore timestamps to strings if needed, or handle as is
+        return { 
+            id: doc.id, 
+            ...d,
+            published_at: d.published_at?.seconds ? new Date(d.published_at.seconds * 1000).toISOString() : d.published_at,
+            created_at: d.created_at?.seconds ? new Date(d.created_at.seconds * 1000).toISOString() : d.created_at
+        };
+      }) as BlogPost[];
 
-      if (error) throw error;
-
-      setBlogPosts(data || []);
+      setBlogPosts(data);
       
       // Extract unique categories
-      const uniqueCategories = ['All', ...new Set((data || []).map(post => post.category))];
+      const uniqueCategories = ['All', ...new Set(data.map(post => post.category).filter(Boolean))];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to load blog posts:', error);

@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { trackEvent } from '@/lib/trackEvent';
 import SmartLink from '@/components/SmartLink';
 import { ROUTES } from '@/nav/routes';
 import { BlogSheet } from '@/components/BlogSheet';
-import { supabase } from '@/db'; import { dbClient as supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
 
 interface BlogPost {
@@ -28,14 +30,27 @@ export default function MobileBlog() {
 
   const fetchPosts = async () => {
     setIsLoading(true);
-    const { data } = await supabase
-      .from('blog_posts')
-      .select('id, slug, title, excerpt, published_at, read_time, category')
-      .eq('published', true)
-      .order('published_at', { ascending: false });
-    
-    if (data) setPosts(data);
-    setIsLoading(false);
+    try {
+      const q = query(
+        collection(db, 'blog_posts'),
+        where('published', '==', true),
+        orderBy('published_at', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          ...d,
+          published_at: d.published_at?.seconds ? new Date(d.published_at.seconds * 1000).toISOString() : d.published_at
+        };
+      }) as BlogPost[];
+      setPosts(data);
+    } catch (error) {
+      console.error("Failed to load posts", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
