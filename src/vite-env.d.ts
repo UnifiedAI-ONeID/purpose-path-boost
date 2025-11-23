@@ -16,9 +16,7 @@ interface ImportMeta {
 }
 
 interface Window {
-  umami?: {
-    track: (eventName: string, data?: Record<string, any>) => void;
-  };
+  umami?: any; // changed from specific object to any to allow direct calls
   posthog?: {
     capture: (eventName: string, properties?: Record<string, any>) => void;
     identify: (id: string, properties?: Record<string, any>) => void;

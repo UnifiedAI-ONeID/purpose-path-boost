@@ -1,25 +1,32 @@
-# Use the official Node.js image.
-# https://hub.docker.com/_/node
-FROM node:18-slim
+# Use the official Node.js image as the base image
+FROM node:18-slim as build
 
-# Create and change to the app directory.
-WORKDIR /usr/src/app
+# Set the working directory
+WORKDIR /app
 
-# Copy application dependency manifests to the container image.
-# A wildcard is used to ensure both package.json AND package-lock.json are copied.
-# Copying this separately prevents re-running npm install on every code change.
-COPY backend/package*.json ./
+# Copy the package.json and package-lock.json files
+COPY package*.json ./
 
-# Install production dependencies.
-RUN npm ci --only=production
+# Install dependencies
+RUN npm install
 
-# Copy local code to the container image.
-COPY backend/ .
+# Copy the rest of the application code
+COPY . .
 
-# Build the application (if needed - currently using ts-node-dev in dev, but should build for prod)
-# We need typescript for building
-RUN npm install typescript
+# Build the React application
 RUN npm run build
 
-# Run the web service on container startup.
-CMD [ "node", "dist/index.js" ]
+# Use a lightweight Nginx image to serve the static files
+FROM nginx:alpine
+
+# Copy the build output to the Nginx html directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy a custom Nginx configuration file
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 8080
+EXPOSE 8080
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

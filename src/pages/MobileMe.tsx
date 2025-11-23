@@ -25,16 +25,20 @@ export default function MobileMe() {
       });
       return () => unsubscribe();
     } else {
-      const { data: { subscription } } = authClient.onAuthStateChange((_: any, newSession: any) => {
-        setUser(newSession?.user ?? null);
-      });
+      const supabaseAuth = authClient as any;
+      if (typeof supabaseAuth.onAuthStateChange === 'function') {
+        const { data: { subscription } } = supabaseAuth.onAuthStateChange((_: any, newSession: any) => {
+          setUser(newSession?.user ?? null);
+        });
 
-      authClient.getSession().then(({ data: { session } }: any) => {
-        setUser(session?.user ?? null);
-      });
+        supabaseAuth.getSession().then(({ data: { session } }: any) => {
+          setUser(session?.user ?? null);
+        });
 
-      return () => subscription.unsubscribe();
+        return () => subscription.unsubscribe();
+      }
     }
+    return () => {};
   }, []);
 
   const handleSignOut = async () => {
