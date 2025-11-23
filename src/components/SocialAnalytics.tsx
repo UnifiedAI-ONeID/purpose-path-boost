@@ -1,9 +1,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { db } from '@/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, DocumentData } from 'firebase/firestore';
 import { Card } from './ui/card';
 import SocialMetricsInsights from './SocialMetricsInsights';
+
+interface SocialMetric {
+  id: string;
+  platform: string;
+  impressions?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  [key: string]: string | number | undefined;
+}
 
 function MiniLineChart({ data }: { data: number[] }) {
   if (!data.length) return <div className="h-10" />;
@@ -24,7 +34,7 @@ function MiniLineChart({ data }: { data: number[] }) {
 }
 
 export default function SocialAnalytics() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<SocialMetric[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,9 +45,9 @@ export default function SocialAnalytics() {
     try {
       const q = query(collection(db, 'social_metrics'), orderBy('captured_at', 'asc'));
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const data: SocialMetric[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SocialMetric));
       setRows(data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error loading metrics:', error);
     } finally {
       setLoading(false);
@@ -45,7 +55,7 @@ export default function SocialAnalytics() {
   }
 
   const byPlatform = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, SocialMetric[]> = {};
     for (const row of rows) {
       if (!map[row.platform]) map[row.platform] = [];
       map[row.platform].push(row);
@@ -53,8 +63,8 @@ export default function SocialAnalytics() {
     return map;
   }, [rows]);
 
-  const getTotalForPlatform = (platform: string, key: string) => {
-    return (byPlatform[platform] || []).reduce((sum, row) => sum + (row[key] || 0), 0);
+  const getTotalForPlatform = (platform: string, key: 'impressions' | 'likes' | 'comments' | 'shares') => {
+    return (byPlatform[platform] || []).reduce((sum, row) => sum + (row[key] as number || 0), 0);
   };
 
   const platforms = Object.keys(byPlatform);

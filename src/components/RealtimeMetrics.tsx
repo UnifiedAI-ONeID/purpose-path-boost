@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { useEffect, useState, useCallback } from 'react';
+import { firestore } from '@/firebase/config';
+import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Activity, TrendingUp, Eye, Award } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,6 +10,18 @@ interface MetricCardProps {
   value: number;
   icon: React.ReactNode;
   change?: number;
+}
+
+interface AnalyticsEvent {
+  session_id: string;
+  event_name: string;
+  properties?: EventProperties;
+  created_at: { toDate: () => Date };
+}
+
+interface EventProperties {
+  score?: number;
+  [key: string]: unknown;
 }
 
 const MetricCard = ({ title, value, icon, change }: MetricCardProps) => (
@@ -52,104 +65,72 @@ export const RealtimeMetrics = () => {
   });
   const [previousMetrics, setPreviousMetrics] = useState(metrics);
 
-  useEffect(() => {
-    // Initial load
-    loadMetrics();
-
-    // Set up realtime subscription
-    const channel = supabase
-      .channel('analytics-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'analytics_events',
-        },
-        (payload) => {
-          console.log('New analytics event:', payload);
-          loadMetrics();
-        }
-      )
-      .subscribe();
-
-    // Refresh every 30 seconds
-    const interval = setInterval(loadMetrics, 30000);
-
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
-  }, []);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     try {
-      // Get today's events
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
-      const { data: todayEvents, error: todayError } = await supabase
-        .from('analytics_events')
-        .select('*')
-        .gte('created_at', today.toISOString());
-
-      if (todayError) throw todayError;
-
-      // Get yesterday's events for comparison
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
 
-      const { data: yesterdayEvents, error: yesterdayError } = await supabase
-        .from('analytics_events')
-        .select('*')
-        .gte('created_at', yesterday.toISOString())
-        .lt('created_at', today.toISOString());
+      const todayQuery = query(
+        collection(firestore, 'analytics_events'),
+        where('created_at', '>=', today)
+      );
+      const yesterdayQuery = query(
+        collection(firestore, 'analytics_events'),
+        where('created_at', '>=', yesterday),
+        where('created_at', '<', today)
+      );
 
-      if (yesterdayError) throw yesterdayError;
+      const [todaySnapshot, yesterdaySnapshot] = await Promise.all([
+        getDocs(todayQuery),
+        getDocs(yesterdayQuery),
+      ]);
+
+      const todayEvents = todaySnapshot.docs.map(doc => doc.data() as AnalyticsEvent);
+      const yesterdayEvents = yesterdaySnapshot.docs.map(doc => doc.data() as AnalyticsEvent);
 
       // Calculate today's metrics
-      const uniqueSessions = new Set(todayEvents?.map(e => e.session_id) || []).size;
-      const quizViews = todayEvents?.filter(e => e.event_name === 'lm_view').length || 0;
-      const quizCompletions = todayEvents?.filter(e => e.event_name === 'quiz_complete').length || 0;
-      const bookViews = todayEvents?.filter(e => e.event_name === 'book_view').length || 0;
-      const bookings = todayEvents?.filter(e => e.event_name === 'book_complete').length || 0;
+      const uniqueSessions = new Set(todayEvents.map(e => e.session_id)).size;
+      const quizViews = todayEvents.filter(e => e.event_name === 'lm_view').length;
+      const quizCompletions = todayEvents.filter(e => e.event_name === 'quiz_complete').length;
+      const bookViews = todayEvents.filter(e => e.event_name === 'book_view').length;
+      const bookings = todayEvents.filter(e => e.event_name === 'book_complete').length;
       
-      // Calculate average clarity score
       const scoresFromQuiz = todayEvents
-        ?.filter(e => {
-          if (e.event_name !== 'quiz_complete' || !e.properties) return false;
-          const props = e.properties as any;
-          return typeof props.score === 'number';
-        })
-        .map(e => (e.properties as any).score as number) || [];
+        .filter(e => 
+          e.event_name === 'quiz_complete' && 
+          e.properties && 
+          typeof e.properties.score === 'number'
+        )
+        .map(e => e.properties!.score as number);
       const avgScore = scoresFromQuiz.length > 0 
         ? Math.round(scoresFromQuiz.reduce((a, b) => a + b, 0) / scoresFromQuiz.length)
         : 0;
 
-      // Calculate conversion rate (quiz to booking)
       const conversionRate = quizCompletions > 0 
         ? Math.round((bookings / quizCompletions) * 100)
         : 0;
 
       // Calculate yesterday's metrics for comparison
-      const yesterdayUniqueSessions = new Set(yesterdayEvents?.map(e => e.session_id) || []).size;
-      const yesterdayQuizCompletions = yesterdayEvents?.filter(e => e.event_name === 'quiz_complete').length || 0;
-      const yesterdayBookings = yesterdayEvents?.filter(e => e.event_name === 'book_complete').length || 0;
-      const yesterdayQuizViews = yesterdayEvents?.filter(e => e.event_name === 'lm_view').length || 0;
+      const yesterdayUniqueSessions = new Set(yesterdayEvents.map(e => e.session_id)).size;
+      const yesterdayQuizCompletions = yesterdayEvents.filter(e => e.event_name === 'quiz_complete').length;
+      const yesterdayBookings = yesterdayEvents.filter(e => e.event_name === 'book_complete').length;
+      const yesterdayQuizViews = yesterdayEvents.filter(e => e.event_name === 'lm_view').length;
 
       setPreviousMetrics({
-        totalEvents: yesterdayEvents?.length || 0,
+        totalEvents: yesterdayEvents.length,
         activeUsers: yesterdayUniqueSessions,
         quizCompletions: yesterdayQuizCompletions,
         bookings: yesterdayBookings,
         quizViews: yesterdayQuizViews,
-        bookViews: yesterdayEvents?.filter(e => e.event_name === 'book_view').length || 0,
-        avgClarityScore: 0,
-        conversionRate: 0,
+        bookViews: yesterdayEvents.filter(e => e.event_name === 'book_view').length,
+        avgClarityScore: 0, // Not calculated for yesterday
+        conversionRate: 0, // Not calculated for yesterday
       });
 
       setMetrics({
-        totalEvents: todayEvents?.length || 0,
+        totalEvents: todayEvents.length,
         activeUsers: uniqueSessions,
         quizCompletions,
         bookings,
@@ -158,10 +139,26 @@ export const RealtimeMetrics = () => {
         avgClarityScore: avgScore,
         conversionRate,
       });
+
     } catch (error) {
       console.error('Failed to load metrics:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadMetrics();
+    const q = query(collection(firestore, "analytics_events"), where("created_at", ">", new Date()));
+    const unsubscribe = onSnapshot(q, () => {
+        loadMetrics();
+    });
+    const interval = setInterval(loadMetrics, 30000);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
+  }, [loadMetrics]);
+
 
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;

@@ -2,46 +2,54 @@ import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Rocket, Sparkles } from 'lucide-react';
-import { invokeApi } from '@/lib/api-client';
+import { AI } from '@/lib/ai-config';
+
+// Type definitions for the component
+interface PostSummary {
+  slug: string;
+  title: string;
+  excerpt?: string;
+  tags?: string[];
+}
+
+interface SocialPlanResult {
+  headline: string;
+  schedules: Record<string, string>;
+  source: string;
+}
 
 interface OneClickPlanProps {
-  post: {
-    slug: string;
-    title: string;
-    excerpt?: string;
-    tags?: string[];
-  };
+  post: PostSummary;
   onHeadline?: (title: string) => void;
 }
 
 export default function OneClickPlan({ post, onHeadline }: OneClickPlanProps) {
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SocialPlanResult | null>(null);
 
   async function run() {
     setBusy(true);
     try {
-      const data = await invokeApi('/api/social/plan', {
-        method: 'POST',
-        body: {
-          slug: post.slug,
-          title: post.title,
-          excerpt: post.excerpt || '',
-          tags: post.tags || [],
-          platforms: ['linkedin', 'facebook', 'instagram', 'x'],
-          lang: 'en',
-          theme: 'light'
-        }
-      });
-      
-      if (data.ok) {
-        setResult(data);
-        if (onHeadline) onHeadline(data.headline);
-      } else {
-        alert(data.error || 'Failed to plan');
-      }
-    } catch (e: any) {
-      alert(e.message || 'Failed to plan');
+      const prompt = `
+        Generate a one-click social media plan for the following blog post:
+
+        **Title:** ${post.title}
+        **Excerpt:** ${post.excerpt || 'N/A'}
+        **Tags:** ${post.tags?.join(', ') || 'N/A'}
+
+        The plan should include an optimized headline and a schedule for posting to LinkedIn, Facebook, Instagram, and X.
+        The schedule should be in UTC.
+      `;
+
+      const response = await AI.genkit.generate({ prompt });
+      const plan = JSON.parse(response.text());
+
+      setResult(plan);
+      if (onHeadline) onHeadline(plan.headline);
+
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(message);
     } finally {
       setBusy(false);
     }
@@ -75,7 +83,7 @@ export default function OneClickPlan({ post, onHeadline }: OneClickPlanProps) {
                         <span className="capitalize font-medium">{platform}:</span>
                         <span className="text-muted-foreground">
                           {time 
-                            ? new Date(time as string).toLocaleString('en-US', {
+                            ? new Date(time).toLocaleString('en-US', {
                                 weekday: 'short',
                                 month: 'short',
                                 day: 'numeric',

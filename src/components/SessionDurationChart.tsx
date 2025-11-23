@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 interface AnalyticsEvent {
   event_name: string;
-  properties: any;
+  properties: Record<string, unknown>;
 }
 
 interface SessionDurationChartProps {

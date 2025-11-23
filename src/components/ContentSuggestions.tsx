@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/db';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface AISuggestionData {
+  topics?: string;
+  error?: string;
+}
 
 export default function ContentSuggestions() {
   const [suggestions, setSuggestions] = useState('');
@@ -18,23 +23,29 @@ export default function ContentSuggestions() {
       
       if (error) throw error;
 
-      if (data?.error) {
-        if (data.error.includes('Rate limit')) {
+      const suggestionData = data as AISuggestionData;
+
+      if (suggestionData?.error) {
+        if (suggestionData.error.includes('Rate limit')) {
           toast.error('Rate limit exceeded. Please try again in a few minutes.');
           setSuggestions('Rate limit exceeded. Please try again later.');
-        } else if (data.error.includes('usage limit')) {
+        } else if (suggestionData.error.includes('usage limit')) {
           toast.error('AI usage limit reached. Please add credits to your workspace.');
           setSuggestions('AI usage limit reached. Please add credits.');
         } else {
-          throw new Error(data.error);
+          throw new Error(suggestionData.error);
         }
       } else {
-        setSuggestions(data.topics || 'No suggestions generated');
+        setSuggestions(suggestionData.topics || 'No suggestions generated');
         toast.success('Content suggestions generated!');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating suggestions:', error);
-      toast.error('Failed to generate suggestions');
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to generate suggestions');
+      }
       setSuggestions('Error generating suggestions. Please try again.');
     } finally {
       setLoading(false);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import SmartLink from './SmartLink';
 import { LessonPlayerYT } from './LessonPlayerYT';
 import { invokeApi } from '@/lib/api-client';
@@ -22,18 +22,22 @@ interface LessonStripProps {
   tags?: string[];
 }
 
+interface LessonsForUserResponse {
+  ok: boolean;
+  rows: Lesson[];
+}
+
 export function LessonStrip({ profileId, tags = [] }: LessonStripProps) {
   const [rows, setRows] = useState<Lesson[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const tagsParam = useMemo(() => tags.join(','), [tags]);
 
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      const tagsParam = tags.join(',');
-      
       try {
-        const response = await invokeApi('/api/lessons/for-user', {
+        const response: LessonsForUserResponse = await invokeApi('/api/lessons/for-user', {
           body: { profile_id: profileId, tags: tagsParam }
         });
         if (response.ok) {
@@ -45,7 +49,7 @@ export function LessonStrip({ profileId, tags = [] }: LessonStripProps) {
         setIsLoading(false);
       }
     })();
-  }, [profileId, tags.join(',')]);
+  }, [profileId, tagsParam]);
 
   if (isLoading) {
     return (

@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from 'react';
 import { buildCaption } from '@/lib/captions/templates';
 import { SocialPlatform } from '@/lib/utm';
@@ -7,7 +6,7 @@ import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { db, functions } from '@/firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, FieldValue } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
 
@@ -23,6 +22,17 @@ interface CaptionBuilderProps {
     tags?: string[];
     cover?: string;
   };
+}
+
+interface SocialPostPayload {
+  blog_slug: string;
+  platform: SocialPlatform;
+  status: 'queued';
+  message: string;
+  media: { type: 'image'; url: string }[] | null;
+  tags: string[];
+  primary_tag: string | null;
+  created_at: FieldValue;
 }
 
 export default function CaptionBuilder({ post }: CaptionBuilderProps) {
@@ -56,7 +66,7 @@ export default function CaptionBuilder({ post }: CaptionBuilderProps) {
     setLoading(true);
     try {
       const promises = targets.map(async (p) => {
-        const postData = {
+        const postData: SocialPostPayload = {
             blog_slug: post.slug,
             platform: p,
             status: 'queued',
@@ -74,10 +84,16 @@ export default function CaptionBuilder({ post }: CaptionBuilderProps) {
       toast.success(`Queued ${promises.length} post(s) for cross-posting`);
       
       // Trigger worker
-      triggerSocialWorker().catch(console.error);
-    } catch (error: any) {
+      triggerSocialWorker().catch((error: unknown) => {
+        console.error('Error triggering social worker:', error);
+      });
+    } catch (error: unknown) {
       console.error('Error queueing posts:', error);
-      toast.error(error.message || 'Failed to queue posts');
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to queue posts');
+      } else {
+        toast.error('An unknown error occurred while queueing posts.');
+      }
     } finally {
       setLoading(false);
     }
@@ -93,7 +109,7 @@ export default function CaptionBuilder({ post }: CaptionBuilderProps) {
             id="lang-select"
             className="px-3 py-1 rounded-md border border-border bg-background"
             value={lang} 
-            onChange={e => setLang(e.target.value as any)}
+            onChange={e => setLang(e.target.value as 'en' | 'zh-CN' | 'zh-TW')}
           >
             <option value="en">English</option>
             <option value="zh-CN">简体中文</option>

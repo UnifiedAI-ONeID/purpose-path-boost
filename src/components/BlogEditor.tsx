@@ -1,11 +1,9 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { auth, db, functions } from '@/firebase/config';
-import { collection, doc, getDoc, addDoc, updateDoc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
-import { httpsCallable } from 'firebase/functions';
+import { auth, db } from '@/firebase/config';
+import { collection, doc, getDoc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,12 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { X, Save, Send, Loader2 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-
-// Helper to trigger cloud functions
-const adminBlogUpsert = httpsCallable(functions, 'admin-blog-upsert');
-const postToSocialFn = httpsCallable(functions, 'post-to-social');
+import { X, Save, Send, Loader2, Sparkles } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { invokeApi } from '@/lib/api-client';
 
 const blogSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200),
@@ -38,24 +33,37 @@ const blogSchema = z.object({
 
 type BlogFormData = z.infer<typeof blogSchema>;
 
+interface BlogData extends BlogFormData {
+    id?: string;
+    updated_at: string | Date;
+    published_at?: string | Date;
+    created_at?: string | Date;
+}
+
 interface BlogEditorProps {
   blogId?: string;
   onClose: () => void;
   onSave: () => void;
 }
 
+interface SocialPost {
+  platform: string;
+  content: string;
+}
+
 const socialPlatforms = [
-  { id: 'twitter', name: 'Twitter/X', enabled: true },
-  { id: 'linkedin', name: 'LinkedIn', enabled: true },
-  { id: 'facebook', name: 'Facebook', enabled: false },
+  { id: 'twitter', name: 'Twitter/X' },
+  { id: 'linkedin', name: 'LinkedIn' },
 ];
 
 export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['twitter', 'linkedin']);
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+  const [generatingPreview, setGeneratingPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState(socialPlatforms[0].id);
   
-  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<BlogFormData>({
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset, getValues } = useForm<BlogFormData>({
     resolver: zodResolver(blogSchema),
     defaultValues: {
       author: 'Grace Huang',
@@ -68,7 +76,6 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   const title = watch('title');
   const content = watch('content');
 
-  // Generate slug from title
   useEffect(() => {
     if (title && !blogId) {
       const slug = title
@@ -80,7 +87,6 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
     }
   }, [title, blogId, setValue]);
 
-  // Auto-calculate read time
   useEffect(() => {
     if (content) {
       const readTime = calculateReadTime(content);
@@ -88,14 +94,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
     }
   }, [content, setValue]);
 
-  // Load existing blog if editing
-  useEffect(() => {
-    if (blogId) {
-      loadBlog();
-    }
-  }, [blogId]);
-
-  const loadBlog = async () => {
+  const loadBlog = useCallback(async () => {
     setIsLoading(true);
     try {
         if (!blogId) return;
@@ -103,114 +102,102 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
         const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        reset({
-          title: data.title,
-          slug: data.slug,
-          excerpt: data.excerpt,
-          content: data.content,
-          category: data.category,
-          author: data.author,
-          image_url: data.image_url || '',
-          meta_title: data.meta_title || '',
-          meta_description: data.meta_description || '',
-          read_time: data.read_time,
-          published: data.published,
-        });
+        const data = docSnap.data() as BlogData;
+        reset(data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load blog post', error);
       toast.error('Failed to load blog post');
     } finally {
       setIsLoading(false);
     }
+  }, [blogId, reset]);
+
+  useEffect(() => {
+    if (blogId) {
+      loadBlog();
+    }
+  }, [blogId, loadBlog]);
+
+  const generatePreviews = async () => {
+    setGeneratingPreview(true);
+    const { title, excerpt, slug } = getValues();
+    try {
+      const res = await invokeApi<{ previews: SocialPost[] }>('/api/social/preview', {
+        method: 'POST',
+        body: { title, excerpt, slug, platforms: socialPlatforms.map(p => p.id) }
+      });
+
+      if (res.ok && res.previews) {
+        setSocialPosts(res.previews);
+      } else {
+        toast.error(res.error || 'Failed to generate previews');
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'An error occurred');
+    } finally {
+      setGeneratingPreview(false);
+    }
   };
 
-  const onSubmit = async (data: BlogFormData) => {
+  const handleContentChange = (platform: string, content: string) => {
+    setSocialPosts(socialPosts.map(p => p.platform === platform ? { ...p, content } : p));
+  };
+
+  const onSubmit = async (data: BlogFormData, publish: boolean = false) => {
     setIsLoading(true);
     try {
       const user = auth.currentUser;
-      
       if (!user) {
         toast.error('Authentication required');
         return;
       }
 
-      const blogData: any = {
+      const blogData = {
         ...data,
         content: sanitizeHtml(data.content),
-        image_url: data.image_url || null,
-        meta_title: data.meta_title || null,
-        meta_description: data.meta_description || null,
-        updated_at: new Date().toISOString() // Use ISO string for simplicity in Cloud Function payload
+        updated_at: serverTimestamp(),
       };
 
-      if (blogId) {
-        blogData.id = blogId;
-      }
-      
-      if (data.published && !blogData.published_at) {
-          blogData.published_at = new Date().toISOString();
-      }
-
-      // Using a direct Firestore write for simplicity, or use the cloud function if complex logic exists
-      // For now, I'll use direct write to avoid cloud function complexity dependency if not deployed
-      
       let savedBlogId = blogId;
-      
+
       if (blogId) {
-          const docRef = doc(db, 'blog_posts', blogId);
-          await updateDoc(docRef, {
-              ...blogData, 
-              updated_at: serverTimestamp()
-          });
-          toast.success('Blog post updated successfully');
+        const docRef = doc(db, 'blog_posts', blogId);
+        await updateDoc(docRef, blogData);
+        toast.success('Blog post updated successfully');
       } else {
-          const docRef = await addDoc(collection(db, 'blog_posts'), {
-              ...blogData,
-              created_at: serverTimestamp(),
-              updated_at: serverTimestamp()
-          });
-          savedBlogId = docRef.id;
-          toast.success('Blog post created successfully');
+        const docRef = await addDoc(collection(db, 'blog_posts'), {
+          ...blogData,
+          created_at: serverTimestamp(),
+        });
+        savedBlogId = docRef.id;
+        toast.success('Blog post created successfully');
       }
 
-      // Handle social posting for new published posts
-      if (!blogId && data.published && selectedPlatforms.length > 0 && savedBlogId) {
-        try {
-          await publishToSocial(savedBlogId, data.title, data.excerpt, data.slug);
-        } catch (socialError) {
-          console.error('[BlogEditor] Social posting error:', socialError);
-          toast.error('Blog saved but social posting failed');
-        }
+      if (publish && savedBlogId) {
+        await publishToSocial(savedBlogId);
       }
 
       onSave();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[BlogEditor] Save error:', error);
-      toast.error(error.message || 'Failed to save blog post');
+      toast.error('Failed to save blog post');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const publishToSocial = async (blogId: string, title: string, excerpt: string, slug: string) => {
+  const publishToSocial = async (blogId: string) => {
     setIsPublishing(true);
     try {
-      // Use the cloud function wrapper
-      await postToSocialFn({
-          blogId,
-          title,
-          excerpt,
-          slug,
-          platforms: selectedPlatforms,
+      await invokeApi('/api/social/post', {
+        method: 'POST',
+        body: { blogId, posts: socialPosts }
       });
-
-      toast.success('Post scheduled for social media');
-    } catch (error: any) {
-      console.error('[BlogEditor] Social posting failed:', error);
-      throw new Error(error.message || 'Social media posting failed');
+      toast.success('Posts sent for publishing!');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to publish');
     } finally {
       setIsPublishing(false);
     }
@@ -225,7 +212,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-serif font-bold">
           {blogId ? 'Edit Blog Post' : 'Create New Blog Post'}
@@ -235,162 +222,144 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title *</Label>
-            <Input id="title" {...register('title')} />
-            {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="slug">URL Slug *</Label>
-            <Input id="slug" {...register('slug')} placeholder="my-blog-post" />
-            {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="excerpt">Excerpt *</Label>
-            <Textarea id="excerpt" {...register('excerpt')} rows={3} />
-            {errors.excerpt && <p className="text-sm text-destructive mt-1">{errors.excerpt.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="content">Content *</Label>
-            <RichTextEditor
-              content={content || ''}
-              onChange={(value) => setValue('content', value)}
-              placeholder="Write your blog post content here..."
-            />
-            {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="category">Category *</Label>
-              <Input id="category" {...register('category')} placeholder="Growth" />
-              {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="author">Author *</Label>
-              <Input id="author" {...register('author')} />
-              {errors.author && <p className="text-sm text-destructive mt-1">{errors.author.message}</p>}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="image_url">Featured Image URL</Label>
-            <Input id="image_url" {...register('image_url')} placeholder="https://..." />
-            {errors.image_url && <p className="text-sm text-destructive mt-1">{errors.image_url.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="read_time">Read Time (minutes) *</Label>
-            <Input
-              id="read_time"
-              type="number"
-              {...register('read_time', { valueAsNumber: true })}
-            />
-            {errors.read_time && <p className="text-sm text-destructive mt-1">{errors.read_time.message}</p>}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>SEO Settings</CardTitle>
-          <CardDescription>Optimize for search engines</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="meta_title">Meta Title (60 chars max)</Label>
-            <Input id="meta_title" {...register('meta_title')} />
-            {errors.meta_title && <p className="text-sm text-destructive mt-1">{errors.meta_title.message}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="meta_description">Meta Description (160 chars max)</Label>
-            <Textarea id="meta_description" {...register('meta_description')} rows={2} />
-            {errors.meta_description && <p className="text-sm text-destructive mt-1">{errors.meta_description.message}</p>}
-          </div>
-        </CardContent>
-      </Card>
-
-      {!blogId && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Social Media Cross-Posting</CardTitle>
-            <CardDescription>Automatically share when published</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {socialPlatforms.map((platform) => (
-              <div key={platform.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={platform.id}
-                  checked={selectedPlatforms.includes(platform.id)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedPlatforms([...selectedPlatforms, platform.id]);
-                    } else {
-                      setSelectedPlatforms(selectedPlatforms.filter(p => p !== platform.id));
-                    }
-                  }}
-                  disabled={!platform.enabled}
-                />
-                <Label htmlFor={platform.id} className="font-normal">
-                  {platform.name}
-                  {!platform.enabled && <span className="text-muted-foreground ml-2">(Coming soon)</span>}
-                </Label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="title">Title *</Label>
+                <Input id="title" {...register('title')} />
+                {errors.title && <p className="text-sm text-destructive mt-1">{errors.title.message}</p>}
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+              <div>
+                <Label htmlFor="content">Body *</Label>
+                <RichTextEditor
+                  content={content || ''}
+                  onChange={(value) => setValue('content', value)}
+                  placeholder="Write your blog post content here..."
+                />
+                {errors.content && <p className="text-sm text-destructive mt-1">{errors.content.message}</p>}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Social Media Posts</CardTitle>
+                <CardDescription>Customize content for each platform.</CardDescription>
+              </div>
+              <Button type="button" variant="outline" onClick={generatePreviews} disabled={generatingPreview || socialPosts.length > 0}>
+                <Sparkles className="w-4 h-4 mr-2" />
+                {generatingPreview ? 'Generating...' : socialPosts.length > 0 ? 'Previews Generated' : 'Generate Previews'}
+              </Button>
+            </CardHeader>
+            {socialPosts.length > 0 && (
+              <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList>
+                    {socialPosts.map(p => <TabsTrigger key={p.platform} value={p.platform}>{socialPlatforms.find(sp => sp.id === p.platform)?.name}</TabsTrigger>)}
+                  </TabsList>
+                  {socialPosts.map(p => (
+                    <TabsContent key={p.platform} value={p.platform}>
+                      <Textarea
+                        value={p.content}
+                        onChange={(e) => handleContentChange(p.platform, e.target.value)}
+                        rows={8}
+                        className="w-full h-auto mt-2"
+                      />
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </CardContent>
+            )}
+          </Card>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Publishing</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="published"
-              checked={published}
-              onCheckedChange={(checked) => setValue('published', checked)}
-            />
-            <Label htmlFor="published" className="font-normal">
-              Publish immediately
-            </Label>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+               <div>
+                <Label htmlFor="slug">URL Slug *</Label>
+                <Input id="slug" {...register('slug')} placeholder="my-blog-post" />
+                {errors.slug && <p className="text-sm text-destructive mt-1">{errors.slug.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="excerpt">Excerpt *</Label>
+                <Textarea id="excerpt" {...register('excerpt')} rows={4} />
+                {errors.excerpt && <p className="text-sm text-destructive mt-1">{errors.excerpt.message}</p>}
+              </div>
+               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="category">Category *</Label>
+                  <Input id="category" {...register('category')} placeholder="Growth" />
+                  {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="author">Author *</Label>
+                  <Input id="author" {...register('author')} />
+                  {errors.author && <p className="text-sm text-destructive mt-1">{errors.author.message}</p>}
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="image_url">Featured Image URL</Label>
+                <Input id="image_url" {...register('image_url')} placeholder="https://..." />
+                {errors.image_url && <p className="text-sm text-destructive mt-1">{errors.image_url.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="read_time">Read Time (minutes) *</Label>
+                <Input id="read_time" type="number" {...register('read_time', { valueAsNumber: true })} />
+                {errors.read_time && <p className="text-sm text-destructive mt-1">{errors.read_time.message}</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>SEO Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="meta_title">Meta Title</Label>
+                <Input id="meta_title" {...register('meta_title')} />
+              </div>
+              <div>
+                <Label htmlFor="meta_description">Meta Description</Label>
+                <Textarea id="meta_description" {...register('meta_description')} rows={2} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Publishing</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                <Switch id="published" checked={published} onCheckedChange={(checked) => setValue('published', checked)} />
+                <Label htmlFor="published" className="font-normal">Publish on blog</Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex flex-col gap-3">
+            <Button type="button" onClick={handleSubmit(data => onSubmit(data, true))} disabled={isLoading || isPublishing || socialPosts.length === 0}>
+              {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />} 
+              Save & Publish
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleSubmit(data => onSubmit(data, false))} disabled={isLoading || isPublishing}>
+              <Save className="mr-2 h-4 w-4" /> 
+              Save as Draft
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-end gap-4">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isLoading || isPublishing}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : isPublishing ? (
-            <>
-              <Send className="mr-2 h-4 w-4" />
-              Publishing...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              {blogId ? 'Update' : 'Create'} Post
-            </>
-          )}
-        </Button>
+        </div>
       </div>
     </form>
   );

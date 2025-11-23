@@ -1,4 +1,4 @@
-the import React, { useEffect, useState, lazy, Suspense } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -27,12 +27,6 @@ import MobileMe from "./pages/MobileMe";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
 import CommunityPage from "./pages/Community";
-
-// Lazy load China-specific components
-const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
-
-// Choose booking component based on region
-const BookingPage = isChinaBuild() ? BookSessionCN : BookSession;
 import ThankYou from "./pages/ThankYou";
 import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
@@ -98,6 +92,12 @@ const PWACoaching = lazy(() => import("./pwa/screens/Coaching"));
 const PWAAnalytics = lazy(() => import("./pwa/screens/Analytics"));
 const PWASessions = lazy(() => import("./pwa/screens/Sessions"));
 const PWASettings = lazy(() => import("./pwa/screens/Settings"));
+
+// Lazy load China-specific components
+const BookSessionCN = lazy(() => import('./pages/BookSession.cn'));
+
+// Choose booking component based on region
+const BookingPage = isChinaBuild() ? BookSessionCN : BookSession;
 
 const queryClient = new QueryClient();
 
@@ -282,27 +282,27 @@ function AppRoutes() {
           <Route path="/community" element={<RequireAuth><CommunityPage /></RequireAuth>} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/about" element={isMobile ? <MePage /> : <About />} />
-        <Route path="/coaching" element={<CoachingPrograms />} />
-        <Route path="/quiz" element={<Quiz />} />
-        <Route path="/blog" element={<BlogPage />} />
-        <Route path="/blog/:slug" element={<BlogDetail />} />
-            <Route path="/events" element={<EventsList />} />
-            <Route path="/events/:slug" element={<EventDetail />} />
-            <Route path="/coaching/:slug" element={<CoachingDetail />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/coaching-session" element={
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
-            <BookingPage />
-          </Suspense>
-        } />
-        <Route path="/thank-you" element={<ThankYou />} />
-        <Route path="/pay" element={<Payment />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
+          <Route path="/coaching" element={<CoachingPrograms />} />
+          <Route path="/quiz" element={<Quiz />} />
+          <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
+          <Route path="/events" element={<EventsList />} />
+          <Route path="/events/:slug" element={<EventDetail />} />
+          <Route path="/coaching/:slug" element={<CoachingDetail />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/coaching-session" element={
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center">加载中...</div>}>
+              <BookingPage />
+            </Suspense>
+          } />
+          <Route path="/thank-you" element={<ThankYou />} />
+          <Route path="/pay" element={<Payment />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
     
     {/* PWA Install Prompt */}
     <InstallPrompt />

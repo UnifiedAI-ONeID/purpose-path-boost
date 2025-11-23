@@ -23,6 +23,7 @@ export const LiteVideo = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    const videoElement = videoRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -34,13 +35,13 @@ export const LiteVideo = ({
       { threshold: 0.1 }
     );
 
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
+    if (videoElement) {
+      observer.observe(videoElement);
     }
 
     return () => {
-      if (videoRef.current) {
-        observer.unobserve(videoRef.current);
+      if (videoElement) {
+        observer.unobserve(videoElement);
       }
     };
   }, [isLoaded]);

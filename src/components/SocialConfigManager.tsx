@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/db';
+import { useState, useEffect, FC, ComponentProps } from 'react';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ import {
   Instagram,
   Youtube,
   FileText,
+  LucideProps,
 } from 'lucide-react';
 
 interface SocialConfig {
@@ -37,7 +39,7 @@ interface SocialConfig {
   updated_at: string;
 }
 
-const PLATFORM_LABELS: Record<string, { name: string; icon: any }> = {
+const PLATFORM_LABELS: Record<string, { name: string; icon: FC<ComponentProps<"svg">> }> = {
   twitter: { name: 'X (Twitter)', icon: Twitter },
   linkedin: { name: 'LinkedIn', icon: Linkedin },
   facebook: { name: 'Facebook', icon: Facebook },
@@ -47,6 +49,9 @@ const PLATFORM_LABELS: Record<string, { name: string; icon: any }> = {
 };
 
 const MASK = '••••••••';
+
+const manageSocialConfig = httpsCallable(functions, 'manage-social-config');
+const testSocialConnection = httpsCallable(functions, 'test-social-connection');
 
 export const SocialConfigManager = () => {
   const [configs, setConfigs] = useState<SocialConfig[]>([]);
@@ -60,12 +65,9 @@ export const SocialConfigManager = () => {
 
   const loadConfigs = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('manage-social-config');
-      
-      if (error) throw error;
-      
-      setConfigs(data);
-    } catch (error: any) {
+      const result = await manageSocialConfig();
+      setConfigs(result.data as SocialConfig[]);
+    } catch (error: unknown) {
       console.error('Failed to load social configs:', error);
       toast.error('Failed to load configurations');
     } finally {
@@ -73,7 +75,7 @@ export const SocialConfigManager = () => {
     }
   };
 
-  const updateField = (platform: string, field: keyof SocialConfig, value: any) => {
+  const updateField = (platform: string, field: keyof SocialConfig, value: string | boolean) => {
     setConfigs(configs.map(config => 
       config.platform === platform ? { ...config, [field]: value } : config
     ));
@@ -82,31 +84,28 @@ export const SocialConfigManager = () => {
   const saveConfig = async (config: SocialConfig) => {
     setSaving(config.platform);
     try {
-      const payload: any = {
+      const payload: Partial<SocialConfig> = {
         platform: config.platform,
         enabled: config.enabled,
         posting_template: config.posting_template || '',
       };
 
-      // Only send fields that have been changed (not masked)
-      ['app_key', 'app_secret', 'access_token', 'refresh_token', 'account_id', 'webhook_url'].forEach(key => {
-        const value = (config as any)[key];
+      const secretFields: (keyof SocialConfig)[] = ['app_key', 'app_secret', 'access_token', 'refresh_token', 'account_id', 'webhook_url'];
+      secretFields.forEach(key => {
+        const value = config[key];
         if (value !== undefined && value !== MASK) {
           payload[key] = value;
         }
       });
 
-      const { data, error } = await supabase.functions.invoke('manage-social-config', {
-        body: payload,
-      });
-
-      if (error) throw error;
+      await manageSocialConfig(payload);
 
       toast.success(`${PLATFORM_LABELS[config.platform].name} configuration saved`);
-      await loadConfigs(); // Reload to get updated version
-    } catch (error: any) {
+      await loadConfigs();
+    } catch (error: unknown) {
       console.error('Save error:', error);
-      toast.error(`Failed to save: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Failed to save: ${errorMessage}`);
     } finally {
       setSaving(null);
     }
@@ -115,11 +114,8 @@ export const SocialConfigManager = () => {
   const testConnection = async (platform: string) => {
     setTesting(platform);
     try {
-      const { data, error } = await supabase.functions.invoke('manage-social-config/test', {
-        body: { platform },
-      });
-
-      if (error) throw error;
+      const result = await testSocialConnection({ platform });
+      const data = result.data as { ok: boolean };
 
       if (data.ok) {
         toast.success(`${PLATFORM_LABELS[platform].name} connection successful!`);
@@ -127,10 +123,11 @@ export const SocialConfigManager = () => {
         toast.error(`${PLATFORM_LABELS[platform].name} connection failed`);
       }
       
-      await loadConfigs(); // Reload to get updated test status
-    } catch (error: any) {
+      await loadConfigs();
+    } catch (error: unknown) {
       console.error('Test error:', error);
-      toast.error(`Test failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Test failed: ${errorMessage}`);
     } finally {
       setTesting(null);
     }
@@ -199,7 +196,6 @@ export const SocialConfigManager = () => {
             </CardHeader>
             
             <CardContent className="space-y-4">
-              {/* Credentials Grid */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor={`${config.platform}-app-key`}>App Key / Client ID</Label>
@@ -251,9 +247,7 @@ export const SocialConfigManager = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor={`${config.platform}-account-id`}>
-                    Account/Page/Org ID
-                  </Label>
+                  <Label htmlFor={`${config.platform}-account-id`}>Account/Page/Org ID</Label>
                   <Input
                     id={`${config.platform}-account-id`}
                     type="password"
@@ -275,11 +269,8 @@ export const SocialConfigManager = () => {
                 </div>
               </div>
 
-              {/* Posting Template */}
               <div>
-                <Label htmlFor={`${config.platform}-template`}>
-                  Custom Posting Template (Optional)
-                </Label>
+                <Label htmlFor={`${config.platform}-template`}>Custom Posting Template (Optional)</Label>
                 <Textarea
                   id={`${config.platform}-template`}
                   value={config.posting_template || ''}
@@ -292,7 +283,6 @@ export const SocialConfigManager = () => {
                 </p>
               </div>
 
-              {/* Actions */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <Button
                   onClick={() => saveConfig(config)}
@@ -331,7 +321,6 @@ export const SocialConfigManager = () => {
                 </Button>
               </div>
 
-              {/* Status Footer */}
               <div className="flex items-center justify-between pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
                   {config.last_test_status === 'ok' && (

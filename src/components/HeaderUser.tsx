@@ -9,6 +9,38 @@ import { usePrefs } from '@/prefs/PrefsProvider';
 import { motion, AnimatePresence } from 'framer-motion';
 import { invokeApi } from '@/lib/api-client';
 
+interface SupabaseSession {
+    user: AppUser | null;
+}
+
+interface SupabaseSubscription {
+  unsubscribe: () => void;
+}
+
+interface SupabaseAuthClient {
+  onAuthStateChange: (callback: (event: string, session: SupabaseSession | null) => void) => { data: { subscription: SupabaseSubscription } };
+  getSession: () => Promise<{ data: { session: SupabaseSession | null } }>;
+}
+
+interface AdminCheckResponse {
+  ok: boolean;
+  is_admin: boolean;
+}
+
+// Simplified user types for properties accessed in this component
+interface FirebaseUserProperties {
+  photoURL?: string;
+  displayName?: string;
+}
+
+interface SupabaseUserProperties {
+  user_metadata: {
+    avatar_url?: string;
+    full_name?: string;
+  };
+  email?: string;
+}
+
 export default function HeaderUser() {
   const { lang } = usePrefs();
   const [user, setUser] = useState<AppUser | null>(null);
@@ -31,10 +63,10 @@ export default function HeaderUser() {
       });
       return () => unsubscribe();
     } else {
-      // Cast authClient to any to access Supabase-specific methods when not in Firebase mode
-      const supabaseAuth = authClient as any;
+      // Cast authClient to SupabaseAuthClient to access Supabase-specific methods
+      const supabaseAuth = authClient as unknown as SupabaseAuthClient;
       if (typeof supabaseAuth.onAuthStateChange === 'function') {
-        const { data: { subscription } } = supabaseAuth.onAuthStateChange((event: any, newSession: any) => {
+        const { data: { subscription } } = supabaseAuth.onAuthStateChange((_event: string, newSession: SupabaseSession | null) => {
           setUser(newSession?.user || null);
           if (newSession?.user) {
             setTimeout(() => {
@@ -45,7 +77,7 @@ export default function HeaderUser() {
           }
         });
 
-        supabaseAuth.getSession().then(({ data: { session } }: any) => {
+        supabaseAuth.getSession().then(({ data: { session } }: { data: { session: SupabaseSession | null }}) => {
           setUser(session?.user || null);
           if (session?.user) {
             setTimeout(() => {
@@ -62,7 +94,7 @@ export default function HeaderUser() {
 
   async function checkAdminStatus() {
     try {
-      const data = await invokeApi('/api/admin/check-role');
+      const data: AdminCheckResponse = await invokeApi('/api/admin/check-role');
       if (data?.ok && data.is_admin) {
         setIsAdmin(true);
       } else {
@@ -96,8 +128,8 @@ export default function HeaderUser() {
   }
 
   const authProvider = import.meta.env.VITE_AUTH_PROVIDER || 'supabase';
-  const avatar = authProvider === 'firebase' ? (user as any).photoURL : (user as any).user_metadata?.avatar_url || '/assets/brand/mark.svg';
-  const displayName = authProvider === 'firebase' ? (user as any).displayName : (user as any).user_metadata?.full_name || (user as any).email?.split('@')[0] || 'Account';
+  const avatar = authProvider === 'firebase' ? (user as FirebaseUserProperties).photoURL : (user as SupabaseUserProperties).user_metadata?.avatar_url || '/assets/brand/mark.svg';
+  const displayName = authProvider === 'firebase' ? (user as FirebaseUserProperties).displayName : (user as SupabaseUserProperties).user_metadata?.full_name || (user as SupabaseUserProperties).email?.split('@')[0] || 'Account';
 
   return (
     <div ref={ref} className="relative">

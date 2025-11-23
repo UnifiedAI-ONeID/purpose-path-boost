@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { useEffect, useState, useCallback } from 'react';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
@@ -27,24 +28,24 @@ interface PostAISuggestionsProps {
   onApplyCaption?: (platform: string, text: string) => void;
 }
 
+const postSuggestionsFn = httpsCallable(functions, 'post-suggestions');
+
 export default function PostAISuggestions({ post, onApplyTitle, onApplyCaption }: PostAISuggestionsProps) {
   const [sug, setSug] = useState<Suggestions | null>(null);
   const [loading, setLoading] = useState(false);
   const [source, setSource] = useState('heuristic');
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('post-suggestions', {
-        body: {
-          slug: post.slug,
-          title: post.title,
-          excerpt: post.excerpt || '',
-          tags: post.tags || [],
-        },
+      const result = await postSuggestionsFn({
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt || '',
+        tags: post.tags || [],
       });
 
-      if (error) throw error;
+      const data = result.data as { suggestions: Suggestions, source: string };
 
       setSug(data.suggestions || null);
       setSource(data.source || 'heuristic');
@@ -52,19 +53,23 @@ export default function PostAISuggestions({ post, onApplyTitle, onApplyCaption }
       if (data.source === 'ai') {
         toast.success('AI suggestions generated');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading suggestions:', error);
-      toast.error('Failed to load suggestions');
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to load suggestions');
+      } else {
+        toast.error('An unknown error occurred while loading suggestions.');
+      }
     } finally {
       setLoading(false);
     }
-  }
+  }, [post.slug, post.title, post.excerpt, post.tags]);
 
   useEffect(() => {
     if (post.slug) {
       load();
     }
-  }, [post.slug]);
+  }, [post.slug, load]);
 
   if (loading) {
     return (

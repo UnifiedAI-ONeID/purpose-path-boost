@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Play } from 'lucide-react';
 import { functions } from '@/firebase/config';
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 
 const getContinueWatching = httpsCallable(functions, 'api-lessons-continue');
 
@@ -15,6 +15,11 @@ interface ContinueWatchingItem {
   cn_alt_url?: string;
   duration_sec?: number;
   last_position_sec?: number;
+}
+
+interface ContinueWatchingResult {
+    ok: boolean;
+    item: ContinueWatchingItem | null;
 }
 
 interface ContinueWatchingBarProps {
@@ -31,8 +36,8 @@ export function ContinueWatchingBar({ profileId, onOpenLesson }: ContinueWatchin
       setIsLoading(true);
       try {
         // Call Firebase Function
-        const result: any = await getContinueWatching({ profile_id: profileId });
-        const data = result.data;
+        const result: HttpsCallableResult<unknown> = await getContinueWatching({ profile_id: profileId });
+        const data = result.data as ContinueWatchingResult;
         
         if (data.ok) {
           setItem(data.item || null);

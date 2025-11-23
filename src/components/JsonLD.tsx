@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function JsonLd({ data }: { data: any }) {
+export function JsonLd({ data }: { data: Record<string, unknown> }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
@@ -36,7 +36,16 @@ export function WebsiteJsonLD() {
   );
 }
 
-export function ArticleJsonLD({ post }:{ post:any }) {
+interface ArticlePost {
+  title: string;
+  slug: string;
+  published_at: string;
+  updated_at?: string;
+  lang?: string;
+  tags?: string[];
+}
+
+export function ArticleJsonLD({ post }:{ post: ArticlePost }) {
   return (
     <JsonLd data={{
       "@context":"https://schema.org",
@@ -53,7 +62,22 @@ export function ArticleJsonLD({ post }:{ post:any }) {
   );
 }
 
-export function EventJsonLD({ ev, tickets }:{ ev:any; tickets:any[] }) {
+interface EventInfo {
+  title: string;
+  start_at: string;
+  end_at: string;
+  cover_url: string;
+  summary: string;
+  meeting_url?: string;
+  slug: string;
+}
+
+interface TicketInfo {
+  price_cents: number;
+  currency: string;
+}
+
+export function EventJsonLD({ ev, tickets }:{ ev: EventInfo; tickets: TicketInfo[] }) {
   return (
     <JsonLd data={{
       "@context":"https://schema.org",

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -40,6 +40,16 @@ interface CoverComposerProps {
   };
 }
 
+interface OgImage {
+    ok: boolean;
+    key: string;
+    url: string;
+}
+
+interface OgRenderAllResponse {
+  images: OgImage[];
+}
+
 export default function CoverComposer({ post }: CoverComposerProps) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [lang, setLang] = useState<'en' | 'zh-CN' | 'zh-TW'>('en');
@@ -63,16 +73,21 @@ export default function CoverComposer({ post }: CoverComposerProps) {
 
       if (error) throw error;
 
+      const responseData = data as OgRenderAllResponse;
       const map: Record<string, string> = {};
-      (data?.images || []).forEach((it: any) => {
+      (responseData?.images || []).forEach((it: OgImage) => {
         if (it.ok) map[it.key] = it.url;
       });
 
       setImgs(map);
       toast.success(`Generated ${Object.keys(map).length} cover images`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating covers:', error);
-      toast.error(error.message || 'Failed to generate covers');
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to generate covers');
+      } else {
+        toast.error('An unknown error occurred while generating covers.');
+      }
     } finally {
       setBusy(false);
     }
@@ -96,7 +111,7 @@ export default function CoverComposer({ post }: CoverComposerProps) {
                 id="tag-select"
                 className="px-3 py-1 rounded-md border border-border bg-background"
                 value={tag}
-                onChange={(e) => setTag(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLSelectElement>) => setTag(e.target.value)}
               >
                 {TAGS.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -108,7 +123,7 @@ export default function CoverComposer({ post }: CoverComposerProps) {
               id="theme-select"
               className="px-3 py-1 rounded-md border border-border bg-background"
               value={theme}
-              onChange={(e) => setTheme(e.target.value as any)}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setTheme(e.target.value as 'light' | 'dark')}
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
@@ -120,7 +135,7 @@ export default function CoverComposer({ post }: CoverComposerProps) {
               id="lang-select"
               className="px-3 py-1 rounded-md border border-border bg-background"
               value={lang}
-              onChange={(e) => setLang(e.target.value as any)}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setLang(e.target.value as 'en' | 'zh-CN' | 'zh-TW')}
             >
               <option value="en">EN</option>
               <option value="zh-CN">简体</option>

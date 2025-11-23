@@ -3,8 +3,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/db';
 
+interface FxData {
+  settings?: {
+    buffer_bps?: number;
+    supported?: string[];
+    cny_rounding?: string;
+  };
+  rates?: {
+    USD?: { updated_at?: string };
+    EUR?: { updated_at?: string };
+  };
+}
+
 export default function FxAuditGlobal() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<FxData | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function load() { 

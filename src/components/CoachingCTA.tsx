@@ -24,6 +24,13 @@ interface PricingMeta {
   };
 }
 
+interface CheckoutResponse {
+  ok: boolean;
+  url?: string;
+  free?: boolean;
+  error?: string;
+}
+
 export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' }: CoachingCTAProps) {
   const { lang } = usePrefs();
   const [meta, setMeta] = useState<PricingMeta | null>(null);
@@ -95,7 +102,7 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
     setBusy(true);
     
     try {
-      const data = await invokeApi('/api/coaching/checkout', {
+      const data: CheckoutResponse = await invokeApi('/api/coaching/checkout', {
         body: {
           slug,
           name: defaultName || 'Client',
@@ -114,8 +121,12 @@ export default function CoachingCTA({ slug, defaultName = '', defaultEmail = '' 
       } else {
         toast.error(data?.error || 'Unable to start checkout');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Payment error. Please try again.');
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || 'Payment error. Please try again.');
+      } else {
+        toast.error('An unknown error occurred during payment.');
+      }
     } finally {
       setTimeout(() => setBusy(false), 900);
     }
