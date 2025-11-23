@@ -11,12 +11,12 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
     function hasRole(role) {
-      // Check role in user doc. 
-      // WARNING: This requires a read. Custom Claims are better for prod performance/cost.
-      // Current implementation assumes roles array in user doc.
-      return isSignedIn() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny([role]);
+      return isSignedIn() && getUserData(request.auth.uid).roles.hasAny([role]);
     }
     
     function isAdmin() {
@@ -96,7 +96,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // --- Leads & Orders ---
+    // --- Leads, Orders & Referrals ---
     match /leads/{leadId} {
       allow create: if true; // Public lead capture
       allow read, update: if isCoach();
@@ -106,6 +106,35 @@ service cloud.firestore {
       allow create: if true; // Public checkout start
       allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin();
       allow update: if isAdmin();
+    }
+
+    match /referrals/{referralId} {
+        allow read: if isCoach();
+        allow create, update: if isOwner(referralId) || isAdmin();
+    }
+
+    // --- Community Features ---
+    match /community_posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.authorId) || isCoach();
+      allow delete: if isOwner(resource.data.authorId) || isCoach();
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(get(after).data.authorId) || isCoach();
+      }
+
+      match /likes/{userId} {
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId);
+      }
+    }
+
+    match /community_reports/{reportId} {
+        allow create: if isSignedIn();
+        allow read, update, delete: if isCoach();
     }
 
     // --- Config ---

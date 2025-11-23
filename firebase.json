@@ -1,4 +1,8 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore_indexes.json"
+  },
   "hosting": {
     "public": "dist",
     "ignore": [

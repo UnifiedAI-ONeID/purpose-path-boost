@@ -67,6 +67,8 @@
     "dompurify": "^3.3.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.6.0",
+    "firestore": "^1.1.6",
+    "firestore-tools": "^1.0.2",
     "framer-motion": "^12.23.24",
     "globby": "^15.0.0",
     "gray-matter": "^4.0.3",
@@ -100,6 +102,7 @@
     "vaul": "^0.9.9",
     "vite-plugin-pwa": "^1.1.0",
     "workbox-window": "^7.3.0",
+    "ws": "^8.18.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {

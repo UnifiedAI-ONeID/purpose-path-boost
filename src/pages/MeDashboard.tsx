@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { db } from '@/firebase/config';
-import { auth } from '@/firebase/config';
+import { db, auth } from '@/lib/firebase';
 import {
   collection,
   query,
@@ -103,7 +102,7 @@ export default function MeDashboard() {
     setLoading(true);
     try {
       // 1. Fetch user profile
-      const profileQuery = query(collection(db, 'zg_profiles'), where('auth_user_id', '==', authUserId), limit(1));
+      const profileQuery = query(collection(db, 'users'), where('auth_user_id', '==', authUserId), limit(1));
       const profileSnapshot = await getDocs(profileQuery);
 
       if (profileSnapshot.empty) {
@@ -229,7 +228,7 @@ export default function MeDashboard() {
   async function updateProfile(updates: Partial<Profile>) {
     if (!profileId) return;
     try {
-        const profileRef = doc(db, 'zg_profiles', profileId);
+        const profileRef = doc(db, 'users', profileId);
         await updateDoc(profileRef, updates);
         
         setData(prev => prev ? {

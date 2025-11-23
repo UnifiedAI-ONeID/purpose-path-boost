@@ -5,15 +5,11 @@ import { Mail, MessageCircle } from 'lucide-react';
 import logo from '@/assets/images/logo.png';
 
 export const Footer = () => {
-  // Safe translation access with fallbacks
-  let t: any;
-  try {
-    const { t: translate } = useTranslation('common');
-    t = translate;
-  } catch (error) {
-    console.warn('Footer: Translation not ready', error);
-    // Fallback translation function
-    t = (key: string) => {
+  const { t, ready } = useTranslation('common');
+
+  // A safe translation function that provides fallbacks if i18next is not ready.
+  const tSafe = (key: string) => {
+    if (!ready) {
       const fallbacks: Record<string, string> = {
         'nav.home': 'Home',
         'nav.about': 'About',
@@ -26,7 +22,8 @@ export const Footer = () => {
         'footer.terms': 'Terms of Service'
       };
       return fallbacks[key] || key;
-    };
+    }
+    return t(key);
   }
 
   return (
@@ -46,21 +43,21 @@ export const Footer = () => {
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold mb-4">{t('nav.home')}</h4>
+            <h4 className="font-semibold mb-4">{tSafe('nav.home')}</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('nav.about')}
+                  {tSafe('nav.about')}
                 </Link>
               </li>
               <li>
                 <Link to="/coaching" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('nav.coaching')}
+                  {tSafe('nav.coaching')}
                 </Link>
               </li>
               <li>
                 <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('nav.blog')}
+                  {tSafe('nav.blog')}
                 </Link>
               </li>
             </ul>
@@ -68,7 +65,7 @@ export const Footer = () => {
 
           {/* Connect */}
           <div>
-            <h4 className="font-semibold mb-4">{t('footer.connect')}</h4>
+            <h4 className="font-semibold mb-4">{tSafe('footer.connect')}</h4>
             <div className="flex flex-col gap-3">
               <a
                 href="mailto:hello@zhengrowth.com"
@@ -79,20 +76,20 @@ export const Footer = () => {
               </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MessageCircle className="h-4 w-4" />
-                <span>{t('footer.wechat')}: ZhenGrowth</span>
+                <span>{tSafe('footer.wechat')}: ZhenGrowth</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>{t('footer.rights')}</p>
+          <p>{tSafe('footer.rights')}</p>
           <div className="flex gap-4">
             <Link to="/privacy" className="hover:text-primary transition-colors">
-              {t('footer.privacy')}
+              {tSafe('footer.privacy')}
             </Link>
             <Link to="/terms" className="hover:text-primary transition-colors">
-              {t('footer.terms')}
+              {tSafe('footer.terms')}
             </Link>
           </div>
         </div>

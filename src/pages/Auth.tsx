@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth } from '@/firebase/config';
+import { auth } from '@/lib/firebase';
 import { userService } from '@/services/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,8 @@ import {
   sendPasswordResetEmail,
   updatePassword,
   onAuthStateChanged,
-  User
+  User,
+  FirebaseError
 } from 'firebase/auth';
 
 export default function Auth() {
@@ -68,7 +69,11 @@ export default function Auth() {
       navigate('/admin'); 
     } else {
       let devicePreference = null;
-      try { devicePreference = localStorage.getItem('zg.devicePreference'); } catch(e){}
+      try { 
+        devicePreference = localStorage.getItem('zg.devicePreference'); 
+      } catch(e){
+        // localStorage may be unavailable in some browser settings
+      }
       
       const shouldUseMobile = devicePreference === 'mobile' || isMobileDevice();
       const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
@@ -86,9 +91,13 @@ export default function Auth() {
       toast.success(lang === 'zh-CN' ? '重置邮件已发送' : 'Reset email sent');
       setResetMode(false);
       setEmail('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message);
+      if (error instanceof FirebaseError) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }
@@ -119,8 +128,12 @@ export default function Auth() {
       } else {
          toast.error('Please sign in to update password or use the link from email.');
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        toast.error(error.message);
+      } else {
+        toast.error('An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }
@@ -151,11 +164,14 @@ export default function Auth() {
         await signInWithEmailAndPassword(auth, email, password);
         toast.success('Signed in successfully');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      let msg = error.message;
-      if (error.code === 'auth/invalid-credential') msg = 'Invalid email or password';
-      if (error.code === 'auth/email-already-in-use') msg = 'Email already in use';
+      let msg = 'An unexpected error occurred.';
+      if (error instanceof FirebaseError) {
+          msg = error.message;
+          if (error.code === 'auth/invalid-credential') msg = 'Invalid email or password';
+          if (error.code === 'auth/email-already-in-use') msg = 'Email already in use';
+      }
       toast.error(msg);
     } finally {
       setLoading(false);

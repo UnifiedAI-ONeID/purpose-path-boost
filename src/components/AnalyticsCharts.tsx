@@ -5,7 +5,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 interface AnalyticsEvent {
   id: string;
   event_name: string;
-  properties: any;
+  properties: Record<string, string | number | boolean | undefined>;
   created_at: string;
   page_url: string;
   session_id: string;
@@ -37,7 +37,7 @@ export const AnalyticsCharts = ({ events }: AnalyticsChartsProps) => {
       const date = new Date(now);
       date.setDate(date.getDate() - (6 - i));
       return {
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateDateString('en-US', { month: 'short', day: 'numeric' }),
         events: 0,
       };
     });

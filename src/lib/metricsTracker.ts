@@ -1,18 +1,23 @@
 
+interface UtmParams {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+}
+
+type MetricPayloadValue = string | number | boolean | null | undefined;
+type MetricPayload = Record<string, MetricPayloadValue>;
+
 interface MetricsEvent {
   name: string;
   route?: string;
   referrer?: string;
-  utm?: {
-    utm_source?: string;
-    utm_medium?: string;
-    utm_campaign?: string;
-    utm_content?: string;
-    utm_term?: string;
-  };
+  utm?: UtmParams;
   device?: string;
   lang?: string;
-  payload?: Record<string, any>;
+  payload?: MetricPayload;
   ts?: number;
   sessionId?: string;
 }
@@ -29,7 +34,9 @@ class MetricsTracker {
     let sid = '';
     try {
       sid = sessionStorage.getItem('metrics_session_id') || '';
-    } catch {}
+    } catch {
+      // sessionStorage can be null in private browsing or SSR
+    }
     if (!sid) {
       try {
         sid = typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -38,7 +45,11 @@ class MetricsTracker {
       } catch {
         sid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       }
-      try { sessionStorage.setItem('metrics_session_id', sid); } catch {}
+      try { 
+        sessionStorage.setItem('metrics_session_id', sid); 
+      } catch {
+        // sessionStorage can be null in private browsing or SSR
+      }
     }
     this.sessionId = sid;
 
@@ -48,9 +59,9 @@ class MetricsTracker {
     }
   }
 
-  track(eventName: string, properties?: Record<string, any>) {
+  track(eventName: string, properties?: MetricPayload) {
     // Check for Do Not Track
-    if (navigator.doNotTrack === '1') {
+    if (typeof navigator !== 'undefined' && navigator.doNotTrack === '1') {
       return;
     }
 
@@ -67,11 +78,16 @@ class MetricsTracker {
 
     // Extract UTM parameters
     const params = new URLSearchParams(window.location.search);
-    const utm: any = {};
-    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(key => {
+    const utm: UtmParams = {};
+    const utmKeys: (keyof UtmParams)[] = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+    
+    utmKeys.forEach(key => {
       const value = params.get(key);
-      if (value) utm[key] = value;
+      if (value) {
+        utm[key] = value;
+      }
     });
+
     if (Object.keys(utm).length > 0) {
       event.utm = utm;
     }
@@ -108,7 +124,7 @@ class MetricsTracker {
       const payload = JSON.stringify({ events });
       const url = '/api/telemetry/log';
 
-      if (sync && navigator.sendBeacon) {
+      if (sync && typeof navigator !== 'undefined' && navigator.sendBeacon) {
         // Use sendBeacon for synchronous requests (on page unload)
         const blob = new Blob([payload], { type: 'application/json' });
         navigator.sendBeacon(url, blob);
@@ -131,6 +147,7 @@ class MetricsTracker {
   }
 
   private getDeviceType(): string {
+    if(typeof navigator === 'undefined') return 'unknown';
     const ua = navigator.userAgent;
     if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
       return 'tablet';
@@ -172,10 +189,15 @@ class MetricsTracker {
 }
 
 // Export singleton instance
-export const metricsTracker = new MetricsTracker();
+let metricsTrackerInstance: MetricsTracker | null = null;
+if (typeof window !== 'undefined') {
+  metricsTrackerInstance = new MetricsTracker();
+}
+export const metricsTracker = metricsTrackerInstance;
+
 
 // Auto-track page views on route changes
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && metricsTracker) {
   // Track initial page view
   metricsTracker.pageView();
 

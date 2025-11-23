@@ -1,6 +1,18 @@
-// Unified analytics event tracking for Umami + PostHog
-import { db } from '@/firebase/config';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+// Define a type for the window object to include analytics libraries
+interface WindowWithAnalytics extends Window {
+  umami?: {
+    (eventName: string, properties?: EventProperties): void;
+    track: (eventName: string, properties?: EventProperties) => void;
+  };
+  posthog?: {
+    capture: (eventName: string, properties?: EventProperties) => void;
+  };
+}
+
+declare const window: WindowWithAnalytics;
 
 export type EventName =
   // Lead Magnet
@@ -38,12 +50,12 @@ export interface EventProperties {
 
 export const track = async (eventName: EventName, properties?: EventProperties) => {
   // Track with Umami
-  if (typeof window !== 'undefined' && (window as any).umami) {
+  if (typeof window !== 'undefined' && window.umami) {
     try {
-      if (typeof (window as any).umami === 'function') {
-        (window as any).umami(eventName, properties);
-      } else if (typeof (window as any).umami.track === 'function') {
-        (window as any).umami.track(eventName, properties);
+      if (typeof window.umami === 'function') {
+        window.umami(eventName, properties);
+      } else if (typeof window.umami.track === 'function') {
+        window.umami.track(eventName, properties);
       }
     } catch (e) {
       console.error('[Analytics] Umami error:', e);
@@ -70,7 +82,9 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
     let sessionId = '';
     try {
       sessionId = sessionStorage.getItem('analytics_session_id') || '';
-    } catch {}
+    } catch {
+      // Fail silently if sessionStorage is not available
+    }
     if (!sessionId) {
       try {
         sessionId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -79,7 +93,11 @@ export const track = async (eventName: EventName, properties?: EventProperties) 
       } catch {
         sessionId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       }
-      try { sessionStorage.setItem('analytics_session_id', sessionId); } catch {}
+      try { 
+        sessionStorage.setItem('analytics_session_id', sessionId); 
+      } catch {
+        // Fail silently if sessionStorage is not available
+      }
     }
 
     // Fire and forget - don't await this to avoid blocking UI

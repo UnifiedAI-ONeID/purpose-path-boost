@@ -55,7 +55,7 @@ export default function BlogComposer({ post }: BlogComposerProps) {
       const baseImageUrl = post.image_url || '';
       
       const promises = targets.map(async (p) => {
-        let imagePath = baseImageUrl; // Simplified for now
+        const imagePath = baseImageUrl; // Simplified for now
         
         const postData = {
           blog_slug: post.slug,
@@ -78,9 +78,13 @@ export default function BlogComposer({ post }: BlogComposerProps) {
       // Trigger worker to process queue
       triggerSocialWorker().catch(console.error);
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error queueing posts:', error);
-      toast.error(error.message || 'Failed to queue posts');
+      if (error instanceof Error) {
+        toast.error(error.message || 'Failed to queue posts');
+      } else {
+        toast.error('An unknown error occurred while queueing posts');
+      }
     } finally {
       setLoading(false);
     }

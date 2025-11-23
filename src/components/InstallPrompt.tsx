@@ -6,6 +6,9 @@ import { X, Download, Share } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '@/assets/images/logo.png';
 
+// Import the type for the BeforeInstallPromptEvent
+import { BeforeInstallPromptEvent } from './A2HSPrompt';
+
 type Props = { delayMs?: number; minVisits?: number };
 
 function enoughTimeSinceDismiss(): boolean {
@@ -71,8 +74,8 @@ export default function InstallPrompt({ delayMs = 8000, minVisits = 2 }: Props) 
   async function onInstallClick() {
     if (deferred && !isiOS) {
       // Android/Chrome: show native prompt
-      await deferred.prompt();
-      const choice = await deferred.userChoice;
+      await (deferred as BeforeInstallPromptEvent).prompt();
+      const choice = await (deferred as BeforeInstallPromptEvent).userChoice;
       if (choice.outcome === 'accepted') {
         localStorage.setItem('zg.pwa.installed', '1');
       } else {

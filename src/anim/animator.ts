@@ -23,10 +23,11 @@ let cachedPlay: PlayFn | null = null;
 let resolving = false;
 
 function prefersReducedMotion(): boolean {
-  try { 
-    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false; 
-  } catch { 
-    return false; 
+  try {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  } catch {
+    // Fails in non-browser env, e.g. SSR, which is fine.
+    return false;
   }
 }
 
@@ -36,23 +37,25 @@ async function resolvePlay(): Promise<PlayFn | null> {
   resolving = true;
   try {
     if (typeof window !== 'undefined') {
-      if (typeof window.ZGHomeClick?.play === 'function') { 
-        cachedPlay = window.ZGHomeClick.play; 
-        return cachedPlay; 
+      if (typeof window.ZGHomeClick?.play === 'function') {
+        cachedPlay = window.ZGHomeClick.play;
+        return cachedPlay;
       }
-      if (typeof window.playHomeClick === 'function') { 
-        cachedPlay = window.playHomeClick; 
-        return cachedPlay; 
+      if (typeof window.playHomeClick === 'function') {
+        cachedPlay = window.playHomeClick;
+        return cachedPlay;
       }
     }
     // Optional dynamic import adapter
     try {
       const mod = await import('../components/ui/HomeClickAnimation');
-      if (typeof mod.play === 'function') { 
-        cachedPlay = mod.play as PlayFn; 
-        return cachedPlay; 
+      if (typeof mod.play === 'function') {
+        cachedPlay = mod.play as PlayFn;
+        return cachedPlay;
       }
-    } catch {}
+    } catch {
+        // Expected to fail if HomeClickAnimation is not used.
+    }
     return null;
   } finally {
     resolving = false;
@@ -71,6 +74,10 @@ export async function triggerHomeAnim(minIntervalMs = 900) {
 
   const play = await resolvePlay();
   if (typeof play === 'function') {
-    try { await play(); } catch {}
+    try { 
+        await play(); 
+    } catch {
+        // Individual animation failures should not crash the app.
+    }
   }
 }

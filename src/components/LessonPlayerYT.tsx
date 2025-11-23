@@ -1,4 +1,4 @@
-
+f
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
@@ -6,7 +6,7 @@ import { loadYouTubeAPI } from '@/lib/youtubeApi';
 import UpsellModal from './UpsellModal';
 import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 import { toast } from 'sonner';
-import { functions } from '@/firebase/config';
+import { functions } from '@/lib/firebase';
 import { httpsCallable } from 'firebase/functions';
 
 // Function definitions
@@ -129,7 +129,9 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
             onReady: (e: any) => {
               try {
                 e.target.playVideo?.();
-              } catch {}
+              } catch {
+                // The player might throw if it's not fully ready, fail silently.
+              }
 
               // Poll for current time
               setInterval(() => {
@@ -138,7 +140,9 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
                   const d = Number(e.target.getDuration?.() || data.lesson.duration_sec || 0);
                   setCurrentTime(ct);
                   if (d > 0) setDuration(d);
-                } catch {}
+                } catch {
+                  // This can fail if the player is destroyed, so we fail silently.
+                }
               }, 1000);
             },
             onStateChange: (e: any) => {
@@ -162,7 +166,9 @@ export function LessonPlayerYT({ profileId, slug, onClose }: LessonPlayerYTProps
       if (ytPlayer.current?.destroy) {
         try {
           ytPlayer.current.destroy();
-        } catch {}
+        } catch {
+          // This can fail if the player is already destroyed, so we fail silently.
+        }
       }
     };
   }, [data?.lesson?.yt_id, isCN]);

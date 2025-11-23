@@ -1,4 +1,4 @@
-import React, { useEffect, useState, lazy, Suspense } from 'react';
+the import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -126,7 +126,7 @@ function AppRoutes() {
     const initializeApp = async () => {
       try {
         // Debug: detect multiple React copies
-        import('react').then((R: any)=> {
+        import('react').then((R: typeof React)=> {
           console.log('[React Debug] version', R.version, 'sameRef', R.useState === React.useState);
         });
 
@@ -181,8 +181,8 @@ function AppRoutes() {
             
             window.addEventListener('beforeunload', () => {
               const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
-              if ((window as any)._hmt) {
-                (window as any)._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
+              if (window._hmt) {
+                window._hmt.push(['_trackEvent', 'engagement', 'session_duration', `${duration}s`, duration]);
               }
             });
           }

@@ -20,8 +20,8 @@ function isStandalone() {
   // SSR guard
   if (typeof window === 'undefined') return false;
   // iOS + Android PWA check
-  // @ts-ignore
-  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || (window.navigator as any).standalone === true;
+  const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+  return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigatorWithStandalone.standalone === true;
 }
 
 export function usePWAPrompt() {
@@ -49,14 +49,14 @@ export function usePWAPrompt() {
       }
     }
     
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt as any);
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
     window.addEventListener('appinstalled', onAppInstalled);
     
     // Initial eligibility (iOS never fires beforeinstallprompt)
     setEligible(!isStandalone());
     
     return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt as any);
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
       window.removeEventListener('appinstalled', onAppInstalled);
     };
   }, []);

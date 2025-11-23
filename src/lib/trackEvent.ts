@@ -4,7 +4,7 @@
  * 2. New metrics tracker - for detailed event analytics in admin dashboard
  */
 
-import { track as legacyTrack } from '@/analytics/events';
+import { track as legacyTrack, EventName, EventProperties } from '@/analytics/events';
 import { metricsTracker } from './metricsTracker';
 
 /**
@@ -12,9 +12,9 @@ import { metricsTracker } from './metricsTracker';
  * @param eventName - Name of the event to track
  * @param properties - Optional properties/metadata for the event
  */
-export function trackEvent(eventName: string, properties?: Record<string, any>) {
+export function trackEvent(eventName: EventName, properties?: EventProperties) {
   // Track in legacy system (Umami/PostHog)
-  legacyTrack(eventName as any, properties);
+  legacyTrack(eventName, properties);
   
   // Track in new metrics system
   metricsTracker.track(eventName, properties);

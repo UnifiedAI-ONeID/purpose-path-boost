@@ -15,6 +15,9 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+// Define a more specific type for Baidu Tongji analytics
+type Hmt = (string | number | undefined)[];
+
 interface Window {
   umami?: any; // changed from specific object to any to allow direct calls
   posthog?: {
@@ -22,6 +25,6 @@ interface Window {
     identify: (id: string, properties?: Record<string, any>) => void;
     init: (apiKey: string, config?: any) => void;
   };
-  _hmt?: any[];
+  _hmt?: Hmt[];
   AMap?: any;
 }

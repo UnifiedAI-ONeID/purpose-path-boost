@@ -1,23 +1,35 @@
-import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { triggerHomeAnim } from '../anim/animator';
+import React, { Suspense } from 'react';
+import RouteAnimHookInternal from './RouteAnimHookInternal';
 
-export default function RouteAnimHook() {
-  // Add error boundary for router context
-  let location;
-  try {
-    location = useLocation();
-  } catch (error) {
-    console.warn('RouteAnimHook: Router context not ready', error);
-    return null;
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  useEffect(() => {
-    // Only trigger if we have a valid location
-    if (location?.pathname) {
-      triggerHomeAnim(700);
-    }
-  }, [location?.pathname]);
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
 
-  return null;
+  componentDidCatch(error, errorInfo) {
+    console.warn('RouteAnimHook: Router context not ready', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // Don't render anything if there's an error
+    }
+
+    return this.props.children;
+  }
+}
+
+export default function RouteAnimHook() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={null}>
+        <RouteAnimHookInternal />
+      </Suspense>
+    </ErrorBoundary>
+  );
 }
