@@ -31,28 +31,33 @@ export default function HeaderUser() {
       });
       return () => unsubscribe();
     } else {
-      const { data: { subscription } } = authClient.onAuthStateChange((event: any, newSession: any) => {
-        setUser(newSession?.user || null);
-        if (newSession?.user) {
-          setTimeout(() => {
-            checkAdminStatus();
-          }, 0);
-        } else {
-          setIsAdmin(false);
-        }
-      });
+      // Cast authClient to any to access Supabase-specific methods when not in Firebase mode
+      const supabaseAuth = authClient as any;
+      if (typeof supabaseAuth.onAuthStateChange === 'function') {
+        const { data: { subscription } } = supabaseAuth.onAuthStateChange((event: any, newSession: any) => {
+          setUser(newSession?.user || null);
+          if (newSession?.user) {
+            setTimeout(() => {
+              checkAdminStatus();
+            }, 0);
+          } else {
+            setIsAdmin(false);
+          }
+        });
 
-      authClient.getSession().then(({ data: { session } }: any) => {
-        setUser(session?.user || null);
-        if (session?.user) {
-          setTimeout(() => {
-            checkAdminStatus();
-          }, 0);
-        }
-      });
+        supabaseAuth.getSession().then(({ data: { session } }: any) => {
+          setUser(session?.user || null);
+          if (session?.user) {
+            setTimeout(() => {
+              checkAdminStatus();
+            }, 0);
+          }
+        });
 
-      return () => subscription.unsubscribe();
+        return () => subscription.unsubscribe();
+      }
     }
+    return () => {};
   }, []);
 
   async function checkAdminStatus() {

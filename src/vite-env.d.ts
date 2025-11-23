@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 interface ImportMetaEnv {
   readonly VITE_FIREBASE_API_KEY: string;
@@ -12,4 +13,17 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+interface Window {
+  umami?: {
+    track: (eventName: string, data?: Record<string, any>) => void;
+  };
+  posthog?: {
+    capture: (eventName: string, properties?: Record<string, any>) => void;
+    identify: (id: string, properties?: Record<string, any>) => void;
+    init: (apiKey: string, config?: any) => void;
+  };
+  _hmt?: any[];
+  AMap?: any;
 }
