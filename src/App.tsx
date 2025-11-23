@@ -153,8 +153,6 @@ function AppRoutes() {
           import('./lib/pwa/cacheMonitor')
         ]);
 
-        // Register service worker (handled by vite-plugin-pwa in main.tsx, explicit call removed)
-        
         // Initialize PWA performance tracking
         initPerformanceTracking();
 
