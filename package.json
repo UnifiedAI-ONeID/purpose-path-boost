@@ -15,6 +15,7 @@
     "@babel/parser": "^7.28.4",
     "@babel/traverse": "^7.28.4",
     "@calcom/embed-react": "^1.5.3",
+    "@google-cloud/secret-manager": "^6.1.1",
     "@hcaptcha/react-hcaptcha": "^1.12.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",

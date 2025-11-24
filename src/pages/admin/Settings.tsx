@@ -1,5 +1,5 @@
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,34 +7,32 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Shield, Users, Globe, Palette } from 'lucide-react';
+import { Shield, Users, Globe, Palette, Search, KeyRound } from 'lucide-react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/firebase/config';
+import AdminSEO from '@/components/admin/AdminSEO';
+import AdminSecrets from '@/components/admin/AdminSecrets';
 
 export default function Settings() {
   const [org, setOrg] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const orgConfigRef = doc(db, 'settings', 'organization');
 
   useEffect(() => {
     loadOrganization();
   }, []);
 
   async function loadOrganization() {
-    const { data } = await supabase
-      .from('organizations' as any)
-      .select('*')
-      .single();
-    
-    if (data) setOrg(data);
+    const docSnap = await getDoc(orgConfigRef);
+    if (docSnap.exists()) {
+      setOrg(docSnap.data());
+    }
   }
 
   async function updateOrganization(updates: any) {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('organizations' as any)
-        .update(updates)
-        .eq('id', org.id);
-
-      if (error) throw error;
+      await setDoc(orgConfigRef, updates, { merge: true });
       toast.success('Settings updated');
       loadOrganization();
     } catch (error: any) {
@@ -57,6 +55,14 @@ export default function Settings() {
             <TabsTrigger value="general">
               <Globe className="h-4 w-4 mr-2" />
               General
+            </TabsTrigger>
+            <TabsTrigger value="seo">
+              <Search className="h-4 w-4 mr-2" />
+              SEO
+            </TabsTrigger>
+            <TabsTrigger value="secrets">
+              <KeyRound className="h-4 w-4 mr-2" />
+              Secrets
             </TabsTrigger>
             <TabsTrigger value="brand">
               <Palette className="h-4 w-4 mr-2" />
@@ -96,6 +102,14 @@ export default function Settings() {
                 </div>
               </div>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="seo">
+            <AdminSEO />
+          </TabsContent>
+
+          <TabsContent value="secrets">
+            <AdminSecrets />
           </TabsContent>
 
           <TabsContent value="brand" className="space-y-4">

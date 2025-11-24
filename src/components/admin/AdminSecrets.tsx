@@ -18,94 +18,99 @@ const FIELDS = [
   { key: 'LINKEDIN_ACCESS_TOKEN', label: 'LinkedIn Access Token' },
   { key: 'FACEBOOK_PAGE_ID', label: 'Facebook Page ID' },
   { key: 'FACEBOOK_PAGE_ACCESS_TOKEN', label: 'Facebook Page Access Token' },
-  { key: 'INSTAGRAM_BUSINESS_ID', label: 'Instagram Business Account ID' },
-  { key: 'INSTAGRAM_GRAPH_TOKEN', label: 'Instagram Graph API Token' },
-  { key: 'X_BEARER_TOKEN', label: 'X (Twitter) Bearer Token' }
 ];
 
-interface SecretListResult {
-    data: { key: string }[];
+interface SecretStatus {
+  [key: string]: boolean;
 }
 
 export default function AdminSecrets() {
-  const [exists, setExists] = useState<Record<string, boolean>>({});
-  const [saving, setSaving] = useState<Record<string, boolean>>({});
-  const [vals, setVals] = useState<Record<string, string>>({});
-
-  async function load() {
-    try {
-      const qs = FIELDS.map(f => f.key).join(',');
-      
-      const result: HttpsCallableResult<SecretListResult> = await manageSecrets({ keys: qs, action: 'list' });
-      const data = result.data;
-
-      const map: Record<string, boolean> = {};
-      (data.data || []).forEach((it: { key: string }) => map[it.key] = true);
-      setExists(map);
-    } catch (error) {
-      console.error('Error loading secrets:', error);
-      toast.error('Failed to load secrets');
-    }
-  }
+  const [secrets, setSecrets] = useState<{ [key: string]: string }>({});
+  const [statuses, setStatuses] = useState<SecretStatus>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => {
-    load();
+    const getStatuses = async () => {
+      setLoading(true);
+      try {
+        const result: HttpsCallableResult<any> = await manageSecrets({ action: 'status' });
+        if (result.data.success) {
+          setStatuses(result.data.statuses);
+        } else {
+          toast.error(result.data.error || 'Failed to get secret statuses.');
+        }
+      } catch (error: any) {
+        console.error("Error fetching secret statuses:", error);
+        toast.error('An error occurred while fetching secret statuses.');
+      }
+      setLoading(false);
+    };
+    getStatuses();
   }, []);
 
-  async function save(k: string) {
-    if (!vals[k]) {
-      toast.error('Please enter a value');
+  const handleSecretChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSecrets({
+      ...secrets,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSave = async (key: string) => {
+    const value = secrets[key];
+    if (!value) {
+      toast.warning('Please enter a value for the secret.');
       return;
     }
 
-    setSaving(s => ({ ...s, [k]: true }));
-    
+    setSaving(key);
     try {
-      await manageSecrets({ key: k, value: vals[k], action: 'set' });
-
-      toast.success('Secret saved successfully');
-      setVals(v => ({ ...v, [k]: '' }));
-      await load();
-    } catch (error) {
-      console.error('Error saving secret:', error);
-      toast.error('Failed to save secret');
-    } finally {
-      setSaving(s => ({ ...s, [k]: false }));
+      const result: HttpsCallableResult<any> = await manageSecrets({ action: 'set', key, value });
+      if (result.data.success) {
+        toast.success(`Secret "${labelFromKey(key)}" saved successfully.`);
+        setSecrets(s => ({ ...s, [key]: '' })); // Clear input after save
+        setStatuses(s => ({ ...s, [key]: true }));
+      } else {
+        toast.error(result.data.error || `Failed to save secret "${labelFromKey(key)}".`);
+      }
+    } catch (error: any) {
+      console.error(`Error saving secret ${key}:`, error);
+      toast.error(`An error occurred while saving the secret: ${error.message}`);
     }
-  }
+    setSaving(null);
+  };
+
+  const labelFromKey = (key: string) => FIELDS.find(f => f.key === key)?.label || key;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Secrets Manager</CardTitle>
+        <CardTitle>Manage Application Secrets</CardTitle>
         <CardDescription>
-          Keys are encrypted at rest. Existing values are hidden (••••); re-save to rotate.
+          Update secret keys for third-party integrations. For security, secrets are write-only and cannot be read back.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-4">
-          {FIELDS.map(f => (
-            <div key={f.key} className="border rounded-lg p-4 space-y-3">
-              <Label htmlFor={f.key} className="text-sm font-medium">
-                {f.label}
-              </Label>
+      <CardContent className="space-y-6">
+        {loading ? <p>Loading secret statuses...</p> : FIELDS.map(({ key, label }) => (
+          <div key={key} className="space-y-2">
+            <Label htmlFor={key}>{label}</Label>
+            <div className="flex items-center space-x-2">
               <Input
-                id={f.key}
+                id={key}
+                name={key}
                 type="password"
-                placeholder={exists[f.key] ? '•••••••• (set to rotate)' : 'enter value'}
-                value={vals[f.key] || ''}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setVals(v => ({ ...v, [f.key]: e.target.value }))}
+                value={secrets[key] || ''}
+                onChange={handleSecretChange}
+                placeholder={statuses[key] ? 'Value is set. Enter new value to overwrite.' : 'Enter secret value'}
+                disabled={saving !== null}
               />
-              <Button
-                className="w-full"
-                disabled={saving[f.key]}
-                onClick={() => save(f.key)}
-              >
-                {saving[f.key] ? 'Saving…' : (exists[f.key] ? 'Update' : 'Save')}
+              <Button onClick={() => handleSave(key)} disabled={saving !== null}>
+                {saving === key ? 'Saving...' : 'Save'}
               </Button>
             </div>
-          ))}
-        </div>
+            {statuses[key] && <p className="text-sm text-green-500 mt-1">This secret is currently set and active.</p>}
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
