@@ -1,7 +1,7 @@
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, ChangeEvent } from 'react';
 import { db } from '@/firebase/config';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, DocumentData } from 'firebase/firestore';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { startOfWeek, format } from 'date-fns';
@@ -18,6 +18,16 @@ type Row = {
   ctr_pct: number | null;
 };
 
+interface TagStat {
+    tag: string;
+    week_start: string;
+    post_count: number;
+    impressions: number;
+    engagements: number;
+    clicks: number;
+    video_views: number;
+}
+
 type Summary = {
   tag: string;
   posts: number;
@@ -27,6 +37,17 @@ type Summary = {
   er: number;
   trend: number[];
 };
+
+interface PostDoc {
+    tags: string[];
+    created_at: { seconds: number };
+    impressions: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    clicks: number;
+    video_views: number;
+}
 
 function Spark({ data }: { data: number[] }) {
   if (!data.length) return <div className="h-10" />;
@@ -57,11 +78,9 @@ export default function TagPerformance() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch all posts which contain tags and potentially metrics
-        // In a real scenario, we might need to join with social_metrics collection
-        const postsSnapshot = await getDocs(query(collection(db, 'social_posts')));
+        const postsSnapshot = await getDocs<PostDoc>(query(collection(db, 'social_posts')));
         
-        const tagStats = new Map<string, any>(); // Key: tag_weekstart
+        const tagStats = new Map<string, TagStat>();
 
         postsSnapshot.forEach(doc => {
             const data = doc.data();
@@ -71,7 +90,6 @@ export default function TagPerformance() {
             const createdAt = data.created_at?.seconds ? new Date(data.created_at.seconds * 1000) : new Date();
             const weekStart = format(startOfWeek(createdAt), 'yyyy-MM-dd');
 
-            // Metrics (assuming they are on the post object for now, or default to 0)
             const imp = data.impressions || 0;
             const eng = (data.likes || 0) + (data.comments || 0) + (data.shares || 0);
             const clicks = data.clicks || 0;
@@ -91,11 +109,13 @@ export default function TagPerformance() {
                     });
                 }
                 const stat = tagStats.get(key);
-                stat.post_count++;
-                stat.impressions += imp;
-                stat.engagements += eng;
-                stat.clicks += clicks;
-                stat.video_views += views;
+                if (stat) {
+                    stat.post_count++;
+                    stat.impressions += imp;
+                    stat.engagements += eng;
+                    stat.clicks += clicks;
+                    stat.video_views += views;
+                }
             });
         });
 
@@ -123,7 +143,6 @@ export default function TagPerformance() {
   const byTag = useMemo(() => {
     const m: Record<string, Row[]> = {};
     for (const r of rows) (m[r.tag] ||= []).push(r);
-    // sort weeks chronologically
     for (const k in m)
       m[k].sort((a, b) => +new Date(a.week_start) - +new Date(b.week_start));
     return m;
@@ -178,13 +197,13 @@ export default function TagPerformance() {
               min={1}
               className="px-2 py-1 w-20 rounded-md border border-border bg-background"
               value={minPosts}
-              onChange={(e) => setMinPosts(+e.target.value || 1)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setMinPosts(+e.target.value || 1)}
             />
           </div>
           <select
             className="px-3 py-1 rounded-md border border-border bg-background"
             value={sortKey}
-            onChange={(e) => setSortKey(e.target.value as any)}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) => setSortKey(e.target.value as 'er' | 'ctr' | 'imp')}
           >
             <option value="er">Sort by ER%</option>
             <option value="ctr">Sort by CTR%</option>
@@ -248,7 +267,6 @@ export default function TagPerformance() {
 function SuggestionBar({ summaries }: { summaries: Summary[] }) {
   if (!summaries.length) return null;
 
-  // Heuristics for actionable suggestions
   const topER = [...summaries].sort((a, b) => b.er - a.er)[0];
   const topCTR = [...summaries]
     .filter((s) => s.ctr != null)

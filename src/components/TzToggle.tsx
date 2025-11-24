@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, ChangeEvent } from 'react';
 
 export default function TzToggle({ startISO, endISO }: { startISO: string; endISO: string }) {
   const [tz, setTz] = useState<'America/Vancouver' | 'Asia/Shanghai'>('America/Vancouver');
@@ -19,7 +20,7 @@ export default function TzToggle({ startISO, endISO }: { startISO: string; endIS
       <select
         className="select text-sm"
         value={tz}
-        onChange={(e) => setTz(e.target.value as any)}
+        onChange={(e: ChangeEvent<HTMLSelectElement>) => setTz(e.target.value as 'America/Vancouver' | 'Asia/Shanghai')}
       >
         <option value="America/Vancouver">Vancouver</option>
         <option value="Asia/Shanghai">Shanghai</option>

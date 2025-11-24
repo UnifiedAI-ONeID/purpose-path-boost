@@ -3,67 +3,19 @@
 > eslint .
 
 
-/home/user/purpose-path-boost/src/components/LessonPlayerYT.tsx
-  172:25  error  Empty block statement  no-empty
-
-/home/user/purpose-path-boost/src/components/MapCN.tsx
-  4:11  error  An empty interface declaration allows any non-nullish value, including literals like `0` and `""`.
-- If that's what you want, disable this lint rule with an inline comment or configure the 'allowInterfaces' rule option.
-- If you want a type meaning "any object", you probably want `object` instead.
-- If you want a type meaning "any value", you probably want `unknown` instead  @typescript-eslint/no-empty-object-type
-
-/home/user/purpose-path-boost/src/components/PostAISuggestions.tsx
-  71:6  warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/user/purpose-path-boost/src/components/RealtimeMetrics.tsx
-  121:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  124:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/SessionDurationChart.tsx
-  7:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/SocialAnalytics.tsx
-  15:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/SocialMetricsInsights.tsx
-  6:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/SocialPostEditor.tsx
-  32:6  warning  React Hook useEffect has a missing dependency: 'generatePreviews'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/user/purpose-path-boost/src/components/SuggestedNextStep.tsx
-  44:6  warning  React Hook useEffect has a missing dependency: 'loadSuggestion'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
 /home/user/purpose-path-boost/src/components/TagPerformance.tsx
-   64:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  187:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/TzToggle.tsx
-  22:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  243:21  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
 
 /home/user/purpose-path-boost/src/components/admin/AdminInstallButton.tsx
-  20:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  28:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  35:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  52:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/AdminSecrets.tsx
-  35:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  39:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  41:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  65:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/ContentLeaderboard.tsx
-   3:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  21:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/admin/FxAuditTicket.tsx
-   14:38  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-   28:6   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  127:61  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
+  18:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/admin/FxOverridesEditor.tsx
-  41:6  warning  React Hook useEffect has a missing dependency: 'loadOverrides'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  32:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/admin/IntegrationsAdmin.tsx
    10:38  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
@@ -176,12 +128,6 @@
 
 /home/user/purpose-path-boost/src/components/ui/toggle.tsx
   37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
-
-/home/user/purpose-path-boost/src/db/index.ts
-  10:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  18:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  38:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  75:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/hooks/useI18nFetch.ts
   20:34  error    Unexpected any. Specify a different type                                                                                                                 @typescript-eslint/no-explicit-any
@@ -344,19 +290,11 @@
 /home/user/purpose-path-boost/src/pages/admin/CrossPostStudio.tsx
   21:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-/home/user/purpose-path-boost/src/pages/admin/DataHealth.tsx
-  10:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 /home/user/purpose-path-boost/src/pages/admin/Funnel.tsx
-   26:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   27:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   30:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  116:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  148:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  175:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  186:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  190:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  255:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  166:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/admin/Overview.tsx
    28:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -516,6 +454,6 @@
   118:26   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   124:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-✖ 292 problems (262 errors, 30 warnings)
+✖ 261 problems (236 errors, 25 warnings)
   1 error and 0 warnings potentially fixable with the `--fix` option.
 

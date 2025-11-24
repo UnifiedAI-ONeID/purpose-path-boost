@@ -2,8 +2,25 @@ import { useMemo } from 'react';
 import { Card } from './ui/card';
 import { engagementScore, ctr, platformLift } from '@/lib/analytics-helpers';
 
+interface SocialMetric {
+  platform: string;
+  impressions?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+  clicks?: number;
+}
+
 interface MetricsInsightsProps {
-  metrics: any[];
+  metrics: SocialMetric[];
+}
+
+interface PlatformPerformance {
+  platform: string;
+  impressions: number;
+  engagement: number;
+  er: number;
 }
 
 export default function SocialMetricsInsights({ metrics }: MetricsInsightsProps) {
@@ -14,7 +31,7 @@ export default function SocialMetricsInsights({ metrics }: MetricsInsightsProps)
     const lifts = platforms.map(p => ({
       platform: p,
       ...platformLift(metrics, p)
-    }));
+    })) as PlatformPerformance[];
 
     // Best performing platform
     const bestPlatform = lifts.reduce((best, current) => 
@@ -22,10 +39,13 @@ export default function SocialMetricsInsights({ metrics }: MetricsInsightsProps)
     );
 
     // Average CTR across platforms
-    const avgCTR = metrics
+    const ctrValues = metrics
       .map(m => ctr(m))
-      .filter(c => c !== null)
-      .reduce((sum, c, _, arr) => sum + (c || 0) / arr.length, 0);
+      .filter((c): c is number => c !== null && isFinite(c));
+    
+    const avgCTR = ctrValues.length > 0 
+      ? ctrValues.reduce((sum, c) => sum + c, 0) / ctrValues.length
+      : 0;
 
     // Total engagement
     const totalEngagement = metrics.reduce((sum, m) => sum + engagementScore(m), 0);

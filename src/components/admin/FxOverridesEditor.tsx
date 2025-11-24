@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Plus, Trash2 } from 'lucide-react';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 interface Override {
   id: string;
@@ -17,28 +18,28 @@ interface FxOverridesEditorProps {
   ticketId: string;
 }
 
+const manageTicketOverrides = httpsCallable(functions, 'api-admin-tickets-overrides');
+
 export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) {
   const [overrides, setOverrides] = useState<Override[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCurrency, setNewCurrency] = useState('CNY');
   const [newPrice, setNewPrice] = useState('');
 
-  async function loadOverrides() {
+  const loadOverrides = useCallback(async () => {
     try {
-      const { data } = await supabase.functions.invoke('api-admin-tickets-overrides', {
-        body: { ticketId }
-      });
-      setOverrides(data?.overrides || []);
+      const result = await manageTicketOverrides({ ticketId });
+      setOverrides((result.data as any)?.overrides || []);
     } catch (e) {
       toast.error('Failed to load overrides');
     } finally {
       setLoading(false);
     }
-  }
+  }, [ticketId]);
 
   useEffect(() => {
     loadOverrides();
-  }, [ticketId]);
+  }, [loadOverrides]);
 
   async function addOverride() {
     if (!newPrice || parseFloat(newPrice) < 0) {
@@ -47,12 +48,10 @@ export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) 
     }
 
     try {
-      await supabase.functions.invoke('api-admin-tickets-overrides', {
-        body: {
-          ticketId,
-          currency: newCurrency,
-          priceCents: Math.round(parseFloat(newPrice) * 100)
-        }
+      await manageTicketOverrides({
+        ticketId,
+        currency: newCurrency,
+        priceCents: Math.round(parseFloat(newPrice) * 100)
       });
 
       toast.success(`Added ${newCurrency} override`);
@@ -65,12 +64,10 @@ export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) 
 
   async function updateOverride(override: Override, newPriceCents: number) {
     try {
-      await supabase.functions.invoke('api-admin-tickets-overrides', {
-        body: {
-          ticketId,
-          currency: override.currency,
-          priceCents: newPriceCents
-        }
+      await manageTicketOverrides({
+        ticketId,
+        currency: override.currency,
+        priceCents: newPriceCents
       });
 
       toast.success(`Updated ${override.currency} override`);
@@ -84,12 +81,10 @@ export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) 
     if (!confirm(`Delete ${currency} override?`)) return;
 
     try {
-      await supabase.functions.invoke('api-admin-tickets-overrides', {
-        body: {
-          ticketId,
-          currency,
-          action: 'delete'
-        }
+      await manageTicketOverrides({
+        ticketId,
+        currency,
+        action: 'delete'
       });
 
       toast.success(`Deleted ${currency} override`);

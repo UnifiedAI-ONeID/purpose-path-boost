@@ -1,7 +1,7 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { functions } from '@/firebase/config';
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,10 @@ const FIELDS = [
   { key: 'X_BEARER_TOKEN', label: 'X (Twitter) Bearer Token' }
 ];
 
+interface SecretListResult {
+    data: { key: string }[];
+}
+
 export default function AdminSecrets() {
   const [exists, setExists] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
@@ -32,13 +36,13 @@ export default function AdminSecrets() {
     try {
       const qs = FIELDS.map(f => f.key).join(',');
       
-      const result: any = await manageSecrets({ keys: qs, action: 'list' });
+      const result: HttpsCallableResult<SecretListResult> = await manageSecrets({ keys: qs, action: 'list' });
       const data = result.data;
 
       const map: Record<string, boolean> = {};
-      (data || []).forEach((it: any) => map[it.key] = true);
+      (data.data || []).forEach((it: { key: string }) => map[it.key] = true);
       setExists(map);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error loading secrets:', error);
       toast.error('Failed to load secrets');
     }
@@ -62,7 +66,7 @@ export default function AdminSecrets() {
       toast.success('Secret saved successfully');
       setVals(v => ({ ...v, [k]: '' }));
       await load();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving secret:', error);
       toast.error('Failed to save secret');
     } finally {
@@ -90,7 +94,7 @@ export default function AdminSecrets() {
                 type="password"
                 placeholder={exists[f.key] ? '•••••••• (set to rotate)' : 'enter value'}
                 value={vals[f.key] || ''}
-                onChange={e => setVals(v => ({ ...v, [f.key]: e.target.value }))}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setVals(v => ({ ...v, [f.key]: e.target.value }))}
               />
               <Button
                 className="w-full"

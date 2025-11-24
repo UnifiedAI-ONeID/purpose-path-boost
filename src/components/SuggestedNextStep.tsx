@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import SmartLink from './SmartLink';
 import { usePrefs } from '../prefs/PrefsProvider';
-import { supabase } from '@/db';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
@@ -16,32 +17,37 @@ type SuggestionData = {
   score?: number;
 };
 
+const suggestNextStepFn = httpsCallable<{ profileId: string }, SuggestionData>(functions, 'pwa-ai-suggest');
+
+function mdToHtml(md: string): string {
+  return md
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.*)$/gm, '<li class="ml-4">$1</li>')
+    .replace(/\n{2,}/g, '<br/>');
+}
+
 export default function SuggestedNextStep({ profileId }: { profileId: string }) {
   const { lang } = usePrefs();
   const [data, setData] = useState<SuggestionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadSuggestion = async () => {
+  const loadSuggestion = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: result, error } = await supabase.functions.invoke('pwa-ai-suggest', {
-        body: { profile_id: profileId }
-      });
-      
-      if (error) throw error;
-      setData(result);
+      const result = await suggestNextStepFn({ profileId });
+      setData(result.data);
     } catch (error) {
       console.error('Error loading suggestion:', error);
       setData({ ok: false });
     } finally {
       setLoading(false);
     }
-  };
+  }, [profileId]);
 
   useEffect(() => {
     loadSuggestion();
-  }, [profileId, lang]);
+  }, [loadSuggestion]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -105,11 +111,4 @@ export default function SuggestedNextStep({ profileId }: { profileId: string }) 
       </div>
     </Card>
   );
-}
-
-function mdToHtml(md: string): string {
-  return md
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/^- (.*)$/gm, '<li class="ml-4">$1</li>')
-    .replace(/\n{2,}/g, '<br/>');
 }

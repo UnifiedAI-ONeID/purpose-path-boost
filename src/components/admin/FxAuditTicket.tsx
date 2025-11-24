@@ -1,31 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 
 interface FxAuditTicketProps {
   ticketId: string;
 }
 
+interface Quote {
+    ok: boolean;
+    source: string;
+    currency: string;
+    display_cents: number;
+    steps: any;
+    rates_meta: any;
+}
+
+const fxInspect = httpsCallable<any, HttpsCallableResult<Quote>>(functions, 'api-admin-fx-inspect');
+
 export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
   const [currency, setCurrency] = useState('USD');
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<Quote | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true);
-    const { data } = await supabase.functions.invoke('api-admin-fx-inspect', {
-      body: { ticketId, currency }
-    });
-    setQuote(data);
-    setBusy(false);
-  }
+    try {
+        const { data } = await fxInspect({ ticketId, currency });
+        setQuote(data);
+    } catch (error) {
+        console.error(error);
+    } finally {
+        setBusy(false);
+    }
+  }, [ticketId, currency]);
 
   useEffect(() => { 
     if (ticketId) load(); 
-  }, [ticketId, currency]);
+  }, [ticketId, currency, load]);
 
   if (!quote?.ok) {
     return (
@@ -124,7 +139,7 @@ export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
 
         <div className="text-xs text-muted-foreground">
           Rates updated: {quote.rates_meta 
-            ? Object.entries(quote.rates_meta).map(([b, m]: any) => 
+            ? Object.entries(quote.rates_meta).map(([b, m]: [string, { updated_at: string }]) => 
                 `${b}: ${new Date(m.updated_at).toLocaleString()}`
               ).join(' · ') 
             : '—'}

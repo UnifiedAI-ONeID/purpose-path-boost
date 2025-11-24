@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { db, storage, auth } from '@/firebase/config';
 import { 
     collection, getDocs, getCountFromServer, query, orderBy, 
-    doc, updateDoc, addDoc, serverTimestamp, where 
+    doc, updateDoc, addDoc, serverTimestamp, where, limit
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { httpsCallable } from 'firebase/functions';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 import { functions } from '@/firebase/config';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -18,16 +18,45 @@ import { toast } from 'sonner';
 import { Upload, Mail, Users, TrendingUp, Send } from 'lucide-react';
 import AdminShell from '@/components/admin/AdminShell';
 
-// Assuming functions are deployed and named this way
+interface EmailAttachment {
+  id: string;
+  filename: string;
+  size_bytes: number;
+}
+
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  html_body: string;
+  stage_id: string | null;
+  from_name: string;
+  from_email: string;
+  stage_name: string;
+  email_attachments: EmailAttachment[];
+}
+
+interface FunnelStage {
+  id: string;
+  name: string;
+  order_index: number;
+}
+
+interface ProcessQueueResult {
+    totalProcessed: number;
+    emailsSent: number;
+    emailsFailed: number;
+}
+
 const sendTestEmailFn = httpsCallable(functions, 'funnel-send-email');
 const processQueueFn = httpsCallable(functions, 'funnel-process-queue');
 
 export default function FunnelManager() {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [stages, setStages] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [stages, setStages] = useState<FunnelStage[]>([]);
   const [stats, setStats] = useState({ totalUsers: 0, emailsSent: 0, pendingEmails: 0 });
   const [loading, setLoading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -38,42 +67,35 @@ export default function FunnelManager() {
   async function loadData() {
     setLoading(true);
     try {
-      // Load funnel stages
       const stagesQuery = query(collection(db, 'funnel_stages'), orderBy('order_index'));
       const stagesSnapshot = await getDocs(stagesQuery);
-      const stagesData = stagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const stagesData = stagesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as FunnelStage[];
       setStages(stagesData);
       
       const stageMap = new Map(stagesData.map(s => [s.id, s.name]));
 
-      // Load email templates and their attachments
       const templatesSnapshot = await getDocs(collection(db, 'email_templates'));
       const templatesData = await Promise.all(templatesSnapshot.docs.map(async (doc) => {
-        const template = { id: doc.id, ...doc.data() };
+        const templateData = { id: doc.id, ...doc.data() };
         
-        const attachmentsQuery = query(collection(db, 'email_attachments'), where('template_id', '==', template.id));
+        const attachmentsQuery = query(collection(db, 'email_attachments'), where('template_id', '==', templateData.id));
         const attachmentsSnapshot = await getDocs(attachmentsQuery);
-        const attachments = attachmentsSnapshot.docs.map(attDoc => ({ id: attDoc.id, ...attDoc.data() }));
+        const attachments = attachmentsSnapshot.docs.map(attDoc => ({ id: attDoc.id, ...attDoc.data() })) as EmailAttachment[];
         
         return {
-          ...template,
-          stage_name: stageMap.get(template.stage_id) || 'Manual only',
+          ...templateData,
+          stage_name: stageMap.get(templateData.stage_id) || 'Manual only',
           email_attachments: attachments
-        };
+        } as EmailTemplate;
       }));
       setTemplates(templatesData);
 
-      // Load stats
       const usersCount = (await getCountFromServer(collection(db, 'user_funnel_progress'))).data().count;
       const sentCount = (await getCountFromServer(collection(db, 'email_logs'))).data().count;
       const pendingQuery = query(collection(db, 'email_queue'), where('status', '==', 'pending'));
       const pendingCount = (await getCountFromServer(pendingQuery)).data().count;
       
-      setStats({
-        totalUsers: usersCount,
-        emailsSent: sentCount,
-        pendingEmails: pendingCount,
-      });
+      setStats({ totalUsers: usersCount, emailsSent: sentCount, pendingEmails: pendingCount });
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -83,7 +105,7 @@ export default function FunnelManager() {
     }
   }
 
-  async function handleSaveTemplate(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSaveTemplate(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
@@ -100,19 +122,17 @@ export default function FunnelManager() {
       };
 
       if (selectedTemplate) {
-        // Update
         const templateRef = doc(db, 'email_templates', selectedTemplate.id);
         await updateDoc(templateRef, { ...templateData, updated_at: serverTimestamp() });
         toast.success('Template updated successfully');
       } else {
-        // Create
         await addDoc(collection(db, 'email_templates'), { ...templateData, created_at: serverTimestamp(), updated_at: serverTimestamp() });
         toast.success('Template created successfully');
       }
 
       setShowTemplateDialog(false);
       setSelectedTemplate(null);
-      await loadData(); // Refresh data
+      await loadData();
     } catch (error: any) {
       console.error('Error saving template:', error);
       toast.error(error.message || 'Failed to save template');
@@ -121,7 +141,7 @@ export default function FunnelManager() {
     }
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, templateId: string) {
+  async function handleFileUpload(e: ChangeEvent<HTMLInputElement>, templateId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -130,10 +150,8 @@ export default function FunnelManager() {
       const storagePath = `email-attachments/${templateId}/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, storagePath);
       
-      // Upload to Firebase Storage
       await uploadBytes(storageRef, file);
 
-      // Save attachment metadata to Firestore
       await addDoc(collection(db, 'email_attachments'), {
         template_id: templateId,
         filename: file.name,
@@ -183,7 +201,7 @@ export default function FunnelManager() {
   async function processQueue() {
     setLoading(true);
     try {
-      const result: any = await processQueueFn();
+      const result: HttpsCallableResult<ProcessQueueResult> = await processQueueFn();
       const data = result.data;
       toast.success(`Processed ${data.totalProcessed} emails (${data.emailsSent} sent, ${data.emailsFailed} failed)`);
       await loadData();
@@ -221,7 +239,7 @@ export default function FunnelManager() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><Label>From Name</Label><Input name="from_name" defaultValue={selectedTemplate?.from_name || 'ZhenGrowth'} /></div>
-                    <div><Label>From Email</Label><Input name="from_email" type="email" defaultValue={selected_template?.from_email || 'hello@zhengrowth.com'} /></div>
+                    <div><Label>From Email</Label><Input name="from_email" type="email" defaultValue={selectedTemplate?.from_email || 'hello@zhengrowth.com'} /></div>
                   </div>
                   <div><Label>Subject Line</Label><Input name="subject" defaultValue={selectedTemplate?.subject} required /><p className="text-xs text-muted-foreground mt-1">Variables: {`{{name}}, {{email}}`}</p></div>
                   <div><Label>HTML Body</Label><Textarea name="html_body" rows={12} defaultValue={selectedTemplate?.html_body} required /><p className="text-xs text-muted-foreground mt-1">Use HTML and variables like {`{{name}}, {{email}}`}</p></div>
@@ -252,7 +270,7 @@ export default function FunnelManager() {
                       <div className="mt-2">
                         <p className="text-xs text-muted-foreground">Attachments:</p>
                         <ul className="text-xs">
-                          {template.email_attachments.map((att: any) => <li key={att.id}>📎 {att.filename} ({(att.size_bytes / 1024).toFixed(1)} KB)</li>)}
+                          {template.email_attachments.map(att => <li key={att.id}>📎 {att.filename} ({(att.size_bytes / 1024).toFixed(1)} KB)</li>)}
                         </ul>
                       </div>
                     )}

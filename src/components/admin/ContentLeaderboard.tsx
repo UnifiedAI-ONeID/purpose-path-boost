@@ -1,6 +1,13 @@
 import { Card } from '@/components/ui/card';
 
-export default function ContentLeaderboard({ rows }: { rows: any[] }) {
+interface Row {
+    slug: string;
+    title: string;
+    starts: number;
+    completes: number;
+}
+
+export default function ContentLeaderboard({ rows }: { rows: Row[] }) {
   return (
     <Card className="p-6">
       <div className="font-semibold text-lg mb-4">Top Lessons (30d)</div>
@@ -18,7 +25,7 @@ export default function ContentLeaderboard({ rows }: { rows: any[] }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r: any) => {
+              {rows.map((r: Row) => {
                 const rate = r.starts > 0 ? ((r.completes / r.starts) * 100).toFixed(1) : '0.0';
                 return (
                   <tr key={r.slug} className="border-b hover:bg-muted/50">

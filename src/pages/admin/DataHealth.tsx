@@ -5,9 +5,17 @@ import { adminService, DataHealthStats } from '@/services/admin';
 import { AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
+interface Anomaly {
+  id: string;
+  entityType: string;
+  description: string;
+  badDocPath: string;
+  createdAt?: { toDate: () => Date };
+}
+
 export default function DataHealth() {
   const [stats, setStats] = useState<DataHealthStats | null>(null);
-  const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
@@ -58,8 +66,8 @@ export default function DataHealth() {
                   {typeof value === 'number' && value === -1 ? 'Err' : value}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Last update: {stats.lastUpdated[key === 'posts' ? 'blog_posts' : key] ? 
-                    formatDistanceToNow(new Date(stats.lastUpdated[key === 'posts' ? 'blog_posts' : key] as string), { addSuffix: true }) : 
+                  Last update: {stats.lastUpdated[key as keyof typeof stats.lastUpdated] ? 
+                    formatDistanceToNow(new Date(stats.lastUpdated[key as keyof typeof stats.lastUpdated] as string), { addSuffix: true }) : 
                     'N/A'}
                 </p>
               </CardContent>

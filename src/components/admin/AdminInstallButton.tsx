@@ -5,40 +5,39 @@ type BIPEvent = Event & {
   userChoice?: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export default function AdminInstallButton() {
   const [bip, setBip] = useState<BIPEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showIOSHelp, setShowIOSHelp] = useState(false);
 
   useEffect(() => {
-    if (!location.pathname.startsWith("/admin")) return;
+    if (typeof window === 'undefined' || !location.pathname.startsWith("/admin")) return;
 
-    // Already installed?
     const isStandalone =
       (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
-      // iOS Safari
-      (window.navigator as any).standalone === true;
+      ('standalone' in window.navigator && (window.navigator as NavigatorWithStandalone).standalone === true);
     if (isStandalone) setInstalled(true);
 
-    // Listen for install prompt
     const onBIP = (e: Event) => {
-      e.preventDefault(); // prevent auto-prompt
-      setBip(e as BIPEvent); // store for later .prompt()
+      e.preventDefault();
+      setBip(e as BIPEvent);
     };
-    window.addEventListener("beforeinstallprompt", onBIP as any);
+    window.addEventListener("beforeinstallprompt", onBIP);
 
-    // Listen for installed
     const onInstalled = () => setInstalled(true);
     window.addEventListener("appinstalled", onInstalled);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBIP as any);
+      window.removeEventListener("beforeinstallprompt", onBIP);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
-  // Hide if not on /admin or already installed
-  if (!location.pathname.startsWith("/admin") || installed) return null;
+  if (typeof window === 'undefined' || !location.pathname.startsWith("/admin") || installed) return null;
 
   function isIOS() {
     return /iphone|ipad|ipod/i.test(navigator.userAgent) && /safari/i.test(navigator.userAgent);
@@ -46,20 +45,16 @@ export default function AdminInstallButton() {
 
   async function install() {
     if (bip) {
-      // Chrome/Edge/Android path
-      await (bip as BIPEvent).prompt();
+      await bip.prompt();
       try {
-        const choice = await (bip as any).userChoice;
-        // optional: telemetry based on choice.outcome
+        const choice = await bip.userChoice;
         console.log('[Admin PWA] Install choice:', choice?.outcome);
       } finally {
-        setBip(null); // prompt can only be used once
+        setBip(null);
       }
     } else if (isIOS()) {
-      // iOS: show help modal (no programmatic prompt)
       setShowIOSHelp(true);
     } else {
-      // Fallback: hint to use browser menu
       alert("Install this Admin app from your browser menu: Add to Home screen.");
     }
   }
@@ -74,7 +69,6 @@ export default function AdminInstallButton() {
         Install Admin App
       </button>
 
-      {/* iOS help Sheet */}
       {showIOSHelp && (
         <div className="fixed inset-0 z-50">
           <div
