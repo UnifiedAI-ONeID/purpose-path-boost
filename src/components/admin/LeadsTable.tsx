@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { functions } from '@/firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { Card } from '@/components/ui/card';
@@ -8,10 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-
-const listLeads = httpsCallable(functions, 'api-admin-leads-list');
-const updateLead = httpsCallable(functions, 'api-admin-leads-update');
-const exportLeadsToCsv = httpsCallable(functions, 'api-admin-leads-export');
 
 type Lead = {
   id: string;
@@ -29,6 +25,37 @@ type Lead = {
   clarity_score?: number | null;
 };
 
+interface ListLeadsParams {
+    limit: number;
+    sortBy: string;
+    sortOrder: string;
+    stage?: string;
+    source?: string;
+    search?: string;
+}
+
+interface ListLeadsResponse {
+    ok: boolean;
+    leads: Lead[];
+    error: string;
+}
+
+interface UpdateLeadParams {
+    id: string;
+    stage?: string;
+    tags?: string[];
+    notes?: string;
+}
+
+interface UpdateLeadResponse {
+    ok: boolean;
+    error: string;
+}
+
+const listLeads = httpsCallable<ListLeadsParams, ListLeadsResponse>(functions, 'api-admin-leads-list');
+const updateLead = httpsCallable<UpdateLeadParams, UpdateLeadResponse>(functions, 'api-admin-leads-update');
+const exportLeadsToCsv = httpsCallable<void, string>(functions, 'api-admin-leads-export');
+
 export default function LeadsTable() {
   const [rows, setRows] = useState<Lead[]>([]);
   const [q, setQ] = useState('');
@@ -36,7 +63,7 @@ export default function LeadsTable() {
   const [source, setSource] = useState<string>('all');
   const [loading, setLoading] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const result = await listLeads({
@@ -48,7 +75,7 @@ export default function LeadsTable() {
         ...(q && { search: q })
       });
 
-      const data = result.data as { ok: boolean, leads: Lead[], error: string };
+      const data = result.data;
 
       if (data?.ok && data.leads) {
         setRows(data.leads || []);
@@ -61,16 +88,16 @@ export default function LeadsTable() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [stage, source, q]);
 
   useEffect(() => {
     load();
-  }, [stage, source, q]);
+  }, [load]);
 
   async function update(id: string, patch: Partial<Lead>) {
     try {
       const result = await updateLead({ id, ...patch });
-      const data = result.data as { ok: boolean, error: string };
+      const data = result.data;
       if (data?.ok) {
         toast.success('Lead updated');
         load(); // Refresh list after update
@@ -86,7 +113,7 @@ export default function LeadsTable() {
   async function exportToCSV() {
     try {
       const result = await exportLeadsToCsv();
-      const csv = result.data as string;
+      const csv = result.data;
 
       if (!csv) {
         toast.error('Export returned empty data.');

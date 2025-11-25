@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import SmartLink from '@/components/SmartLink';
 import { usePWA } from '../core/PWAProvider';
 import { GuestPrompt } from '../core/GuestPrompt';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/firebase/config';
 import {
   User, Target, Calendar, TrendingUp, Award,
   Settings, LogOut, Sparkles, ArrowRight

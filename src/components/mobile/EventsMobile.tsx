@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import MobileShell, { Section, MobileCard, Skeleton } from "./MobileShell";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { eventService, Event } from "@/services/events";
 
+interface TranslatableString {
+  en?: string;
+  [key: string]: string | undefined;
+}
+
 export default function EventsMobile() {
-  const [allEvents, setAllEvents] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -31,15 +36,16 @@ export default function EventsMobile() {
     load();
   }, []);
 
-  useEffect(() => {
-    // Filter and Paginate
+  const filterAndPaginate = useCallback(() => {
     if (loading && page === 1) return; // Don't filter while initial loading
 
     let filtered = allEvents;
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       filtered = allEvents.filter(e => {
-        const title = typeof e.title === 'string' ? e.title : (e.title?.en || '');
+        const title = typeof e.title === 'string' 
+          ? e.title 
+          : ((e.title as unknown as TranslatableString).en || '');
         return title.toLowerCase().includes(q);
       });
     }
@@ -47,8 +53,11 @@ export default function EventsMobile() {
     const slice = filtered.slice(0, page * PAGE_SIZE);
     setEvents(slice);
     setHasMore(slice.length < filtered.length);
+  }, [page, searchQuery, allEvents, loading]);
 
-  }, [page, searchQuery, allEvents]);
+  useEffect(() => {
+    filterAndPaginate();
+  }, [filterAndPaginate]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -60,11 +69,15 @@ export default function EventsMobile() {
       { threshold: 0.1 }
     );
 
-    if (sentryRef.current) {
-      observer.observe(sentryRef.current);
+    const currentSentry = sentryRef.current;
+    if (currentSentry) {
+      observer.observe(currentSentry);
     }
 
-    return () => observer.disconnect();
+    return () => {
+        if (currentSentry) observer.unobserve(currentSentry);
+        observer.disconnect();
+    };
   }, [loading, hasMore]);
 
   return (
@@ -127,12 +140,17 @@ export default function EventsMobile() {
   );
 }
 
-function EventCard({ event }: { event: any }) {
+function EventCard({ event }: { event: Event }) {
   const startDate = new Date(event.start_at);
   const month = startDate.toLocaleString(undefined, { month: 'short' }).toUpperCase();
   const day = startDate.getDate();
-  const title = typeof event.title === 'string' ? event.title : (event.title?.en || 'Untitled');
-  const summary = typeof event.summary === 'string' ? event.summary : (event.summary?.en || '');
+  const title = typeof event.title === 'string' 
+    ? event.title 
+    : ((event.title as unknown as TranslatableString).en || 'Untitled');
+  
+  const summary = typeof event.summary === 'string' 
+    ? event.summary 
+    : ((event.summary as unknown as TranslatableString).en || '');
 
   return (
     <MobileCard href={`/events/${event.slug}`}>

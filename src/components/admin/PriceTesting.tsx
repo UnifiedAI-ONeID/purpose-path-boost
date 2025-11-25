@@ -6,9 +6,34 @@ import { toast } from 'sonner';
 import { functions } from '@/firebase/config';
 import { httpsCallable } from 'firebase/functions';
 
-const suggestPricing = httpsCallable(functions, 'api-admin-pricing-suggest');
-const applyPricingSuggestion = httpsCallable(functions, 'api-admin-pricing-apply-suggestion');
-const adoptPricingWinner = httpsCallable(functions, 'api-admin-pricing-adopt-winner');
+interface Suggestion {
+    id: string;
+    variant: string;
+    currency: string;
+    price_cents: number;
+    suggest_cents: number;
+    reasoning: string;
+}
+
+interface SuggestPricingResponse {
+    ok: boolean;
+    suggestions: Suggestion[];
+    error: string;
+}
+
+interface ApplyPricingResponse {
+    ok: boolean;
+    error: string;
+}
+
+interface AdoptWinnerResponse {
+    ok: boolean;
+    error: string;
+}
+
+const suggestPricing = httpsCallable<{ ticketId: string; region: string }, SuggestPricingResponse>(functions, 'api-admin-pricing-suggest');
+const applyPricingSuggestion = httpsCallable<{ ticketId: string; currency: string; priceCents: number }, ApplyPricingResponse>(functions, 'api-admin-pricing-apply-suggestion');
+const adoptPricingWinner = httpsCallable<{ testId: string; winningVariant: string }, AdoptWinnerResponse>(functions, 'api-admin-pricing-adopt-winner');
 
 interface PriceTestingProps {
   eventId: string;
@@ -17,8 +42,8 @@ interface PriceTestingProps {
   baseCurrency: string;
 }
 
-export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrency }: PriceTestingProps) {
-  const [suggestion, setSuggestion] = useState<any>(null);
+export default function PriceTesting({ ticketId }: PriceTestingProps) {
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [country, setCountry] = useState('CN');
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState<string>('');
@@ -30,14 +55,14 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
           ticketId, 
           region: country 
         });
-      const data = result.data as { ok: boolean, suggestions: any[], error: string };
+      const data = result.data;
       if (data?.ok) {
         setSuggestion(data.suggestions?.[0]);
         setNote('');
       } else {
         toast.error(data?.error || 'Failed to get suggestions');
       }
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to get suggestions');
     } finally {
       setLoading(false);
@@ -54,14 +79,14 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
           currency: suggestion.currency,
           priceCents: suggestion.price_cents
         });
-      const data = result.data as { ok: boolean, error: string };
+      const data = result.data;
       if (data?.ok) {
         toast.success('Applied pricing suggestion');
         setNote(`Applied ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);
       } else {
         toast.error(data?.error || 'Failed to apply suggestion');
       }
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to apply suggestion');
     } finally {
       setLoading(false);
@@ -71,18 +96,20 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
   async function adoptWinner() {
     setLoading(true);
     try {
+      if (!suggestion) return;
+      
       const result = await adoptPricingWinner({
-          testId: suggestion?.id,
-          winningVariant: suggestion?.variant
+          testId: suggestion.id,
+          winningVariant: suggestion.variant
         });
-      const data = result.data as { ok: boolean, error: string };
+      const data = result.data;
       if (data?.ok) {
         toast.success('Adopted winning variant');
         setNote(`Winner adopted: ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);
       } else {
         toast.error(data?.error || 'Failed to adopt winner');
       }
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to adopt winner');
     } finally {
       setLoading(false);

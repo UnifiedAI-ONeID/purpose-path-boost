@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Calendar, Copy, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { auth, db } from '@/lib/firebase';
+import { auth, db } from '@/firebase/config';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 

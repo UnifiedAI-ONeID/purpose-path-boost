@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { invokeApi } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -6,32 +6,63 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
+interface CalSettings {
+  handle: string;
+  eventType: string;
+  theme: string;
+}
+
+interface YoutubeSettings {
+  privacy_mode: boolean;
+  captions: boolean;
+  default_lang: string;
+}
+
+interface CnSettings {
+  base_url: string;
+}
+
+interface Secret {
+    key: string;
+    updated_at: string;
+}
+
+interface SettingsState {
+    settings?: { key: string; value: unknown }[];
+    secrets?: Secret[];
+}
+
+interface ApiResponse<T> {
+  data: T | null;
+  error?: string;
+}
+
 export default function IntegrationsAdmin() {
-  const [state, setState] = useState<any>(null);
-  const [cal, setCal] = useState({ handle: '', eventType: '', theme: 'auto' });
-  const [yt, setYt] = useState({ privacy_mode: true, captions: true, default_lang: 'en' });
-  const [cn, setCn] = useState({ base_url: '' });
+  const [state, setState] = useState<SettingsState | null>(null);
+  const [cal, setCal] = useState<CalSettings>({ handle: '', eventType: '', theme: 'auto' });
+  const [yt, setYt] = useState<YoutubeSettings>({ privacy_mode: true, captions: true, default_lang: 'en' });
+  const [cn, setCn] = useState<CnSettings>({ base_url: '' });
   const [secret, setSecret] = useState({ key: '', value: '' });
 
-  async function load() {
-    const { data } = await invokeApi('/api/admin/integrations/get');
+  const load = useCallback(async () => {
+    const { data } = await invokeApi<SettingsState>('/api/admin/integrations/get');
     if (data) {
       setState(data);
-      const map: Record<string, any> = {};
-      (data.settings || []).forEach((r: any) => {
+      const map: Record<string, unknown> = {};
+      (data.settings || []).forEach((r) => {
         map[r.key] = r.value;
       });
-      setCal(map.calcom || cal);
-      setYt(map.youtube || yt);
-      setCn(map.cn_video || cn);
+      if (map.calcom) setCal(map.calcom as CalSettings);
+      if (map.youtube) setYt(map.youtube as YoutubeSettings);
+      if (map.cn_video) setCn(map.cn_video as CnSettings);
     }
-  }
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const save = async (key: string, value: any) => {
+  const save = async (key: string, value: unknown) => {
     await invokeApi('/api/admin/integrations/set', {
       method: 'POST',
       body: { key, value }
@@ -187,7 +218,7 @@ export default function IntegrationsAdmin() {
         <div className="mt-4">
           <h4 className="font-medium text-sm mb-2">Stored Secrets:</h4>
           <ul className="text-xs space-y-1">
-            {(state.secrets || []).map((s: any) => (
+            {(state.secrets || []).map((s) => (
               <li key={s.key} className="text-muted-foreground">
                 {s.key} · updated {new Date(s.updated_at).toLocaleString()}
               </li>

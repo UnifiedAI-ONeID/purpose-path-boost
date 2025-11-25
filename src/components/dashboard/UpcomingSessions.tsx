@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
+
+interface Session {
+    start_at: string;
+    title: string;
+}
+
+interface UserSummary {
+    next_session: Session;
+}
 
 export default function UpcomingSessions({ profileId }: { profileId: string }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<UserSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,6 +27,15 @@ export default function UpcomingSessions({ profileId }: { profileId: string }) {
     }
     load();
   }, [profileId]);
+
+  if (loading) {
+      return (
+        <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <div className="font-semibold text-lg">Your next session</div>
+            <div className="text-sm text-muted-foreground mt-2">Loading...</div>
+        </div>
+      );
+  }
 
   const session = data?.next_session;
 

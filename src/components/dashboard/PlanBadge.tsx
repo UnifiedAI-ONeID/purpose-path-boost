@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
+
+interface UserSummary {
+    plan: string;
+    remaining?: number;
+}
 
 export default function PlanBadge({ profileId }: { profileId: string }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<UserSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { db } from '@/lib/firebase';
+import { db } from '@/firebase/config';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 
 const LS_KEY = 'zg.content.v';

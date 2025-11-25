@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { functions } from '@/firebase/config';
-import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import { httpsCallable } from 'firebase/functions';
 
 interface FxAuditTicketProps {
   ticketId: string;
@@ -15,11 +15,20 @@ interface Quote {
     source: string;
     currency: string;
     display_cents: number;
-    steps: any;
-    rates_meta: any;
+    steps: {
+        base?: { currency: string; cents: number };
+        fx_unavailable?: boolean;
+        fx?: { via: string; rate: number; raw_cents: number };
+        buffer_bps: number;
+        buffered_cents: number;
+        cny_rounding?: string;
+        rounded_cents: number;
+        override?: { cents: number };
+    };
+    rates_meta: Record<string, { updated_at: string }>;
 }
 
-const fxInspect = httpsCallable<any, HttpsCallableResult<Quote>>(functions, 'api-admin-fx-inspect');
+const fxInspect = httpsCallable<{ ticketId: string; currency: string }, Quote>(functions, 'api-admin-fx-inspect');
 
 export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
   const [currency, setCurrency] = useState('USD');
@@ -102,7 +111,7 @@ export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
           <div className="rounded-lg border p-3">
             <div className="text-muted-foreground mb-1">Base</div>
             <div className="font-medium">
-              {steps.base?.currency} {(steps.base?.cents / 100).toFixed(2)}
+              {steps.base?.currency} {(steps.base?.cents !== undefined ? steps.base.cents / 100 : 0).toFixed(2)}
             </div>
           </div>
           <div className="rounded-lg border p-3">
@@ -113,20 +122,20 @@ export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
               <div>
                 via: {steps.fx?.via || steps.base?.currency} · rate: {steps.fx?.rate ? steps.fx.rate.toFixed(6) : '1.000000'}
                 <br />
-                raw: {((steps.fx?.raw_cents || steps.base?.cents) / 100).toFixed(2)}
+                raw: {((steps.fx?.raw_cents || steps.base?.cents || 0) / 100).toFixed(2)}
               </div>
             )}
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-muted-foreground mb-1">Buffer</div>
             <div>
-              {(steps.buffer_bps / 100).toFixed(2)}% → {(steps.buffered_cents / 100).toFixed(2)}
+              {((steps.buffer_bps || 0) / 100).toFixed(2)}% → {((steps.buffered_cents || 0) / 100).toFixed(2)}
             </div>
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-muted-foreground mb-1">Rounding</div>
             <div>
-              {quote.currency === 'CNY' ? `CNY (${steps.cny_rounding})` : '.99 rule'} → {(steps.rounded_cents / 100).toFixed(2)}
+              {quote.currency === 'CNY' ? `CNY (${steps.cny_rounding})` : '.99 rule'} → {((steps.rounded_cents || 0) / 100).toFixed(2)}
             </div>
           </div>
         </div>
@@ -139,7 +148,7 @@ export default function FxAuditTicket({ ticketId }: FxAuditTicketProps) {
 
         <div className="text-xs text-muted-foreground">
           Rates updated: {quote.rates_meta 
-            ? Object.entries(quote.rates_meta).map(([b, m]: [string, { updated_at: string }]) => 
+            ? Object.entries(quote.rates_meta).map(([b, m]) => 
                 `${b}: ${new Date(m.updated_at).toLocaleString()}`
               ).join(' · ') 
             : '—'}

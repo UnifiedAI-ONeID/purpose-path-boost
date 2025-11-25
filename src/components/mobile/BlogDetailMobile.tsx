@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import { Helmet } from "react-helmet-async";
@@ -22,6 +22,11 @@ type Post = {
   meta_description?: string;
 };
 
+interface TranslatableString {
+  en?: string;
+  [key: string]: string | undefined;
+}
+
 export default function BlogDetailMobile() {
   const { slug } = useParams();
   const [post, setPost] = useState<Post | null>(null);
@@ -30,23 +35,7 @@ export default function BlogDetailMobile() {
   const [related, setRelated] = useState<Post[]>([]);
   const articleRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadPost();
-  }, [slug]);
-
-  useEffect(() => {
-    function onScroll() {
-      if (!articleRef.current) return;
-      const el = articleRef.current;
-      const max = el.scrollHeight - window.innerHeight;
-      setReading(Math.max(0, Math.min(1, window.scrollY / Math.max(1, max))));
-    }
-    
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  async function loadPost() {
+  const loadPost = useCallback(async () => {
     if (!slug) return;
 
     try {
@@ -57,14 +46,13 @@ export default function BlogDetailMobile() {
         return;
       }
       
-      // Handle i18n content structure if present
-      // data.content might be object { en: "...", zh: "..." }
-      // Logic below assumes string. Ideally blogService handles this or we handle it here.
-      // For now assuming data.content is string or mapped by service.
-      // But my blogService just returned ...data.
-      // I'll do a quick check:
-      const content = typeof data.content === 'object' ? (data.content.en || '') : data.content;
-      const title = typeof data.title === 'object' ? (data.title.en || '') : data.title;
+      const content = typeof data.content === 'object' 
+        ? ((data.content as unknown as TranslatableString).en || '') 
+        : data.content;
+        
+      const title = typeof data.title === 'object' 
+        ? ((data.title as unknown as TranslatableString).en || '') 
+        : data.title;
       
       const postData = { ...data, content, title };
       
@@ -87,7 +75,23 @@ export default function BlogDetailMobile() {
     } catch (err) {
       console.error('Failed to load post:', err);
     }
-  }
+  }, [slug]);
+
+  useEffect(() => {
+    loadPost();
+  }, [loadPost]);
+
+  useEffect(() => {
+    function onScroll() {
+      if (!articleRef.current) return;
+      const el = articleRef.current;
+      const max = el.scrollHeight - window.innerHeight;
+      setReading(Math.max(0, Math.min(1, window.scrollY / Math.max(1, max))));
+    }
+    
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   function tagHeadings(html: string) {
     if (!html) return '';
@@ -103,7 +107,7 @@ export default function BlogDetailMobile() {
     try {
       await navigator.clipboard.writeText(url);
       alert('Link copied to clipboard!');
-    } catch (err) {
+    } catch {
       alert('Failed to copy link');
     }
   }

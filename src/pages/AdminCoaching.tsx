@@ -1,7 +1,7 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import { invokeApi } from '@/lib/api-client';
 
 type Offer = {

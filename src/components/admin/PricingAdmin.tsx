@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { functions } from '@/firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,16 +11,16 @@ import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
 
 // Firebase callable functions
-const listPlansFn = httpsCallable(functions, 'admin-plans-list');
-const upsertPlanFn = httpsCallable(functions, 'admin-plans-upsert');
-const deletePlanFn = httpsCallable(functions, 'admin-plans-delete');
-const listPackagesFn = httpsCallable(functions, 'admin-packages-list');
-const upsertPackageFn = httpsCallable(functions, 'admin-packages-upsert');
-const setPackageLessonsFn = httpsCallable(functions, 'admin-package-lessons-set');
-const setPlanIncludesFn = httpsCallable(functions, 'admin-plan-includes-set');
-const listFunnelsFn = httpsCallable(functions, 'admin-funnels-list');
-const upsertFunnelFn = httpsCallable(functions, 'admin-funnels-upsert');
-const setFunnelTriggersFn = httpsCallable(functions, 'admin-funnel-triggers-set');
+const listPlansFn = httpsCallable<void, { rows: Tier[] }>(functions, 'admin-plans-list');
+const upsertPlanFn = httpsCallable<Tier, void>(functions, 'admin-plans-upsert');
+const deletePlanFn = httpsCallable<{ slug: string }, void>(functions, 'admin-plans-delete');
+const listPackagesFn = httpsCallable<void, { rows: Package[] }>(functions, 'admin-packages-list');
+const upsertPackageFn = httpsCallable<Partial<Package>, void>(functions, 'admin-packages-upsert');
+const setPackageLessonsFn = httpsCallable<{ package_id?: string; lessons: { slug: string; order_index: number }[] }, void>(functions, 'admin-package-lessons-set');
+const setPlanIncludesFn = httpsCallable<{ plan_slug: string; package_ids: string[] }, void>(functions, 'admin-plan-includes-set');
+const listFunnelsFn = httpsCallable<void, { rows: Funnel[] }>(functions, 'admin-funnels-list');
+const upsertFunnelFn = httpsCallable<Partial<Funnel>, void>(functions, 'admin-funnels-upsert');
+const setFunnelTriggersFn = httpsCallable<{ lesson_slug: string; funnel_slugs: string[] }, void>(functions, 'admin-funnel-triggers-set');
 
 // Type definitions
 interface Tier {
@@ -28,7 +28,7 @@ interface Tier {
   title: string;
   monthly_usd_cents: number;
   annual_usd_cents: number;
-  features: Record<string, any>;
+  features: Record<string, unknown>;
   price_id_month?: string | null;
   price_id_year?: string | null;
   blurb?: string;
@@ -51,7 +51,7 @@ interface Funnel {
   slug: string;
   name: string;
   target_plan_slug: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 const initialTierFormState: Tier = {
@@ -115,14 +115,14 @@ function TiersTab() {
   const [featuresJson, setFeaturesJson] = useState(JSON.stringify(initialTierFormState.features, null, 2));
   const [faqJson, setFaqJson] = useState(JSON.stringify(initialTierFormState.faq, null, 2));
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
         const result = await listPlansFn();
-        setRows((result.data as any).rows || []);
-    } catch (error) { toast.error('Failed to load tiers.') }
-  }
+        setRows(result.data.rows || []);
+    } catch { toast.error('Failed to load tiers.') }
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
   
   useEffect(() => {
     setFeaturesJson(JSON.stringify(form.features || {}, null, 2));
@@ -138,8 +138,8 @@ function TiersTab() {
       toast.success('Plan saved successfully');
       load();
       resetForm();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save plan. Check JSON validity.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save plan. Check JSON validity.');
     }
   }
 
@@ -149,7 +149,7 @@ function TiersTab() {
         await deletePlanFn({ slug });
         toast.success('Plan deleted');
         load();
-    } catch(err: any) { toast.error(err.message || 'Failed to delete plan.'); }
+    } catch(err) { toast.error(err instanceof Error ? err.message : 'Failed to delete plan.'); }
   }
 
   function resetForm() {
@@ -247,14 +247,14 @@ function PackagesTab() {
   const [lessonQuery, setLessonQuery] = useState('');
   const [selected, setSelected] = useState<{ slug: string, order_index: number }[]>([]);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const result = await listPackagesFn();
-      setRows((result.data as any).rows || []);
-    } catch(e) { toast.error('Failed to load packages')}
-  }
+      setRows(result.data.rows || []);
+    } catch { toast.error('Failed to load packages')}
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   async function save() {
     try {
@@ -262,8 +262,8 @@ function PackagesTab() {
       toast.success('Package saved');
       load();
       resetForm();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save package');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save package');
     }
   }
 
@@ -272,7 +272,7 @@ function PackagesTab() {
       await setPackageLessonsFn({ package_id: pkg.id, lessons: selected });
       toast.success('Lessons updated');
       load();
-    } catch(err: any) { toast.error(err.message || 'Failed to update lessons'); }
+    } catch(err) { toast.error(err instanceof Error ? err.message : 'Failed to update lessons'); }
   }
 
   function resetForm() {
@@ -354,21 +354,21 @@ function MappingTab() {
   const [plan, setPlan] = useState<string>('');
   const [sel, setSel] = useState<Record<string, boolean>>({});
 
-  async function load() {
+  const load = useCallback(async () => {
     const p = await listPlansFn();
-    setPlans((p.data as any).rows || []);
+    setPlans(p.data.rows || []);
     const k = await listPackagesFn();
-    setPkgs((k.data as any).rows || []);
-  }
+    setPkgs(k.data.rows || []);
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   async function save() {
     const ids = pkgs.filter(x => sel[x.id]).map(x => x.id);
     try {
       await setPlanIncludesFn({ plan_slug: plan, package_ids: ids });
       toast.success('Mapping saved!');
-    } catch (err: any) { toast.error(err.message || 'Failed to save mapping'); }
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to save mapping'); }
   }
 
   return (
@@ -402,14 +402,14 @@ function FunnelsTab() {
   const [configJson, setConfigJson] = useState(JSON.stringify(initialFunnelFormState.config, null, 2));
   const [attach, setAttach] = useState({ lesson_slug: '', funnel_slugs: '' });
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const result = await listFunnelsFn();
-      setFunnels((result.data as any).rows || []);
-    } catch(e) { toast.error('Failed to load funnels'); }
-  }
+      setFunnels(result.data.rows || []);
+    } catch { toast.error('Failed to load funnels'); }
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
   
   useEffect(() => {
       setConfigJson(JSON.stringify(form.config || {}, null, 2));
@@ -422,8 +422,8 @@ function FunnelsTab() {
       toast.success('Funnel saved');
       load();
       resetForm();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save funnel. Check JSON validity.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save funnel. Check JSON validity.');
     }
   }
 
@@ -433,7 +433,7 @@ function FunnelsTab() {
         await setFunnelTriggersFn({ lesson_slug: attach.lesson_slug, funnel_slugs: arr });
         toast.success('Funnel triggers linked!');
         setAttach({ lesson_slug: '', funnel_slugs: '' });
-      } catch (err: any) { toast.error(err.message || 'Failed to link triggers'); }
+      } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to link triggers'); }
   }
 
   function resetForm() {

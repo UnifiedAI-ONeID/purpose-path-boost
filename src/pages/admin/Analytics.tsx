@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, Target, Eye, MousePointer } from 'lucide-react';

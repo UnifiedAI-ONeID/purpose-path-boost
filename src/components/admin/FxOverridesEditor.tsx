@@ -18,7 +18,14 @@ interface FxOverridesEditorProps {
   ticketId: string;
 }
 
-const manageTicketOverrides = httpsCallable(functions, 'api-admin-tickets-overrides');
+interface ManageTicketOverridesResponse {
+    overrides: Override[];
+}
+
+const manageTicketOverrides = httpsCallable<
+    { ticketId: string; currency?: string; priceCents?: number; action?: string },
+    ManageTicketOverridesResponse
+>(functions, 'api-admin-tickets-overrides');
 
 export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) {
   const [overrides, setOverrides] = useState<Override[]>([]);
@@ -29,7 +36,7 @@ export default function FxOverridesEditor({ ticketId }: FxOverridesEditorProps) 
   const loadOverrides = useCallback(async () => {
     try {
       const result = await manageTicketOverrides({ ticketId });
-      setOverrides((result.data as any)?.overrides || []);
+      setOverrides(result.data?.overrides || []);
     } catch (e) {
       toast.error('Failed to load overrides');
     } finally {

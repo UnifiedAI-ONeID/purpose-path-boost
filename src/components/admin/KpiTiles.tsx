@@ -1,5 +1,14 @@
-export default function KpiTiles({ kpi }: { kpi: any }) {
-  const Item = ({ label, val }: { label: string; val: any }) => (
+interface KPI {
+    mrr?: number;
+    active?: number;
+    dau?: number;
+    mau?: number;
+    completes30?: number;
+    bookings30?: number;
+}
+
+export default function KpiTiles({ kpi }: { kpi: KPI }) {
+  const Item = ({ label, val }: { label: string; val: string | number }) => (
     <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
       <div className="text-sm text-muted-foreground">{label}</div>
       <div className="text-2xl font-semibold mt-1">{val}</div>

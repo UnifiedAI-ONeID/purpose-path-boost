@@ -2,7 +2,7 @@ import { ChangeEvent, useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { PLATFORM_DISPLAY_NAMES, PlatKey } from '@/lib/og/sizes';
 import { Loader2, Download, ExternalLink } from 'lucide-react';

@@ -1,0 +1,7 @@
+src/lib/funnels.ts:import { db } from '@/lib/firebase';
+src/lib/versionGuard.ts:import { db } from '@/lib/firebase';
+src/pwa/core/PWAProvider.tsx:import { auth, db } from '@/lib/firebase';
+src/pwa/screens/MeDashboard.tsx:import { auth } from '@/lib/firebase';
+src/pwa/screens/Dashboard.tsx:import { auth, db } from '@/lib/firebase';
+src/analytics/events.ts:import { db } from '@/lib/firebase';
+src/pages/MeDashboard.tsx:import { db, auth } from '@/lib/firebase';

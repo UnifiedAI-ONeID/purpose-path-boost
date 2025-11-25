@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import BottomSheet from "./BottomSheet";
 import { invokeApi } from "@/lib/api-client";
 
@@ -11,11 +11,30 @@ type Props = {
   defaultEmail?: string;
 };
 
+interface PricePreviewResponse {
+    ok: boolean;
+    display_cents: number;
+    currency: string;
+}
+
+interface CouponPreviewResponse {
+    ok: boolean;
+    total_cents: number;
+    currency?: string;
+    discount_cents: number;
+    reason?: string;
+}
+
+interface RegisterResponse {
+    ok: boolean;
+    url?: string;
+    error?: string;
+}
+
 export default function EventRegisterSheet({ 
   open, 
   onClose, 
   eventId, 
-  eventSlug, 
   tickets, 
   defaultEmail 
 }: Props) {
@@ -28,25 +47,25 @@ export default function EventRegisterSheet({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string>('');
 
-  useEffect(() => {
-    if (open && ticketId) {
-      previewPrice();
-    }
-  }, [open, ticketId, currency]);
-
-  async function previewPrice() {
+  const previewPrice = useCallback(async () => {
     try {
-      const data = await invokeApi('/api/events/price-preview', {
+      const data = await invokeApi<PricePreviewResponse>('/api/events/price-preview', {
         body: { ticket_id: ticketId, currency }
       });
       
-      if (data?.ok) {
-        setPrice({ amount: data.display_cents, cur: data.currency });
+      if (data.data?.ok) {
+        setPrice({ amount: data.data.display_cents, cur: data.data.currency });
       }
     } catch (err) {
       console.error('Failed to preview price:', err);
     }
-  }
+  }, [ticketId, currency]);
+
+  useEffect(() => {
+    if (open && ticketId) {
+      previewPrice();
+    }
+  }, [open, ticketId, currency, previewPrice]);
 
   async function applyCoupon() {
     if (!coupon || !email) {
@@ -55,17 +74,17 @@ export default function EventRegisterSheet({
     }
 
     try {
-      const data = await invokeApi('/api/events/coupon-preview', {
+      const data = await invokeApi<CouponPreviewResponse>('/api/events/coupon-preview', {
         body: { event_id: eventId, ticket_id: ticketId, email, code: coupon }
       });
       
-      if (data?.ok) {
-        setPrice({ amount: data.total_cents, cur: data.currency || currency });
-        setMsg(`Coupon applied! Saved ${(data.discount_cents / 100).toFixed(2)}`);
+      if (data.data?.ok) {
+        setPrice({ amount: data.data.total_cents, cur: data.data.currency || currency });
+        setMsg(`Coupon applied! Saved ${(data.data.discount_cents / 100).toFixed(2)}`);
       } else {
-        alert(`Invalid code: ${data?.reason || 'Unknown error'}`);
+        alert(`Invalid code: ${data.data?.reason || 'Unknown error'}`);
       }
-    } catch (err) {
+    } catch {
       alert('Failed to apply coupon');
     }
   }
@@ -80,7 +99,7 @@ export default function EventRegisterSheet({
     setMsg('');
 
     try {
-      const data = await invokeApi('/api/events/register', {
+      const data = await invokeApi<RegisterResponse>('/api/events/register', {
         body: {
           event_id: eventId,
           ticket_id: ticketId,
@@ -92,16 +111,16 @@ export default function EventRegisterSheet({
         }
       });
 
-      if (data?.ok && data?.url) {
+      if (data.data?.ok && data.data?.url) {
         // Redirect to payment
-        window.location.href = data.url;
-      } else if (data?.ok && !data?.url) {
+        window.location.href = data.data.url;
+      } else if (data.data?.ok && !data.data?.url) {
         setMsg('Registered successfully! Check your email for details.');
         setTimeout(onClose, 2000);
       } else {
-        throw new Error(data?.error || 'Registration failed');
+        throw new Error(data.data?.error || 'Registration failed');
       }
-    } catch (err) {
+    } catch {
       alert('Unable to complete registration. Please try again.');
     } finally {
       setBusy(false);

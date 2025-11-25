@@ -5,7 +5,7 @@ import { ROUTES } from '@/nav/routes';
 import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
 

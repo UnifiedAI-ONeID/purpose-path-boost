@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ComponentType } from "react";
 import { useLocation } from "react-router-dom";
 
 export default function MobileShell({ children }: { children: React.ReactNode }) {
@@ -105,7 +105,7 @@ export function Section({ title, children, subtitle }: {
 }
 
 export function MobileCard({ children, href }: { children: React.ReactNode; href?: string }) {
-  const Component: any = href ? 'a' : 'div';
+  const Component = href ? 'a' : 'div';
   return (
     <Component 
       href={href} 
@@ -121,7 +121,7 @@ export function MobileCTA({ children, href, onClick }: {
   href?: string; 
   onClick?: () => void 
 }) {
-  const Component: any = href ? 'a' : 'button';
+  const Component = (href ? 'a' : 'button') as ComponentType<{ href?: string; onClick?: () => void; className: string; children: React.ReactNode }>;
   return (
     <Component 
       href={href} 

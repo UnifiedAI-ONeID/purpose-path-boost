@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import { invokeApi } from '@/lib/api-client';
 import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 

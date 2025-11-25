@@ -21,7 +21,7 @@ export default function Quiz() {
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
-    import('@/db').then(({ dbClient: supabase }) => {
+    import('@/lib/supabase').then(({ dbClient: supabase }) => {
       supabase.functions
         .invoke('pwa-boot', {
           body: { lang },
@@ -36,7 +36,7 @@ export default function Quiz() {
   async function choose(choice: any) {
     const device_id = localStorage.getItem('zg.device')!;
     
-    const { dbClient: supabase } = await import('@/db');
+    const { dbClient: supabase } = await import('@/lib/supabase');
     supabase.functions.invoke('pwa-quiz-answer', {
       body: {
         device_id,

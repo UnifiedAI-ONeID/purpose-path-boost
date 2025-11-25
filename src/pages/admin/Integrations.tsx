@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
 import { adminService } from '@/services/admin';

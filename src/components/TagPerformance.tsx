@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useState, ChangeEvent } from 'react';
 import { db } from '@/firebase/config';
-import { collection, getDocs, query, DocumentData } from 'firebase/firestore';
+import { collection, getDocs, query } from 'firebase/firestore';
 import { Card } from './ui/card';
 import { Label } from './ui/label';
 import { startOfWeek, format } from 'date-fns';

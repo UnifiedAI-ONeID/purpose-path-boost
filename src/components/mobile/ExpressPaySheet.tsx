@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { invokeApi } from "@/lib/api-client";
 import BottomSheet from "./BottomSheet";
@@ -12,6 +12,18 @@ const expressPaySchema = z.object({
 });
 
 type ExpressPayForm = z.infer<typeof expressPaySchema>;
+
+interface ExpressPayPriceResponse {
+    ok: boolean;
+    amount_cents: number;
+    currency: string;
+}
+
+interface ExpressPayCreateResponse {
+    ok: boolean;
+    url?: string;
+    error?: string;
+}
 
 export default function ExpressPaySheet({ 
   open, 
@@ -32,26 +44,26 @@ export default function ExpressPaySheet({
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof ExpressPayForm, string>>>({});
 
-  useEffect(() => {
-    if (open) {
-      refreshPrice();
-    }
-  }, [open, currency]);
-
-  async function refreshPrice() {
+  const refreshPrice = useCallback(async () => {
     try {
-      const data = await invokeApi('/api/express/price', {
+      const data = await invokeApi<ExpressPayPriceResponse>('/api/express/price', {
         body: { currency }
       });
       
-      if (data?.ok) {
-        setPrice({ amount: data.amount_cents, cur: data.currency });
+      if (data.data?.ok) {
+        setPrice({ amount: data.data.amount_cents, cur: data.data.currency });
       }
     } catch (err) {
       console.error('Failed to load price:', err);
       toast.error('Failed to load price');
     }
-  }
+  }, [currency]);
+
+  useEffect(() => {
+    if (open) {
+      refreshPrice();
+    }
+  }, [open, currency, refreshPrice]);
 
   async function handlePay() {
     // Clear previous errors
@@ -82,7 +94,7 @@ export default function ExpressPaySheet({
     setBusy(true);
 
     try {
-      const data = await invokeApi('/api/express/create', {
+      const data = await invokeApi<ExpressPayCreateResponse>('/api/express/create', {
         body: {
           name: validation.data.name,
           email: validation.data.email,
@@ -93,11 +105,11 @@ export default function ExpressPaySheet({
         }
       });
 
-      if (data?.ok && data?.url) {
+      if (data.data?.ok && data.data?.url) {
         // Redirect to payment
-        window.location.href = data.url;
+        window.location.href = data.data.url;
       } else {
-        throw new Error(data?.error || 'Payment creation failed');
+        throw new Error(data.data?.error || 'Payment creation failed');
       }
     } catch (err) {
       console.error('Payment error:', err);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 
 type NpsQuickProps = {
   profileId: string;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { supabase } from '@/lib/supabase';
 
 export type UserAnalytics = {
   ok: boolean;

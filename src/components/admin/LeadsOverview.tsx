@@ -1,20 +1,47 @@
 import { useEffect, useState } from 'react';
 import { functions } from '@/firebase/config';
 import { httpsCallable } from 'firebase/functions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
-const getLeadsAnalytics = httpsCallable(functions, 'api-admin-leads-analytics');
+interface Summary {
+    totalLeads: number;
+    wonLeads: number;
+    todayLeads: number;
+    conversionRate: number;
+    weekOverWeekGrowth: number;
+    avgClarityScore: number;
+}
+
+interface Breakdown {
+    byStage: Record<string, number>;
+    bySource: Record<string, number>;
+    byLanguage: Record<string, number>;
+    byCountry: Record<string, number>;
+}
+
+interface Analytics {
+    summary: Summary;
+    breakdown: Breakdown;
+}
+
+interface ApiResponse {
+    ok: boolean;
+    analytics: Analytics;
+    error?: string;
+}
+
+const getLeadsAnalytics = httpsCallable<void, ApiResponse>(functions, 'api-admin-leads-analytics');
 
 export default function LeadsOverview() {
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
     try {
       const response = await getLeadsAnalytics();
-      const data = response.data as { ok: boolean, analytics: any, error: string };
+      const data = response.data;
 
       if (data?.ok && data.analytics) {
         setAnalytics(data.analytics);
@@ -110,7 +137,7 @@ export default function LeadsOverview() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(analytics.breakdown.byStage).map(([stage, count]: [string, any]) => (
+                {Object.entries(analytics.breakdown.byStage).map(([stage, count]) => (
                   <div key={stage} className="flex items-center justify-between">
                     <span className="text-sm capitalize">{stage}</span>
                     <div className="flex items-center gap-2">
@@ -135,7 +162,7 @@ export default function LeadsOverview() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(analytics.breakdown.bySource).map(([source, count]: [string, any]) => (
+                {Object.entries(analytics.breakdown.bySource).map(([source, count]) => (
                   <div key={source} className="flex items-center justify-between">
                     <span className="text-sm capitalize">{source}</span>
                     <div className="flex items-center gap-2">
@@ -160,7 +187,7 @@ export default function LeadsOverview() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(analytics.breakdown.byLanguage).map(([lang, count]: [string, any]) => (
+                {Object.entries(analytics.breakdown.byLanguage).map(([lang, count]) => (
                   <div key={lang} className="flex items-center justify-between">
                     <span className="text-sm uppercase">{lang}</span>
                     <div className="flex items-center gap-2">
@@ -185,7 +212,7 @@ export default function LeadsOverview() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(analytics.breakdown.byCountry).map(([country, count]: [string, any]) => (
+                {Object.entries(analytics.breakdown.byCountry).map(([country, count]) => (
                   <div key={country} className="flex items-center justify-between">
                     <span className="text-sm capitalize">{country}</span>
                     <div className="flex items-center gap-2">

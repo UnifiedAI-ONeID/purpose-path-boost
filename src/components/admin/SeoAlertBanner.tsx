@@ -5,7 +5,7 @@ import { functions } from '@/firebase/config';
 import { httpsCallable } from 'firebase/functions';
 import { invokeApi } from '@/lib/api-client';
 
-const getSeoAlerts = httpsCallable(functions, 'api-admin-seo-alerts');
+const getSeoAlerts = httpsCallable<{ open: number }, Alert[]>(functions, 'api-admin-seo-alerts');
 
 type Alert = {
   id: string;
@@ -15,6 +15,10 @@ type Alert = {
   action_url?: string;
 };
 
+interface ResolveResponse {
+    ok: boolean;
+}
+
 export default function SeoAlertBanner() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +27,7 @@ export default function SeoAlertBanner() {
     async function loadAlerts() {
       try {
         const result = await getSeoAlerts({ open: 1 });
-        const data = result.data as Alert[];
+        const data = result.data;
         setAlerts(data || []);
       } catch (error) {
         console.error('Failed to load SEO alerts:', error);
@@ -41,12 +45,12 @@ export default function SeoAlertBanner() {
 
   async function dismissAlert(id: string) {
     try {
-      const result = await invokeApi('/api/admin/seo/resolve', {
+      const result = await invokeApi<ResolveResponse>('/api/admin/seo/resolve', {
         method: 'POST',
         body: { id }
       });
 
-      if (result.ok) {
+      if (result.data?.ok) {
         setAlerts(alerts.filter(a => a.id !== id));
         toast.success('Alert dismissed');
       }

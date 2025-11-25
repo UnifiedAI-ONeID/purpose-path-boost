@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { db, auth } from '@/lib/firebase';
+import { db, auth } from '@/firebase/config';
 import {
   collection,
   query,
