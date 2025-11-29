@@ -3,95 +3,30 @@
 > eslint .
 
 
-/home/user/purpose-path-boost/src/components/TagPerformance.tsx
-  243:21  error  Parsing error: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+/home/user/purpose-path-boost/functions/src/api.ts
+  32:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-/home/user/purpose-path-boost/src/components/admin/AdminInstallButton.tsx
-  18:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+/home/user/purpose-path-boost/functions/src/internals/secrets.ts
+  22:19  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  67:9   error  Unexpected lexical declaration in case block  no-case-declarations
+  68:9   error  Unexpected lexical declaration in case block  no-case-declarations
 
-/home/user/purpose-path-boost/src/components/admin/FxAuditTicket.tsx
-  18:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  19:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  22:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+/home/user/purpose-path-boost/src/components/BlogEditor.tsx
+  211:30  error  Parsing error: '{' expected
 
-/home/user/purpose-path-boost/src/components/admin/FxOverridesEditor.tsx
-  32:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/IntegrationsAdmin.tsx
-   10:38  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-   20:33  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-   21:41  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-   32:6   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-   34:43  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-  190:44  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/KpiTiles.tsx
-  1:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  2:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/LeadsOverview.tsx
-    8:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  119:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  144:94  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  169:94  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  194:96  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+/home/user/purpose-path-boost/src/components/admin/AdminSecrets.tsx
+  37:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  68:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/admin/LeadsTable.tsx
-   76:6   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-   91:6   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  154:19  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-  239:80  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/PriceTesting.tsx
-  16:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  36:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  62:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  85:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/admin/PricingAdmin.tsx
-   50:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   51:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  100:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  265:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  313:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  314:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  323:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  356:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  361:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  485:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  525:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  526:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  567:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  580:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  607:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  608:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  645:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  765:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/dashboard/PlanBadge.tsx
-  5:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/dashboard/UpcomingSessions.tsx
-  5:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/mobile/BlogDetailMobile.tsx
-  35:6  warning  React Hook useEffect has a missing dependency: 'loadPost'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/user/purpose-path-boost/src/components/mobile/EventRegisterSheet.tsx
-  35:6  warning  React Hook useEffect has a missing dependency: 'previewPrice'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/user/purpose-path-boost/src/components/mobile/EventsMobile.tsx
-    7:46  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
-    8:40  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
-   51:6   warning  React Hook useEffect has a missing dependency: 'loading'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  130:40  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/src/components/mobile/ExpressPaySheet.tsx
-  39:6  warning  React Hook useEffect has a missing dependency: 'refreshPrice'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-
-/home/user/purpose-path-boost/src/components/mobile/MobileShell.tsx
-  108:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  124:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  8:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/components/motion/ScrollReveal.tsx
   10:8  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -129,6 +64,9 @@
 /home/user/purpose-path-boost/src/components/ui/toggle.tsx
   37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
 
+/home/user/purpose-path-boost/src/hooks/useAdminSEO.ts
+  29:6  warning  React Hook useEffect has a missing dependency: 'seoConfigRef'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
 /home/user/purpose-path-boost/src/hooks/useI18nFetch.ts
   20:34  error    Unexpected any. Specify a different type                                                                                                                 @typescript-eslint/no-explicit-any
   22:9   error    Unexpected any. Specify a different type                                                                                                                 @typescript-eslint/no-explicit-any
@@ -163,11 +101,8 @@
   33:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/lib/api-client.ts
-   8:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  12:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  18:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  22:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  54:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   3:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/lib/captions/templates.ts
   36:27  error  Unexpected constant truthiness on the left-hand side of a `||` expression  no-constant-binary-expression
@@ -181,8 +116,12 @@
   50:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/lib/edge.ts
-   8:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  11:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  5:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  8:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/user/purpose-path-boost/src/lib/initAnalytics.ts
+  52:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/lib/integrations.ts
   3:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -210,23 +149,27 @@
   32:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/AdminAI.tsx
-   6:118  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
-  23:29   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
-  39:92   error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
+   9:118  error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
+  27:29   warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  43:92   error    Unexpected any. Specify a different type                                                                 @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/AdminBookings.tsx
-   6:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  67:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/AdminCalBookings.tsx
   8:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
+/home/user/purpose-path-boost/src/pages/AdminCalEventTypes.tsx
+  33:6  warning  React Hook useEffect has a missing dependency: 'reload'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
 /home/user/purpose-path-boost/src/pages/AdminCoaching.tsx
-  113:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  99:80  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/AdminCoupons.tsx
-  60:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  75:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/AdminEventEdit.tsx
    90:6   warning  React Hook useEffect has missing dependencies: 'isNew' and 'loadEvent'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
@@ -257,7 +200,7 @@
   94:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/EventDetail.tsx
-  186:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  189:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/EventsList.tsx
   15:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -306,16 +249,14 @@
   173:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/admin/ReferralsManager.tsx
-  18:50  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
-  20:52  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
-  25:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  51:6   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  56:35  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pages/admin/Settings.tsx
-  13:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  22:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  29:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  33:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  40:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:34  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  23:6   warning  React Hook useEffect has a missing dependency: 'loadOrganization'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  32:46  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  38:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/prefs/PrefsProvider.tsx
   156:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
@@ -343,7 +284,7 @@
   64:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pwa/screens/EnhancedHome.tsx
-  17:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pwa/screens/Home.tsx
   24:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -353,9 +294,9 @@
   172:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/pwa/screens/Quiz.tsx
-  19:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  36:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  93:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/src/services/admin.ts
   17:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -371,76 +312,19 @@
 /home/user/purpose-path-boost/src/services/users.ts
   18:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
+/home/user/purpose-path-boost/src/tests/useAdminAuth.test.ts
+  31:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
 /home/user/purpose-path-boost/src/vite-env.d.ts
   22:11  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   24:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   25:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   26:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   29:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tailwind.config.ts
-  137:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
-
-/home/user/purpose-path-boost/tools/migration/lib/core.ts
-   35:31  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
-   82:20  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
-   82:58  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
-   89:7   error  'state' is never reassigned. Use 'const' instead  prefer-const
-  110:92  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
-  128:21  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_auth.ts
-   5:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   9:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  18:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_bookings.ts
-   3:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  24:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  27:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_commerce.ts
-   3:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  33:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  36:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_content.ts
-   3:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  37:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  40:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_events.ts
-   3:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  36:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  39:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_leads.ts
-  13:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  16:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  26:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  42:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  45:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  65:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  68:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_user_data.ts
-   3:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-   6:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  24:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  27:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  44:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  47:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  64:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  67:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/home/user/purpose-path-boost/tools/migration/scripts/migrate_users.ts
-  11:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  14:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  19:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /home/user/purpose-path-boost/tools/zg-audit/audit.ts
    65:39   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -454,6 +338,8 @@
   118:26   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
   124:108  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
-✖ 261 problems (236 errors, 25 warnings)
-  1 error and 0 warnings potentially fixable with the `--fix` option.
+/home/user/purpose-path-boost/vite.config.ts
+  44:12  error  Parsing error: ',' expected
+
+✖ 180 problems (159 errors, 21 warnings)
 

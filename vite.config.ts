@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: {
+      protocol: 'wss',
+      clientPort: 443
+    }
   },
   publicDir: 'public',
   plugins: [
@@ -36,7 +40,7 @@ export default defineConfig(({ mode }) => ({
             purpose: "any"
           },
           { 
-            src: "/app-icon-192-maskable.png", 
+            src: "/app-icon-192-maskable.png", _composer_unnamed_chunk_1
             sizes: "192x192", 
             type: "image/png",
             purpose: "maskable"
