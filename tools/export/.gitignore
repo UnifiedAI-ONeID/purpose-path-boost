@@ -1,0 +1,8 @@
+# Ignore all CSV exports (sensitive data)
+csv_exports/
+*.csv
+*.json
+
+# Allow README
+!README.md
+!.gitignore
