@@ -337,3 +337,7 @@
 
 ✖ 178 problems (157 errors, 21 warnings)
 
+
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
