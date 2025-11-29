@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => ({
             purpose: "any"
           },
           { 
-            src: "/app-icon-192-maskable.png", _composer_unnamed_chunk_1
+            src: "/app-icon-192-maskable.png",
             sizes: "192x192", 
             type: "image/png",
             purpose: "maskable"

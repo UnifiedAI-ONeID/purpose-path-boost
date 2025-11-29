@@ -208,7 +208,8 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
         body: { blogId, posts: socialPosts.map(p => ({...p, content: sanitizeHtml(p.content)})) }
       });
       toast.success('Posts sent for publishing!');
-    } catch (e: unknown)      toast.error(e instanceof Error ? e.message : 'Failed to publish');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to publish');
     } finally {
       setIsPublishing(false);
     }
