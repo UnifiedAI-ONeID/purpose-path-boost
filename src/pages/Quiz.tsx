@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { trackEvent } from '@/lib/trackEvent';
+
+const captureQuizLead = httpsCallable(functions, 'capture-quiz-lead');
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name is required'),
@@ -85,8 +88,7 @@ const Quiz = () => {
     
     try {
       // Call Lovable Cloud edge function to capture lead and send email
-      const { data: responseData, error } = await supabase.functions.invoke('capture-quiz-lead', {
-        body: {
+      await captureQuizLead({
           name: data.name,
           email: data.email,
           language: data.language,
@@ -98,13 +100,7 @@ const Quiz = () => {
               answer: answers[i],
             })),
           },
-        },
-      });
-
-      if (error) {
-        console.error('Quiz submission failed');
-        throw error;
-      }
+        });
 
       // Track successful submission
       trackEvent('lm_submit', { score });

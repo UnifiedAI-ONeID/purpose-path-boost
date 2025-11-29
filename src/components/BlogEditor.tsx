@@ -120,12 +120,18 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   }, [blogId, loadBlog]);
 
   const generatePreviews = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('Authentication required');
+      return;
+    }
+
     setGeneratingPreview(true);
     const { title, excerpt, slug } = getValues();
     try {
       const res = await invokeApi<{ previews: SocialPost[] }>('/api/social/preview', {
         method: 'POST',
-        body: { title, excerpt, slug, platforms: socialPlatforms.map(p => p.id) }
+        body: { title: sanitizeHtml(title), excerpt: sanitizeHtml(excerpt), slug: sanitizeHtml(slug), platforms: socialPlatforms.map(p => p.id) }
       });
 
       if (res.ok && res.previews) {
@@ -189,15 +195,20 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
   };
 
   const publishToSocial = async (blogId: string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('Authentication required');
+      return;
+    }
+
     setIsPublishing(true);
     try {
       await invokeApi('/api/social/post', {
         method: 'POST',
-        body: { blogId, posts: socialPosts }
+        body: { blogId, posts: socialPosts.map(p => ({...p, content: sanitizeHtml(p.content)})) }
       });
       toast.success('Posts sent for publishing!');
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to publish');
+    } catch (e: unknown)      toast.error(e instanceof Error ? e.message : 'Failed to publish');
     } finally {
       setIsPublishing(false);
     }
@@ -309,7 +320,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
               </div>
               <div>
                 <Label htmlFor="image_url">Featured Image URL</Label>
-                <Input id="image_url" {...register('image_url')} placeholder="https://..." />
+                <Input id="image_url" {...register('image_url')} placeholder="https://" />
                 {errors.image_url && <p className="text-sm text-destructive mt-1">{errors.image_url.message}</p>}
               </div>
               <div>

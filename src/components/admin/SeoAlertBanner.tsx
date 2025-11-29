@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { X, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { invokeApi } from '@/lib/api-client';
+
+const getSeoAlerts = httpsCallable(functions, 'api-admin-seo-alerts');
 
 type Alert = {
   id: string;
@@ -19,11 +22,8 @@ export default function SeoAlertBanner() {
   useEffect(() => {
     async function loadAlerts() {
       try {
-        const { data, error } = await supabase.functions.invoke('api-admin-seo-alerts', {
-          body: { open: 1 }
-        });
-        
-        if (error) throw error;
+        const result = await getSeoAlerts({ open: 1 });
+        const data = result.data as Alert[];
         setAlerts(data || []);
       } catch (error) {
         console.error('Failed to load SEO alerts:', error);

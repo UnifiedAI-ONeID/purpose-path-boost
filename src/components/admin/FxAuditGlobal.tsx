@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+const getFxRates = httpsCallable(functions, 'api-admin-fx-rates');
+const updateFxRates = httpsCallable(functions, 'api-admin-fx-update');
 
 interface FxData {
   settings?: {
@@ -20,17 +24,15 @@ export default function FxAuditGlobal() {
   const [busy, setBusy] = useState(false);
 
   async function load() { 
-    const { data: result } = await supabase.functions.invoke('api-admin-fx-rates');
-    setData(result); 
+    const result = await getFxRates();
+    setData(result.data as FxData);
   }
   
   useEffect(() => { load(); }, []);
 
   async function refresh() { 
     setBusy(true); 
-    await supabase.functions.invoke('api-admin-fx-update', { 
-      body: { base: 'USD', rates: {} } 
-    }); 
+    await updateFxRates({ base: 'USD', rates: {} }); 
     setBusy(false); 
     load(); 
   }

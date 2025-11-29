@@ -3,7 +3,7 @@ import posthog from 'posthog-js';
 import { functions } from '@/firebase/config';
 import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
 
-const getPublicConfig = httpsCallable(functions, 'getPublicConfig';
+const getPublicConfig = httpsCallable(functions, 'getPublicConfig');
 const CONFIG_CACHE_KEY = 'zg.pwa.config';
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 

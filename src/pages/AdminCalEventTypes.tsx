@@ -1,7 +1,8 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { db } from '@/firebase/config';
+import { collection, getDocs, addDoc, updateDoc, doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Calendar, ExternalLink, RefreshCw } from 'lucide-react';
 
@@ -15,7 +16,8 @@ type CalEventType = {
   price: number | null;
   currency: string | null;
   active: boolean;
-  last_synced_at: string | null;
+  last_synced_at: Timestamp | null;
+  created_at: Timestamp;
 };
 
 export default function AdminCalEventTypes() {
@@ -24,6 +26,8 @@ export default function AdminCalEventTypes() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const eventTypesCollection = collection(db, 'cal_event_types');
+
   useEffect(() => {
     reload();
   }, []);
@@ -31,12 +35,9 @@ export default function AdminCalEventTypes() {
   async function reload() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('cal_event_types')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const snapshot = await getDocs(eventTypesCollection);
+      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as CalEventType));
+      data.sort((a, b) => b.created_at.toMillis() - a.created_at.toMillis());
       setRows(data || []);
     } catch (err) {
       console.error('Failed to load Cal.com event types:', err);
@@ -49,20 +50,16 @@ export default function AdminCalEventTypes() {
   async function save(row: CalEventType) {
     setBusy(true);
     try {
-      const { error } = await supabase
-        .from('cal_event_types')
-        .update({
-          title: row.title,
-          description: row.description,
-          cal_event_type_id: row.cal_event_type_id,
-          length: row.length,
-          price: row.price,
-          currency: row.currency,
-          active: row.active
-        })
-        .eq('id', row.id);
-
-      if (error) throw error;
+      const docRef = doc(db, 'cal_event_types', row.id);
+      await updateDoc(docRef, {
+        title: row.title,
+        description: row.description,
+        cal_event_type_id: row.cal_event_type_id,
+        length: row.length,
+        price: row.price,
+        currency: row.currency,
+        active: row.active
+      });
 
       toast.success('Event type updated successfully');
       setEditingId(null);
@@ -78,19 +75,17 @@ export default function AdminCalEventTypes() {
     setBusy(true);
     try {
       const newSlug = `event-${Date.now()}`;
-      const { error } = await supabase
-        .from('cal_event_types')
-        .insert({
-          slug: newSlug,
-          title: 'New Event Type',
-          cal_event_type_id: `${newSlug}-temp`,
-          length: 60,
-          price: 0,
-          currency: 'USD',
-          active: false
-        });
-
-      if (error) throw error;
+      await addDoc(eventTypesCollection, {
+        slug: newSlug,
+        title: 'New Event Type',
+        cal_event_type_id: `${newSlug}-temp`,
+        length: 60,
+        price: 0,
+        currency: 'USD',
+        active: false,
+        created_at: serverTimestamp(),
+        last_synced_at: null,
+      });
 
       toast.success('Event type created');
       reload();
@@ -306,7 +301,7 @@ export default function AdminCalEventTypes() {
 
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Last synced: {row.last_synced_at ? new Date(row.last_synced_at).toLocaleString() : 'Never'}</span>
+                  <span>Last synced: {row.last_synced_at ? row.last_synced_at.toDate().toLocaleString() : 'Never'}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button

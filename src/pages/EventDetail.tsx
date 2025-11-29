@@ -9,9 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import EventRegisterSheet from '@/components/mobile/EventRegisterSheet';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { invokeApi } from '@/lib/api-client';
 import { sanitizeHtml } from '@/lib/sanitize';
+
+const getEvent = httpsCallable(functions, 'api-events-get');
+const getEventTickets = httpsCallable(functions, 'api-events-tickets');
+const getEventPricePreview = httpsCallable(functions, 'api-events-price-preview');
+const getEventCouponPreview = httpsCallable(functions, 'api-events-coupon-preview');
 
 interface Event {
   id: string;
@@ -62,15 +68,13 @@ export default function EventDetail() {
   useEffect(() => {
     async function load() {
       try {
-        const { data: eventData } = await supabase.functions.invoke('api-events-get', {
-          body: { slug }
-        });
+        const eventResult = await getEvent({ slug });
+        const eventData = eventResult.data as Event;
         setEvent(eventData);
 
         if (eventData?.id) {
-          const { data: ticketsData } = await supabase.functions.invoke('api-events-tickets', {
-            body: { event_id: eventData.id }
-          });
+          const ticketsResult = await getEventTickets({ event_id: eventData.id });
+          const ticketsData = ticketsResult.data as Ticket[];
           setTickets(ticketsData || []);
           if (ticketsData && ticketsData.length > 0) {
             setSelectedTicket(ticketsData[0].id);
@@ -119,12 +123,11 @@ export default function EventDetail() {
         }
 
         // Fallback to standard price preview
-        const { data: result } = await supabase.functions.invoke('api-events-price-preview', {
-          body: { ticket_id: selectedTicket, currency: selectedCurrency }
-        });
-        
-        if (result.ok) {
-          setDisplayPrice({ cents: result.display_cents, currency: result.currency });
+        const result = await getEventPricePreview({ ticket_id: selectedTicket, currency: selectedCurrency });
+        const data = result.data as { ok: boolean, display_cents: number, currency: string };
+
+        if (data.ok) {
+          setDisplayPrice({ cents: data.display_cents, currency: data.currency });
         }
       } catch (e) {
         console.error('Price preview failed:', e);
@@ -360,14 +363,13 @@ export default function EventDetail() {
                       }
 
                       try {
-                        const { data: resp } = await supabase.functions.invoke('api-events-coupon-preview', {
-                          body: {
-                            event_id: event!.id,
-                            ticket_id: selectedTicket,
-                            email,
-                            code: couponCode
-                          }
+                        const result = await getEventCouponPreview({ 
+                          event_id: event!.id, 
+                          ticket_id: selectedTicket, 
+                          email, 
+                          code: couponCode 
                         });
+                        const resp = result.data as { ok: boolean, currency: string, total_cents: number, reason: string };
                         
                         if (resp?.ok) {
                           toast.success(`Coupon applied! New price: ${resp.currency} ${(resp.total_cents / 100).toFixed(2)}`);

@@ -2,8 +2,12 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw } from 'lucide-react';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
+
+const getVersion = httpsCallable(functions, 'admin-get-version');
+const bumpVersion = httpsCallable(functions, 'admin-bump-version');
 
 export function VersionControl() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,22 +18,19 @@ export function VersionControl() {
   }, []);
 
   const fetchCurrentVersion = async () => {
-    const { data } = await supabase
-      .from('zg_versions')
-      .select('v')
-      .eq('key', 'content')
-      .maybeSingle();
-    
-    setCurrentVersion(data?.v || null);
+    try {
+      const result = await getVersion();
+      const data = result.data as { v: number };
+      setCurrentVersion(data.v || null);
+    } catch (error) {
+        console.error('Failed to fetch version:', error);
+    }
   };
 
   const handleBumpVersion = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.rpc('bump_version_now');
-      
-      if (error) throw error;
-      
+      await bumpVersion();
       await fetchCurrentVersion();
       toast.success('Content version bumped! All clients will refresh within seconds.');
     } catch (error) {

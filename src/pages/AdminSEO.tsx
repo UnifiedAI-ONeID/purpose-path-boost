@@ -6,8 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { AlertCircle, AlertTriangle, Info, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { invokeApi } from '@/lib/api-client';
+
+const runSeoWatch = httpsCallable(functions, 'seo-watch');
+const resolveSeoAlert = httpsCallable(functions, 'api-admin-seo-resolve');
 
 type Alert = {
   id: string;
@@ -59,11 +63,7 @@ export default function AdminSEO() {
   async function runScan() {
     setRunning(true);
     try {
-      const { error } = await supabase.functions.invoke('seo-watch');
-      
-      if (error) {
-        throw error;
-      }
+      await runSeoWatch();
 
       toast.success('SEO scan completed successfully');
       // Reload data after scan
@@ -78,13 +78,7 @@ export default function AdminSEO() {
 
   async function resolveAlert(id: string) {
     try {
-      const { error } = await supabase.functions.invoke('api-admin-seo-resolve', {
-        body: { alertId: id }
-      });
-
-      if (error) {
-        throw error;
-      }
+      await resolveSeoAlert({ alertId: id });
 
       setAlerts(alerts.map(a => 
         a.id === id ? { ...a, resolved_at: new Date().toISOString() } : a

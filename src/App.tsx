@@ -140,7 +140,8 @@ function AppRoutes() {
           { isChinaBuild },
           { bootVersionGuard },
           { initPerformanceTracking },
-          { initCacheMonitoring }
+          { initCacheMonitoring },
+          { initPwa }
         ] = await Promise.all([
           import('./anim/boot'),
           import('./nav/deeplink'),
@@ -150,8 +151,12 @@ function AppRoutes() {
           import('./lib/region'),
           import('./lib/versionGuard'),
           import('./lib/pwa/performance'),
-          import('./lib/pwa/cacheMonitor')
+          import('./lib/pwa/cacheMonitor'),
+          import('./lib/pwa/init')
         ]);
+
+        // Initialize PWA modules
+        initPwa();
 
         // Initialize PWA performance tracking
         initPerformanceTracking();

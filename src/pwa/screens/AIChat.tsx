@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { usePWA } from '../core/PWAProvider';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Brain, Send, Sparkles, Loader2, User, Bot } from 'lucide-react';
 import { toast } from 'sonner';
+
+const suggestPwaAi = httpsCallable(functions, 'pwa-ai-suggest');
 
 interface Message {
   role: 'user' | 'assistant';
@@ -45,18 +48,18 @@ export default function AIChat() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('pwa-ai-suggest', {
-        body: {
-          type: 'chat',
-          message: input,
-          context: {
-            isGuest,
-            previousMessages: messages.slice(-5) // Last 5 messages for context
-          }
+      const result = await suggestPwaAi({
+        type: 'chat',
+        message: input,
+        context: {
+          isGuest,
+          previousMessages: messages.slice(-5) // Last 5 messages for context
         }
       });
 
-      if (!error && data?.ok) {
+      const data = result.data as { ok: boolean, response: string };
+
+      if (data?.ok) {
         const assistantMessage: Message = {
           role: 'assistant',
           content: data.response || 'I\'m here to help!',

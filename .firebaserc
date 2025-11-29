@@ -1,6 +1,1 @@
-
-{
-  "projects": {
-    "default": "your-firebase-project-id"
-  }
-}
+{"projects":{"default":"zhengrowth-prod"}}

@@ -1,6 +1,9 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+const getAdminBookings = httpsCallable(functions, 'api-admin-bookings');
 
 export default function AdminBookings() {
   const [rows, setRows] = useState<any[]>([]);
@@ -13,9 +16,8 @@ export default function AdminBookings() {
   async function loadBookings() {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('api-admin-bookings');
-      
-      if (error) throw error;
+      const result = await getAdminBookings();
+      const data = result.data as { rows: any[] };
       setRows(data?.rows || []);
     } catch (err) {
       console.error('Failed to load bookings:', err);

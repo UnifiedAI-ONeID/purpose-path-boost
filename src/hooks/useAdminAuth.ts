@@ -1,39 +1,45 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { auth, functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+import { onAuthStateChanged } from 'firebase/auth';
+
+const checkAdminRoleFn = httpsCallable(functions, 'admin-check-role');
 
 export function useAdminAuth() {
-  const [ok, setOk] = useState<boolean | null>(null);
-  
-  useEffect(() => {
-    (async () => {
-      // Get current session to ensure we have an auth token
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        console.log('[useAdminAuth] No session found, redirecting to auth');
-        setOk(false);
-        location.href = '/auth?returnTo=/admin';
-        return;
-      }
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
-      console.log('[useAdminAuth] Checking admin role with auth token');
-      const { data, error } = await supabase.functions.invoke('api-admin-check-role', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        console.log('[useAdminAuth] User is signed in, checking admin role.');
+        try {
+          const result = await checkAdminRoleFn();
+          const { isAdmin: isAdminResult } = result.data as { isAdmin: boolean };
+
+          console.log('[useAdminAuth] Admin check result:', { isAdmin: isAdminResult });
+
+          if (isAdminResult) {
+            setIsAdmin(true);
+            console.log('[useAdminAuth] User is admin, access granted.');
+          } else {
+            setIsAdmin(false);
+            console.log('[useAdminAuth] User is not an admin, redirecting to auth.');
+            window.location.href = '/auth?returnTo=/admin';
+          }
+        } catch (error) {
+          console.error('[useAdminAuth] Error checking admin role:', error);
+          setIsAdmin(false);
+          window.location.href = '/auth?returnTo=/admin';
         }
-      });
-      
-      console.log('[useAdminAuth] Admin check result:', { data, error });
-      const isAdmin = !error && data?.is_admin === true;
-      setOk(isAdmin);
-      
-      if (!isAdmin) {
-        console.log('[useAdminAuth] User is not admin, redirecting to auth');
-        location.href = '/auth?returnTo=/admin';
       } else {
-        console.log('[useAdminAuth] User is admin, access granted');
+        console.log('[useAdminAuth] No user signed in, redirecting to auth.');
+        setIsAdmin(false);
+        window.location.href = '/auth?returnTo=/admin';
       }
-    })();
+    });
+
+    return () => unsubscribe();
   }, []);
-  
-  return ok;
+
+  return isAdmin;
 }

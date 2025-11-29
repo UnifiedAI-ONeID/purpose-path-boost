@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { invokeApi } from '@/lib/api-client';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,79 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Plus, Edit2, Trash2, Save, X } from 'lucide-react';
+
+// Firebase callable functions
+const listPlansFn = httpsCallable(functions, 'admin-plans-list');
+const upsertPlanFn = httpsCallable(functions, 'admin-plans-upsert');
+const deletePlanFn = httpsCallable(functions, 'admin-plans-delete');
+const listPackagesFn = httpsCallable(functions, 'admin-packages-list');
+const upsertPackageFn = httpsCallable(functions, 'admin-packages-upsert');
+const setPackageLessonsFn = httpsCallable(functions, 'admin-package-lessons-set');
+const setPlanIncludesFn = httpsCallable(functions, 'admin-plan-includes-set');
+const listFunnelsFn = httpsCallable(functions, 'admin-funnels-list');
+const upsertFunnelFn = httpsCallable(functions, 'admin-funnels-upsert');
+const setFunnelTriggersFn = httpsCallable(functions, 'admin-funnel-triggers-set');
+
+// Type definitions
+interface Tier {
+  slug: string;
+  title: string;
+  monthly_usd_cents: number;
+  annual_usd_cents: number;
+  features: Record<string, any>;
+  price_id_month?: string | null;
+  price_id_year?: string | null;
+  blurb?: string;
+  faq?: { q: string; a: string }[];
+  active: boolean;
+}
+
+interface Package {
+  id: string;
+  slug: string;
+  title: string;
+  summary?: string;
+  poster_url?: string;
+  active: boolean;
+  lesson_count?: number;
+}
+
+interface Funnel {
+  id: string;
+  slug: string;
+  name: string;
+  target_plan_slug: string;
+  config: Record<string, any>;
+}
+
+const initialTierFormState: Tier = {
+  slug: '',
+  title: '',
+  monthly_usd_cents: 2900,
+  annual_usd_cents: 27840,
+  features: { videos_per_month: 10, all_access: false },
+  price_id_month: '',
+  price_id_year: '',
+  blurb: '',
+  faq: [],
+  active: true
+};
+
+const initialPackageFormState: Partial<Package> = {
+  slug: '',
+  title: '',
+  summary: '',
+  poster_url: '',
+  active: true
+};
+
+const initialFunnelFormState: Funnel = {
+    id: '',
+    slug: '',
+    name: '',
+    target_plan_slug: 'growth',
+    config: { copy: { headline: 'Unlock all lessons', sub: 'Join Growth' }, cta: '/pricing?highlight=growth' }
+};
 
 export default function PricingAdmin() {
   return (
@@ -25,21 +99,10 @@ export default function PricingAdmin() {
             <TabsTrigger value="mapping">Mapping</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="tiers">
-            <TiersTab />
-          </TabsContent>
-
-          <TabsContent value="packages">
-            <PackagesTab />
-          </TabsContent>
-
-          <TabsContent value="funnels">
-            <FunnelsTab />
-          </TabsContent>
-
-          <TabsContent value="mapping">
-            <MappingTab />
-          </TabsContent>
+          <TabsContent value="tiers"><TiersTab /></TabsContent>
+          <TabsContent value="packages"><PackagesTab /></TabsContent>
+          <TabsContent value="funnels"><FunnelsTab /></TabsContent>
+          <TabsContent value="mapping"><MappingTab /></TabsContent>
         </Tabs>
       </CardContent>
     </Card>
@@ -47,90 +110,54 @@ export default function PricingAdmin() {
 }
 
 function TiersTab() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [form, setForm] = useState<any>({
-    slug: '',
-    title: '',
-    monthly_usd_cents: 2900,
-    annual_usd_cents: 27840,
-    features: '{"videos_per_month":10,"all_access":false}',
-    price_id_month: '',
-    price_id_year: '',
-    blurb: '',
-    faq: '[]',
-    active: true
-  });
+  const [rows, setRows] = useState<Tier[]>([]);
+  const [form, setForm] = useState(initialTierFormState);
+  const [featuresJson, setFeaturesJson] = useState(JSON.stringify(initialTierFormState.features, null, 2));
+  const [faqJson, setFaqJson] = useState(JSON.stringify(initialTierFormState.faq, null, 2));
 
   async function load() {
-    const result = await invokeApi('/api/admin/plans/list');
-    if (result.ok) {
-      setRows(result.rows || []);
-    }
+    try {
+        const result = await listPlansFn();
+        setRows((result.data as any).rows || []);
+    } catch (error) { toast.error('Failed to load tiers.') }
   }
 
+  useEffect(() => { load(); }, []);
+  
   useEffect(() => {
-    load();
-  }, []);
+    setFeaturesJson(JSON.stringify(form.features || {}, null, 2));
+    setFaqJson(JSON.stringify(form.faq || [], null, 2));
+  }, [form]);
 
   async function save() {
     try {
-      const result = await invokeApi('/api/admin/plans/upsert', {
-        method: 'POST',
-        body: {
-          slug: form.slug,
-          title: form.title,
-          monthly_usd_cents: Number(form.monthly_usd_cents),
-          annual_usd_cents: Number(form.annual_usd_cents),
-          features: JSON.parse(form.features || '{}'),
-          active: !!form.active,
-          price_id_month: form.price_id_month || null,
-          price_id_year: form.price_id_year || null,
-          blurb: form.blurb || '',
-          faq: JSON.parse(form.faq || '[]')
-        }
-      });
-
-      if (result.ok) {
-        toast.success('Plan saved successfully');
-        load();
-        resetForm();
-      } else {
-        toast.error(result.error || 'Failed to save plan');
-      }
+      const features = JSON.parse(featuresJson);
+      const faq = JSON.parse(faqJson);
+      const payload = { ...form, features, faq, monthly_usd_cents: Number(form.monthly_usd_cents), annual_usd_cents: Number(form.annual_usd_cents) };
+      await upsertPlanFn(payload);
+      toast.success('Plan saved successfully');
+      load();
+      resetForm();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save plan');
+      toast.error(err.message || 'Failed to save plan. Check JSON validity.');
     }
   }
 
   async function deletePlan(slug: string) {
     if (!confirm(`Delete plan "${slug}"?`)) return;
-    
-    const result = await invokeApi('/api/admin/plans/delete', {
-      method: 'POST',
-      body: { slug }
-    });
-
-    if (result.ok) {
-      toast.success('Plan deleted');
-      load();
-    } else {
-      toast.error(result.error || 'Failed to delete plan');
-    }
+    try {
+        await deletePlanFn({ slug });
+        toast.success('Plan deleted');
+        load();
+    } catch(err: any) { toast.error(err.message || 'Failed to delete plan.'); }
   }
 
   function resetForm() {
-    setForm({
-      slug: '',
-      title: '',
-      monthly_usd_cents: 0,
-      annual_usd_cents: 0,
-      features: '{}',
-      price_id_month: '',
-      price_id_year: '',
-      blurb: '',
-      faq: '[]',
-      active: true
-    });
+    setForm(initialTierFormState);
+  }
+  
+  function edit(tier: Tier) {
+      setForm(tier);
   }
 
   return (
@@ -138,123 +165,51 @@ function TiersTab() {
       <div>
         <h3 className="font-semibold mb-4">Create / Edit Tier</h3>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="slug">Slug</Label>
-            <Input
-              id="slug"
-              placeholder="starter, growth, pro"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            />
-          </div>
+          <Label>Slug</Label>
+          <Input placeholder="starter, growth, pro" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
 
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              placeholder="Starter Plan"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
+          <Label>Title</Label>
+          <Input placeholder="Starter Plan" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="monthly">Monthly (cents)</Label>
-              <Input
-                id="monthly"
-                type="number"
-                placeholder="2900"
-                value={form.monthly_usd_cents}
-                onChange={(e) => setForm({ ...form, monthly_usd_cents: e.target.value })}
-              />
+              <Label>Monthly (cents)</Label>
+              <Input type="number" placeholder="2900" value={form.monthly_usd_cents} onChange={(e) => setForm({ ...form, monthly_usd_cents: +e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="annual">Annual (cents)</Label>
-              <Input
-                id="annual"
-                type="number"
-                placeholder="27840"
-                value={form.annual_usd_cents}
-                onChange={(e) => setForm({ ...form, annual_usd_cents: e.target.value })}
-              />
+              <Label>Annual (cents)</Label>
+              <Input type="number" placeholder="27840" value={form.annual_usd_cents} onChange={(e) => setForm({ ...form, annual_usd_cents: +e.target.value })} />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="features">Features (JSON)</Label>
-            <Textarea
-              id="features"
-              rows={3}
-              placeholder='{"videos_per_month":10,"all_access":false}'
-              value={form.features}
-              onChange={(e) => setForm({ ...form, features: e.target.value })}
-            />
-          </div>
+          <Label>Features (JSON)</Label>
+          <Textarea rows={3} placeholder='{}' value={featuresJson} onChange={(e) => setFeaturesJson(e.target.value)} />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price_month">Airwallex Price ID (Monthly)</Label>
-              <Input
-                id="price_month"
-                placeholder="price_xxx"
-                value={form.price_id_month}
-                onChange={(e) => setForm({ ...form, price_id_month: e.target.value })}
-              />
+              <Label>Airwallex Price ID (Monthly)</Label>
+              <Input placeholder="price_xxx" value={form.price_id_month || ''} onChange={(e) => setForm({ ...form, price_id_month: e.target.value })} />
             </div>
             <div>
-              <Label htmlFor="price_year">Airwallex Price ID (Annual)</Label>
-              <Input
-                id="price_year"
-                placeholder="price_yyy"
-                value={form.price_id_year}
-                onChange={(e) => setForm({ ...form, price_id_year: e.target.value })}
-              />
+              <Label>Airwallex Price ID (Annual)</Label>
+              <Input placeholder="price_yyy" value={form.price_id_year || ''} onChange={(e) => setForm({ ...form, price_id_year: e.target.value })} />
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="blurb">Blurb</Label>
-            <Textarea
-              id="blurb"
-              rows={2}
-              placeholder="Perfect for getting started"
-              value={form.blurb}
-              onChange={(e) => setForm({ ...form, blurb: e.target.value })}
-            />
-          </div>
+          <Label>Blurb</Label>
+          <Textarea rows={2} placeholder="Perfect for getting started" value={form.blurb || ''} onChange={(e) => setForm({ ...form, blurb: e.target.value })} />
 
-          <div>
-            <Label htmlFor="faq">FAQ (JSON Array)</Label>
-            <Textarea
-              id="faq"
-              rows={2}
-              placeholder='[{"q":"Question?","a":"Answer"}]'
-              value={form.faq}
-              onChange={(e) => setForm({ ...form, faq: e.target.value })}
-            />
-          </div>
+          <Label>FAQ (JSON Array)</Label>
+          <Textarea rows={2} placeholder='[]' value={faqJson} onChange={(e) => setFaqJson(e.target.value)} />
 
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="active"
-              checked={!!form.active}
-              onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="rounded"
-            />
+            <input type="checkbox" id="active" checked={!!form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="rounded" />
             <Label htmlFor="active">Active</Label>
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={save}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Tier
-            </Button>
-            <Button variant="outline" onClick={resetForm}>
-              <X className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+            <Button onClick={save}><Save className="w-4 h-4 mr-2" />Save Tier</Button>
+            <Button variant="outline" onClick={resetForm}><X className="w-4 h-4 mr-2" />Reset</Button>
           </div>
         </div>
       </div>
@@ -262,7 +217,7 @@ function TiersTab() {
       <div>
         <h3 className="font-semibold mb-4">Existing Tiers</h3>
         <div className="space-y-2">
-          {rows.map((r: any) => (
+          {rows.map((r) => (
             <Card key={r.slug}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
@@ -273,31 +228,8 @@ function TiersTab() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setForm({
-                        slug: r.slug,
-                        title: r.title,
-                        monthly_usd_cents: r.monthly_usd_cents,
-                        annual_usd_cents: r.annual_usd_cents,
-                        features: JSON.stringify(r.features || {}),
-                        price_id_month: r.price_id_month || '',
-                        price_id_year: r.price_id_year || '',
-                        blurb: r.blurb || '',
-                        faq: JSON.stringify(r.faq || []),
-                        active: r.active
-                      })}
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deletePlan(r.slug)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => edit(r)}><Edit2 className="w-3 h-3" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => deletePlan(r.slug)}><Trash2 className="w-3 h-3" /></Button>
                   </div>
                 </div>
               </CardContent>
@@ -310,80 +242,43 @@ function TiersTab() {
 }
 
 function PackagesTab() {
-  const [rows, setRows] = useState<any[]>([]);
-  const [form, setForm] = useState<any>({
-    id: '',
-    slug: '',
-    title: '',
-    summary: '',
-    poster_url: '',
-    active: true
-  });
+  const [rows, setRows] = useState<Package[]>([]);
+  const [form, setForm] = useState<Partial<Package>>(initialPackageFormState);
   const [lessonQuery, setLessonQuery] = useState('');
-  const [selected, setSelected] = useState<any[]>([]);
+  const [selected, setSelected] = useState<{ slug: string, order_index: number }[]>([]);
 
   async function load() {
-    const result = await invokeApi('/api/admin/packages/list');
-    if (result.ok) {
-      setRows(result.rows || []);
-    }
+    try {
+      const result = await listPackagesFn();
+      setRows((result.data as any).rows || []);
+    } catch(e) { toast.error('Failed to load packages')}
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function save() {
     try {
-      const result = await invokeApi('/api/admin/packages/upsert', {
-        method: 'POST',
-        body: form.id ? form : {
-          slug: form.slug,
-          title: form.title,
-          summary: form.summary,
-          poster_url: form.poster_url,
-          active: form.active
-        }
-      });
-
-      if (result.ok) {
-        toast.success('Package saved');
-        load();
-        resetForm();
-      } else {
-        toast.error(result.error || 'Failed to save package');
-      }
+      await upsertPackageFn(form);
+      toast.success('Package saved');
+      load();
+      resetForm();
     } catch (err: any) {
       toast.error(err.message || 'Failed to save package');
     }
   }
 
-  async function setLessons(pkg: any) {
-    const result = await invokeApi('/api/admin/package-lessons/set', {
-      method: 'POST',
-      body: {
-        package_id: pkg.id,
-        lessons: selected
-      }
-    });
-
-    if (result.ok) {
+  async function setLessons(pkg: Package) {
+    try {
+      await setPackageLessonsFn({ package_id: pkg.id, lessons: selected });
       toast.success('Lessons updated');
       load();
-    } else {
-      toast.error(result.error || 'Failed to update lessons');
-    }
+    } catch(err: any) { toast.error(err.message || 'Failed to update lessons'); }
   }
 
   function resetForm() {
-    setForm({
-      id: '',
-      slug: '',
-      title: '',
-      summary: '',
-      poster_url: '',
-      active: true
-    });
+    setForm(initialPackageFormState);
+    setSelected([]);
+    setLessonQuery('');
   }
 
   return (
@@ -391,90 +286,38 @@ function PackagesTab() {
       <div>
         <h3 className="font-semibold mb-4">Create / Edit Package</h3>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="pkg-slug">Slug</Label>
-            <Input
-              id="pkg-slug"
-              placeholder="mindfulness-basics"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            />
-          </div>
+          <Label>Slug</Label>
+          <Input placeholder="mindfulness-basics" value={form.slug || ''} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
 
-          <div>
-            <Label htmlFor="pkg-title">Title</Label>
-            <Input
-              id="pkg-title"
-              placeholder="Mindfulness Basics"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
+          <Label>Title</Label>
+          <Input placeholder="Mindfulness Basics" value={form.title || ''} onChange={(e) => setForm({ ...form, title: e.target.value })} />
 
-          <div>
-            <Label htmlFor="pkg-summary">Summary</Label>
-            <Textarea
-              id="pkg-summary"
-              rows={2}
-              placeholder="Learn the fundamentals..."
-              value={form.summary}
-              onChange={(e) => setForm({ ...form, summary: e.target.value })}
-            />
-          </div>
+          <Label>Summary</Label>
+          <Textarea rows={2} placeholder="Learn the fundamentals..." value={form.summary || ''} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
 
-          <div>
-            <Label htmlFor="pkg-poster">Poster URL</Label>
-            <Input
-              id="pkg-poster"
-              placeholder="https://..."
-              value={form.poster_url}
-              onChange={(e) => setForm({ ...form, poster_url: e.target.value })}
-            />
-          </div>
+          <Label>Poster URL</Label>
+          <Input placeholder="https://..." value={form.poster_url || ''} onChange={(e) => setForm({ ...form, poster_url: e.target.value })} />
 
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="pkg-active"
-              checked={!!form.active}
-              onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="rounded"
-            />
+            <input type="checkbox" id="pkg-active" checked={!!form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="rounded" />
             <Label htmlFor="pkg-active">Active</Label>
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={save}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Package
-            </Button>
-            <Button variant="outline" onClick={resetForm}>
-              <X className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+            <Button onClick={save}><Save className="w-4 h-4 mr-2" />Save Package</Button>
+            <Button variant="outline" onClick={resetForm}><X className="w-4 h-4 mr-2" />Reset</Button>
           </div>
 
           <div className="border-t pt-4 mt-6">
             <h4 className="font-semibold mb-2">Attach Lessons (Quick Add)</h4>
             <div className="flex gap-2">
-              <Input
-                className="flex-1"
-                placeholder="Enter lesson slugs (comma-separated)"
-                value={lessonQuery}
-                onChange={(e) => setLessonQuery(e.target.value)}
-              />
-              <Button
-                onClick={() => {
+              <Input className="flex-1" placeholder="Enter lesson slugs (comma-separated)" value={lessonQuery} onChange={(e) => setLessonQuery(e.target.value)} />
+              <Button onClick={() => {
                   const slugs = lessonQuery.split(',').map(s => s.trim()).filter(Boolean);
                   setSelected(slugs.map((slug, i) => ({ slug, order_index: i })));
-                }}
-              >
-                Parse
-              </Button>
+                }}>Parse</Button>
             </div>
-            <div className="text-xs text-muted-foreground mt-2">
-              Selected: {selected.map(s => s.slug).join(', ') || '—'}
-            </div>
+            <div className="text-xs text-muted-foreground mt-2">Selected: {selected.map(s => s.slug).join(', ') || '—'}</div>
           </div>
         </div>
       </div>
@@ -482,36 +325,20 @@ function PackagesTab() {
       <div>
         <h3 className="font-semibold mb-4">Packages</h3>
         <div className="space-y-2">
-          {rows.map((p: any) => (
+          {rows.map((p) => (
             <Card key={p.id}>
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <div className="font-semibold">{p.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {p.slug} · {p.lesson_count} lessons
-                    </div>
+                    <div className="text-xs text-muted-foreground">{p.slug} · {p.lesson_count} lessons</div>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setLessons(p)}
-                    >
-                      Save Lessons
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setForm(p)}
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setLessons(p)}>Save Lessons</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setForm(p)}><Edit2 className="w-3 h-3" /></Button>
                   </div>
                 </div>
-                {p.summary && (
-                  <div className="text-xs text-muted-foreground">{p.summary}</div>
-                )}
+                {p.summary && <div className="text-xs text-muted-foreground">{p.summary}</div>}
               </CardContent>
             </Card>
           ))}
@@ -522,79 +349,45 @@ function PackagesTab() {
 }
 
 function MappingTab() {
-  const [plans, setPlans] = useState<any[]>([]);
-  const [pkgs, setPkgs] = useState<any[]>([]);
+  const [plans, setPlans] = useState<Tier[]>([]);
+  const [pkgs, setPkgs] = useState<Package[]>([]);
   const [plan, setPlan] = useState<string>('');
   const [sel, setSel] = useState<Record<string, boolean>>({});
 
   async function load() {
-    const p = await invokeApi('/api/admin/plans/list');
-    if (p.ok) setPlans(p.rows || []);
-
-    const k = await invokeApi('/api/admin/packages/list');
-    if (k.ok) setPkgs(k.rows || []);
+    const p = await listPlansFn();
+    setPlans((p.data as any).rows || []);
+    const k = await listPackagesFn();
+    setPkgs((k.data as any).rows || []);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function save() {
     const ids = pkgs.filter(x => sel[x.id]).map(x => x.id);
-    const result = await invokeApi('/api/admin/plan-includes/set', {
-      method: 'POST',
-      body: { plan_slug: plan, package_ids: ids }
-    });
-
-    if (result.ok) {
+    try {
+      await setPlanIncludesFn({ plan_slug: plan, package_ids: ids });
       toast.success('Mapping saved!');
-    } else {
-      toast.error(result.error || 'Failed to save mapping');
-    }
+    } catch (err: any) { toast.error(err.message || 'Failed to save mapping'); }
   }
 
   return (
     <div className="mt-4 space-y-4">
       <h3 className="font-semibold">Plan ↔ Package Mapping</h3>
-      
       <div className="flex gap-2">
-        <select
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background flex-1"
-          value={plan}
-          onChange={(e) => setPlan(e.target.value)}
-        >
+        <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background flex-1" value={plan} onChange={(e) => setPlan(e.target.value)}>
           <option value="">Select a plan</option>
-          {plans.map((p: any) => (
-            <option key={p.slug} value={p.slug}>
-              {p.title} ({p.slug})
-            </option>
-          ))}
+          {plans.map((p) => (<option key={p.slug} value={p.slug}>{p.title} ({p.slug})</option>))}
         </select>
-        <Button disabled={!plan} onClick={save}>
-          <Save className="w-4 h-4 mr-2" />
-          Save Mapping
-        </Button>
+        <Button disabled={!plan} onClick={save}><Save className="w-4 h-4 mr-2" />Save Mapping</Button>
       </div>
-
       <div className="grid md:grid-cols-3 gap-2">
-        {pkgs.map((p: any) => (
-          <label
-            key={p.id}
-            className={`border rounded-md p-3 flex items-center gap-2 cursor-pointer hover:bg-accent/50 ${
-              sel[p.id] ? 'bg-primary/10 border-primary' : ''
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={!!sel[p.id]}
-              onChange={(e) => setSel({ ...sel, [p.id]: e.target.checked })}
-              className="rounded"
-            />
+        {pkgs.map((p) => (
+          <label key={p.id} className={`border rounded-md p-3 flex items-center gap-2 cursor-pointer hover:bg-accent/50 ${sel[p.id] ? 'bg-primary/10 border-primary' : ''}`}>
+            <input type="checkbox" checked={!!sel[p.id]} onChange={(e) => setSel({ ...sel, [p.id]: e.target.checked })} className="rounded" />
             <div>
               <div className="font-medium text-sm">{p.title}</div>
-              <div className="text-xs text-muted-foreground">
-                {p.lesson_count} lessons
-              </div>
+              <div className="text-xs text-muted-foreground">{p.lesson_count} lessons</div>
             </div>
           </label>
         ))}
@@ -604,72 +397,47 @@ function MappingTab() {
 }
 
 function FunnelsTab() {
-  const [funnels, setFunnels] = useState<any[]>([]);
-  const [form, setForm] = useState<any>({
-    id: '',
-    slug: '',
-    name: '',
-    target_plan_slug: 'growth',
-    config: '{"copy":{"headline":"Unlock all lessons","sub":"Join Growth"},"cta":"/pricing?highlight=growth"}'
-  });
+  const [funnels, setFunnels] = useState<Funnel[]>([]);
+  const [form, setForm] = useState<Partial<Funnel>>(initialFunnelFormState);
+  const [configJson, setConfigJson] = useState(JSON.stringify(initialFunnelFormState.config, null, 2));
   const [attach, setAttach] = useState({ lesson_slug: '', funnel_slugs: '' });
 
   async function load() {
-    const result = await invokeApi('/api/admin/funnels/list');
-    if (result.ok) {
-      setFunnels(result.rows || []);
-    }
+    try {
+      const result = await listFunnelsFn();
+      setFunnels((result.data as any).rows || []);
+    } catch(e) { toast.error('Failed to load funnels'); }
   }
 
+  useEffect(() => { load(); }, []);
+  
   useEffect(() => {
-    load();
-  }, []);
+      setConfigJson(JSON.stringify(form.config || {}, null, 2));
+  }, [form]);
 
   async function save() {
     try {
-      const result = await invokeApi('/api/admin/funnels/upsert', {
-        method: 'POST',
-        body: {
-          ...form,
-          config: JSON.parse(form.config || '{}')
-        }
-      });
-
-      if (result.ok) {
-        toast.success('Funnel saved');
-        load();
-        resetForm();
-      } else {
-        toast.error(result.error || 'Failed to save funnel');
-      }
+      const config = JSON.parse(configJson);
+      await upsertFunnelFn({ ...form, config });
+      toast.success('Funnel saved');
+      load();
+      resetForm();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to save funnel');
+      toast.error(err.message || 'Failed to save funnel. Check JSON validity.');
     }
   }
 
   async function link() {
-    const arr = attach.funnel_slugs.split(',').map(x => x.trim()).filter(Boolean);
-    const result = await invokeApi('/api/admin/funnel-triggers/set', {
-      method: 'POST',
-      body: { lesson_slug: attach.lesson_slug, funnel_slugs: arr }
-    });
-
-    if (result.ok) {
-      toast.success('Funnel triggers linked!');
-      setAttach({ lesson_slug: '', funnel_slugs: '' });
-    } else {
-      toast.error(result.error || 'Failed to link triggers');
-    }
+      const arr = attach.funnel_slugs.split(',').map(x => x.trim()).filter(Boolean);
+      try {
+        await setFunnelTriggersFn({ lesson_slug: attach.lesson_slug, funnel_slugs: arr });
+        toast.success('Funnel triggers linked!');
+        setAttach({ lesson_slug: '', funnel_slugs: '' });
+      } catch (err: any) { toast.error(err.message || 'Failed to link triggers'); }
   }
 
   function resetForm() {
-    setForm({
-      id: '',
-      slug: '',
-      name: '',
-      target_plan_slug: 'growth',
-      config: '{"copy":{"headline":"Unlock all lessons","sub":"Join Growth"},"cta":"/pricing?highlight=growth"}'
-    });
+    setForm(initialFunnelFormState);
   }
 
   return (
@@ -677,56 +445,21 @@ function FunnelsTab() {
       <div>
         <h3 className="font-semibold mb-4">Create / Edit Funnel</h3>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="f-slug">Slug</Label>
-            <Input
-              id="f-slug"
-              placeholder="growth-upsell"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-            />
-          </div>
+          <Label>Slug</Label>
+          <Input placeholder="growth-upsell" value={form.slug || ''} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
 
-          <div>
-            <Label htmlFor="f-name">Name</Label>
-            <Input
-              id="f-name"
-              placeholder="Growth Upsell"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </div>
+          <Label>Name</Label>
+          <Input placeholder="Growth Upsell" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
 
-          <div>
-            <Label htmlFor="f-target">Target Plan Slug</Label>
-            <Input
-              id="f-target"
-              placeholder="growth"
-              value={form.target_plan_slug}
-              onChange={(e) => setForm({ ...form, target_plan_slug: e.target.value })}
-            />
-          </div>
+          <Label>Target Plan Slug</Label>
+          <Input placeholder="growth" value={form.target_plan_slug || ''} onChange={(e) => setForm({ ...form, target_plan_slug: e.target.value })} />
 
-          <div>
-            <Label htmlFor="f-config">Config (JSON)</Label>
-            <Textarea
-              id="f-config"
-              rows={4}
-              placeholder='{"copy":{"headline":"...","sub":"..."},"cta":"/pricing"}'
-              value={form.config}
-              onChange={(e) => setForm({ ...form, config: e.target.value })}
-            />
-          </div>
+          <Label>Config (JSON)</Label>
+          <Textarea rows={4} placeholder='{}' value={configJson} onChange={(e) => setConfigJson(e.target.value)} />
 
           <div className="flex gap-2">
-            <Button onClick={save}>
-              <Save className="w-4 h-4 mr-2" />
-              Save Funnel
-            </Button>
-            <Button variant="outline" onClick={resetForm}>
-              <X className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
+            <Button onClick={save}><Save className="w-4 h-4 mr-2" />Save Funnel</Button>
+            <Button variant="outline" onClick={resetForm}><X className="w-4 h-4 mr-2" />Reset</Button>
           </div>
         </div>
       </div>
@@ -734,41 +467,27 @@ function FunnelsTab() {
       <div>
         <h3 className="font-semibold mb-4">Attach Funnel to Lesson</h3>
         <div className="space-y-4 mb-6">
-          <div>
-            <Label htmlFor="attach-lesson">Lesson Slug</Label>
-            <Input
-              id="attach-lesson"
-              placeholder="intro-to-mindfulness"
-              value={attach.lesson_slug}
-              onChange={(e) => setAttach({ ...attach, lesson_slug: e.target.value })}
-            />
-          </div>
+          <Label>Lesson Slug</Label>
+          <Input placeholder="intro-to-mindfulness" value={attach.lesson_slug} onChange={(e) => setAttach({ ...attach, lesson_slug: e.target.value })} />
 
-          <div>
-            <Label htmlFor="attach-funnels">Funnel Slugs (comma-separated)</Label>
-            <Input
-              id="attach-funnels"
-              placeholder="growth-upsell, pro-upsell"
-              value={attach.funnel_slugs}
-              onChange={(e) => setAttach({ ...attach, funnel_slugs: e.target.value })}
-            />
-          </div>
+          <Label>Funnel Slugs (comma-separated)</Label>
+          <Input placeholder="growth-upsell, pro-upsell" value={attach.funnel_slugs} onChange={(e) => setAttach({ ...attach, funnel_slugs: e.target.value })} />
 
-          <Button onClick={link}>
-            <Plus className="w-4 h-4 mr-2" />
-            Link Funnels
-          </Button>
+          <Button onClick={link}><Plus className="w-4 h-4 mr-2" />Link Funnels</Button>
         </div>
 
         <h3 className="font-semibold mb-2">Existing Funnels</h3>
         <div className="space-y-2">
-          {funnels.map((f: any) => (
+          {funnels.map((f) => (
             <Card key={f.slug}>
               <CardContent className="pt-4">
-                <div className="font-semibold">{f.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {f.slug} → {f.target_plan_slug}
-                </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                        <div className="font-semibold">{f.name}</div>
+                        <div className="text-xs text-muted-foreground">{f.slug} → {f.target_plan_slug}</div>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setForm(f)}><Edit2 className="w-3 h-3" /></Button>
+                  </div>
               </CardContent>
             </Card>
           ))}

@@ -6,9 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { usePWA } from '../core/PWAProvider';
 import { GuestPrompt } from '../core/GuestPrompt';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Target, Plus, Check, Calendar, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+const managePwaGoals = httpsCallable(functions, 'pwa-me-goals');
 
 interface Goal {
   id: string;
@@ -35,11 +38,9 @@ export default function Goals() {
 
   const fetchGoals = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('pwa-me-goals', {
-        method: 'GET'
-      });
-      
-      if (!error && data?.ok) {
+      const result = await managePwaGoals({ method: 'GET' });
+      const data = result.data as { ok: boolean, goals: Goal[] };
+      if (data?.ok) {
         setGoals(data.goals || []);
       }
     } catch (err) {
@@ -53,15 +54,15 @@ export default function Goals() {
     if (!newGoal.trim()) return;
     
     try {
-      const { data, error } = await supabase.functions.invoke('pwa-me-goals', {
+      const result = await managePwaGoals({
         method: 'POST',
         body: {
           title: newGoal,
           priority: 'medium'
         }
       });
-      
-      if (!error && data?.ok) {
+      const data = result.data as { ok: boolean, goal: Goal };
+      if (data?.ok) {
         setGoals([...goals, data.goal]);
         setNewGoal('');
         toast.success('Goal added!');
@@ -73,15 +74,15 @@ export default function Goals() {
 
   const toggleGoal = async (goalId: string, completed: boolean) => {
     try {
-      const { data, error } = await supabase.functions.invoke('pwa-me-goals', {
+      const result = await managePwaGoals({
         method: 'PATCH',
         body: {
           goal_id: goalId,
           completed: !completed
         }
       });
-      
-      if (!error && data?.ok) {
+      const data = result.data as { ok: boolean };
+      if (data?.ok) {
         setGoals(goals.map(g => 
           g.id === goalId ? { ...g, completed: !completed } : g
         ));

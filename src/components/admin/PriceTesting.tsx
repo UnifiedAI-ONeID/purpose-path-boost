@@ -3,7 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
+
+const suggestPricing = httpsCallable(functions, 'api-admin-pricing-suggest');
+const applyPricingSuggestion = httpsCallable(functions, 'api-admin-pricing-apply-suggestion');
+const adoptPricingWinner = httpsCallable(functions, 'api-admin-pricing-adopt-winner');
 
 interface PriceTestingProps {
   eventId: string;
@@ -21,12 +26,11 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
   async function getSuggest() {
     setLoading(true);
     try {
-      const { data } = await supabase.functions.invoke('api-admin-pricing-suggest', {
-        body: { 
+      const result = await suggestPricing({ 
           ticketId, 
           region: country 
-        }
-      });
+        });
+      const data = result.data as { ok: boolean, suggestions: any[], error: string };
       if (data?.ok) {
         setSuggestion(data.suggestions?.[0]);
         setNote('');
@@ -45,14 +49,12 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
     
     setLoading(true);
     try {
-      const { data } = await supabase.functions.invoke('api-admin-pricing-apply-suggestion', {
-        body: {
+      const result = await applyPricingSuggestion({
           ticketId,
           currency: suggestion.currency,
           priceCents: suggestion.price_cents
-        }
-      });
-      
+        });
+      const data = result.data as { ok: boolean, error: string };
       if (data?.ok) {
         toast.success('Applied pricing suggestion');
         setNote(`Applied ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);
@@ -69,13 +71,11 @@ export default function PriceTesting({ eventId, ticketId, basePrice, baseCurrenc
   async function adoptWinner() {
     setLoading(true);
     try {
-      const { data } = await supabase.functions.invoke('api-admin-pricing-adopt-winner', {
-        body: { 
+      const result = await adoptPricingWinner({
           testId: suggestion?.id,
           winningVariant: suggestion?.variant
-        }
-      });
-      
+        });
+      const data = result.data as { ok: boolean, error: string };
       if (data?.ok) {
         toast.success('Adopted winning variant');
         setNote(`Winner adopted: ${suggestion.currency} ${(suggestion.price_cents / 100).toFixed(2)}`);

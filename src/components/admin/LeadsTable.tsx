@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
+
+const listLeads = httpsCallable(functions, 'api-admin-leads-list');
+const updateLead = httpsCallable(functions, 'api-admin-leads-update');
+const exportLeadsToCsv = httpsCallable(functions, 'api-admin-leads-export');
 
 type Lead = {
   id: string;
@@ -34,38 +39,25 @@ export default function LeadsTable() {
   async function load() {
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Please sign in to view leads');
-        return;
-      }
-
-      const response = await supabase.functions.invoke('api-admin-leads-list', {
-        body: {
-          limit: 100,
-          sortBy: 'created_at',
-          sortOrder: 'desc',
-          ...(stage !== 'all' && { stage }),
-          ...(source !== 'all' && { source }),
-          ...(q && { search: q })
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+      const result = await listLeads({
+        limit: 100,
+        sortBy: 'created_at',
+        sortOrder: 'desc',
+        ...(stage !== 'all' && { stage }),
+        ...(source !== 'all' && { source }),
+        ...(q && { search: q })
       });
 
-      if (response.error) {
-        console.error('[LeadsTable] Error loading leads:', response.error);
-        toast.error('Failed to load leads');
-        return;
-      }
+      const data = result.data as { ok: boolean, leads: Lead[], error: string };
 
-      if (response.data?.ok && response.data.leads) {
-        setRows(response.data.leads || []);
+      if (data?.ok && data.leads) {
+        setRows(data.leads || []);
+      } else {
+        throw new Error(data?.error || 'Failed to load leads');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[LeadsTable] Exception:', error);
-      toast.error('Failed to load leads');
+      toast.error(error.message || 'Failed to load leads');
     } finally {
       setLoading(false);
     }
@@ -75,68 +67,32 @@ export default function LeadsTable() {
     load();
   }, [stage, source, q]);
 
-  useEffect(() => {
-    // Initial load
-    load();
-    
-    // Realtime subscription for updates
-    const channel = supabase
-      .channel('leads_table')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, load)
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
   async function update(id: string, patch: Partial<Lead>) {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await supabase.functions.invoke('api-admin-leads-update', {
-        body: { id, ...patch },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.error) {
-        console.error('[LeadsTable] Error updating lead:', response.error);
-        toast.error('Failed to update lead');
-        return;
-      }
-
-      if (response.data?.ok) {
+      const result = await updateLead({ id, ...patch });
+      const data = result.data as { ok: boolean, error: string };
+      if (data?.ok) {
         toast.success('Lead updated');
-        load();
+        load(); // Refresh list after update
+      } else {
+        throw new Error(data?.error || 'Failed to update lead');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[LeadsTable] Exception:', error);
-      toast.error('Failed to update lead');
+      toast.error(error.message || 'Failed to update lead');
     }
   }
 
   async function exportToCSV() {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const result = await exportLeadsToCsv();
+      const csv = result.data as string;
 
-      const response = await supabase.functions.invoke('api-admin-leads-export', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.error) {
-        console.error('[LeadsTable] Error exporting:', response.error);
-        toast.error('Failed to export leads');
+      if (!csv) {
+        toast.error('Export returned empty data.');
         return;
       }
 
-      // Response is CSV text
-      const csv = response.data;
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -149,10 +105,6 @@ export default function LeadsTable() {
       console.error('[LeadsTable] Export exception:', error);
       toast.error('Failed to export leads');
     }
-  }
-
-  function csv(s: any) {
-    return `"${String(s || '').replace(/"/g, '""')}"`;
   }
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source).filter(Boolean))).sort(), [rows]);

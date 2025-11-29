@@ -1,34 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { triggerHomeAnim } from '@/anim/animator';
-import { dbClient as supabase } from '@/db';
+import { auth } from '@/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Startup() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    async function checkAndRedirect() {
-      console.log('[Startup] Starting routing logic');
-      
-      // Show branding animation
-      triggerHomeAnim(600);
-      
-      // Check if user is authenticated
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (sessionData?.session) {
+    triggerHomeAnim(600);
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
         console.log('[Startup] User authenticated, checking admin status');
         
-        // Check if user is admin
         try {
-          const { data, error } = await supabase.functions.invoke('api-admin-check-role', {
-            headers: {
-              Authorization: `Bearer ${sessionData.session.access_token}`
-            }
-          });
+          const idTokenResult = await user.getIdTokenResult();
+          const isAdmin = idTokenResult.claims.isAdmin === true;
           
-          const isAdmin = !error && data?.is_admin === true;
           console.log('[Startup] Admin check result:', isAdmin);
           
           if (isAdmin) {
@@ -59,9 +49,9 @@ export default function Startup() {
         }
         setChecking(false);
       }, 1200);
-    }
+    });
 
-    checkAndRedirect();
+    return () => unsubscribe();
   }, [navigate]);
 
   return (

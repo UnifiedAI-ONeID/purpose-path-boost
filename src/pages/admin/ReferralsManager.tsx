@@ -5,19 +5,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/db';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { toast } from 'sonner';
 import { Copy } from 'lucide-react';
 
+// Firebase callable functions
+const referralsOverviewFn = httpsCallable(functions, 'admin-referrals-overview');
+const referralsSettingsFn = httpsCallable(functions, 'admin-referrals-settings');
+const referralsCreateFn = httpsCallable(functions, 'admin-referrals-create');
+
+// Type definitions
+interface ReferralSettings {
+  friend_percent_off: number;
+  referrer_percent_off: number;
+  coupon_expiry_days: number;
+}
+
+interface LeaderboardEntry {
+  profile_id: string;
+  total: number;
+}
+
+interface InviteResult {
+  ok: boolean;
+  link: string;
+  friend_coupon: string;
+  expires_at: string;
+  error?: string;
+}
+
 export default function ReferralsManager() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<ReferralSettings>({
     friend_percent_off: 20,
     referrer_percent_off: 20,
     coupon_expiry_days: 7
   });
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [email, setEmail] = useState('');
-  const [inviteResult, setInviteResult] = useState<any>(null);
+  const [inviteResult, setInviteResult] = useState<InviteResult | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,17 +52,8 @@ export default function ReferralsManager() {
 
   async function fetchData() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { data, error } = await supabase.functions.invoke(
-        'api-admin-referrals-overview',
-        {
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
+      const result = await referralsOverviewFn();
+      const data = result.data as any;
       setSettings(data?.settings || settings);
       setLeaderboard(data?.leaderboard || []);
     } catch (error) {
@@ -49,18 +66,7 @@ export default function ReferralsManager() {
 
   async function handleSaveSettings() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { error } = await supabase.functions.invoke(
-        'api-admin-referrals-settings',
-        {
-          body: settings,
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
+      await referralsSettingsFn(settings);
       toast.success('Settings saved');
     } catch (error) {
       console.error('[ReferralsManager] Save failed:', error);
@@ -75,18 +81,9 @@ export default function ReferralsManager() {
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
+      const result = await referralsCreateFn({ email });
+      const data = result.data as InviteResult;
 
-      const { data, error } = await supabase.functions.invoke(
-        'api-admin-referrals-create',
-        {
-          body: { email },
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
       if (!data?.ok) {
         toast.error(data?.error || 'Failed to create invite');
         return;

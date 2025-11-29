@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+
+const getLeadsAnalytics = httpsCallable(functions, 'api-admin-leads-analytics');
 
 export default function LeadsOverview() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -10,23 +13,14 @@ export default function LeadsOverview() {
 
   const fetchAnalytics = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      const response = await getLeadsAnalytics();
+      const data = response.data as { ok: boolean, analytics: any, error: string };
 
-      const response = await supabase.functions.invoke('api-admin-leads-analytics', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.error) {
-        console.error('[LeadsOverview] Analytics error:', response.error);
+      if (data?.ok && data.analytics) {
+        setAnalytics(data.analytics);
+      } else {
+        console.error('[LeadsOverview] Analytics error:', data?.error);
         toast.error('Failed to load analytics');
-        return;
-      }
-
-      if (response.data?.ok && response.data.analytics) {
-        setAnalytics(response.data.analytics);
       }
     } catch (error) {
       console.error('[LeadsOverview] Error:', error);

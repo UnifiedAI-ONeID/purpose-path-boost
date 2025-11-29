@@ -3,8 +3,12 @@ import AdminShell from '@/components/admin/AdminShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { supabase } from '@/db';
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from 'sonner';
+
+const listAdminCoupons = httpsCallable(functions, 'api-admin-coupons-list');
+const saveAdminCoupon = httpsCallable(functions, 'api-admin-coupons-save');
 
 interface Coupon {
   code: string;
@@ -25,8 +29,9 @@ export default function AdminCoupons() {
 
   async function fetchCoupons() {
     try {
-      const { data, error } = await supabase.functions.invoke('api-admin-coupons-list');
-      if (!error && data?.rows) {
+      const result = await listAdminCoupons();
+      const data = result.data as { rows: Coupon[] };
+      if (data?.rows) {
         setCoupons(data.rows);
       }
     } catch (error) {
@@ -48,11 +53,7 @@ export default function AdminCoupons() {
     };
 
     try {
-      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body
-      });
-      
-      if (error) throw error;
+      await saveAdminCoupon(body);
       
       e.currentTarget.reset();
       fetchCoupons();
@@ -65,11 +66,7 @@ export default function AdminCoupons() {
 
   async function handleDisable(code: string) {
     try {
-      const { error } = await supabase.functions.invoke('api-admin-coupons-save', {
-        body: { code, active: false }
-      });
-      
-      if (error) throw error;
+      await saveAdminCoupon({ code, active: false });
       fetchCoupons();
       toast.success('Coupon disabled');
     } catch (error: any) {
