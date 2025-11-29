@@ -6,10 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BlogEditor } from '@/components/BlogEditor';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Plus, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { fx } from '@/lib/edge';
 
 interface BlogPost {
   id: string;
@@ -53,20 +53,7 @@ export function AdminBlogList() {
   const loadPosts = async () => {
     try {
       setIsLoading(true);
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session?.session?.access_token) {
-        toast.error('Not authenticated');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('admin-blog-list', {
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-      });
-
-      if (error) throw error;
+      const data = await fx('api-admin-blog-list');
 
       if (data?.ok && data?.rows) {
         setPosts(data.rows);
@@ -85,41 +72,15 @@ export function AdminBlogList() {
     if (!confirm(`Delete blog post "${title}"? This cannot be undone.`)) return;
 
     try {
-      const { data: session } = await supabase.auth.getSession();
-      
-      if (!session?.session?.access_token) {
-        toast.error('Not authenticated');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('admin-blog-delete', {
-        body: { id },
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-      });
-
-      if (error) {
-        console.error('[AdminBlogList] Delete error:', error);
-        throw new Error('Failed to connect to server');
-      }
+      const data = await fx('api-admin-blog-delete', 'POST', { id });
 
       if (data?.ok) {
         toast.success('Blog post deleted successfully');
         
         // Trigger cache bust and sitemap rebuild
         try {
-          await supabase.functions.invoke('admin-cache-bust', {
-            headers: {
-              Authorization: `Bearer ${session.session.access_token}`,
-            },
-          });
-          
-          await supabase.functions.invoke('admin-sitemap-rebuild', {
-            headers: {
-              Authorization: `Bearer ${session.session.access_token}`,
-            },
-          });
+          await fx('api-admin-cache-bust');
+          await fx('api-admin-sitemap-rebuild');
         } catch (cacheError) {
           console.error('[AdminBlogList] Cache/sitemap error:', cacheError);
         }

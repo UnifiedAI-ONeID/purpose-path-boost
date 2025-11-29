@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { fx } from '@/lib/edge';
 
 function langKey(l: string) {
   return l === 'zh-CN' ? 'zh_cn' : l === 'zh-TW' ? 'zh_tw' : 'en';
@@ -21,28 +22,18 @@ export default function Quiz() {
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
-    import('@/lib/supabase').then(({ dbClient: supabase }) => {
-      supabase.functions
-        .invoke('pwa-boot', {
-          body: { lang },
-          headers: { 'Accept-Language': lang }
-        })
-        .then(({ data }) => {
-          if (data?.ok) setCfg(data.quiz || []);
-        });
+    fx('pwa-boot', 'POST', { lang }).then((data) => {
+        if (data?.ok) setCfg(data.quiz || []);
     });
   }, [lang]);
 
   async function choose(choice: any) {
     const device_id = localStorage.getItem('zg.device')!;
     
-    const { dbClient: supabase } = await import('@/lib/supabase');
-    supabase.functions.invoke('pwa-quiz-answer', {
-      body: {
-        device_id,
-        question_key: cfg[idx].key,
-        choice_value: choice.value
-      }
+    fx('pwa-quiz-answer', 'POST', {
+      device_id,
+      question_key: cfg[idx].key,
+      choice_value: choice.value
     });
 
     const newTags = Array.from(new Set([...tags, choice.tag].filter(Boolean)));

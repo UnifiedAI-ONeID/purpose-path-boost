@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
+import { auth } from '@/firebase/config';
 
 export default function System() {
   const [msg, setMsg] = useState('');
@@ -14,20 +15,12 @@ export default function System() {
   async function handleBumpVersion() {
     setBumping(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
+      if (!auth.currentUser) {
         toast.error('Not authenticated');
         return;
       }
 
-      const { error } = await supabase.functions.invoke('api-admin-bump-version', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
-        }
-      });
-
-      if (error) throw error;
+      await fx('api-admin-bump-version', 'POST');
       toast.success('Cache/version bumped - clients will refresh');
     } catch (error) {
       console.error('[System] Bump failed:', error);
@@ -45,17 +38,10 @@ export default function System() {
 
     setAlerting(true);
     try {
-      const { error } = await supabase
-        .from('nudge_inbox')
-        .insert([{
-          profile_id: null,
-          kind: 'banner',
-          title: 'SEO Update',
-          body: msg,
-          expire_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-        }]);
-
-      if (error) throw error;
+      await fx('api-admin-seo-alert', 'POST', {
+        message: msg,
+        expire_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
       setMsg('');
       toast.success('SEO alert queued');
     } catch (error) {

@@ -10,6 +10,7 @@ import {
   TrendingUp, Sparkles, ArrowRight 
 } from 'lucide-react';
 import { usePrefs } from '@/prefs/PrefsProvider';
+import { fx } from '@/lib/edge';
 
 export default function EnhancedHome() {
   const { lang } = usePrefs();
@@ -22,10 +23,8 @@ export default function EnhancedHome() {
   // Fetch quick stats for authenticated users
   useEffect(() => {
     if (!isGuest && isOnline) {
-      import('@/lib/supabase').then(({ dbClient: supabase }) => {
-        supabase.functions.invoke('pwa-me-summary').then(({ data }) => {
-          if (data?.ok) setQuickStats(data);
-        });
+      fx('pwa-me-summary').then((data) => {
+        if (data?.ok) setQuickStats(data);
       });
     }
   }, [isGuest, isOnline]);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Sparkles, Loader2 } from 'lucide-react';
@@ -19,10 +19,8 @@ export default function ContentSuggestions() {
     setSuggestions('Generating AI-powered content suggestions...');
     
     try {
-      const { data, error } = await supabase.functions.invoke('ai-suggest-topics');
+      const data = await fx('ai-suggest-topics');
       
-      if (error) throw error;
-
       const suggestionData = data as AISuggestionData;
 
       if (suggestionData?.error) {

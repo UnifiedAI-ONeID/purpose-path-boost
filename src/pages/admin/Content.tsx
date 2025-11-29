@@ -7,7 +7,7 @@ import AdminShell from '@/components/admin/AdminShell';
 import { AdminBlogList } from '@/components/admin/AdminBlogList';
 import ContentLeaderboard from '@/components/admin/ContentLeaderboard';
 import { VersionControl } from '@/components/admin/VersionControl';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/edge';
 
 export default function Content() {
   const [tab, setTab] = useState<'pages' | 'blog' | 'analytics'>('pages');

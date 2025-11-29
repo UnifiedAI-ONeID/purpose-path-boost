@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { fx } from '@/lib/edge';
 
 interface CoachingOffer {
   id: string;
@@ -28,20 +29,13 @@ export default function Coaching() {
   useEffect(() => {
     const tags = searchParams.get('tags') || '';
     
-    import('@/lib/supabase').then(({ dbClient: supabase }) => {
-      supabase.functions
-        .invoke('pwa-coaching-recommend', {
-          body: { lang, tags },
-          headers: { 'Accept-Language': lang }
-        })
-        .then(({ data }) => {
-          if (data?.ok) {
-            setOffers(data.rows || []);
-          }
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    });
+    fx('pwa-coaching-recommend', 'POST', { lang, tags }).then((data) => {
+        if (data?.ok) {
+        setOffers(data.rows || []);
+        }
+        setLoading(false);
+    })
+    .catch(() => setLoading(false));
   }, [lang, searchParams]);
 
   if (loading) {

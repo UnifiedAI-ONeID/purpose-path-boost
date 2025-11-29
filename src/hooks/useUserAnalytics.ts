@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
+import { auth } from '@/firebase/config';
 
 export type UserAnalytics = {
   ok: boolean;
@@ -35,27 +36,13 @@ export function useUserAnalytics(profileId: string | undefined) {
 
     async function fetchAnalytics() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
+        if (!auth.currentUser) {
           console.error('[useUserAnalytics] No active session');
           return;
         }
 
-        const { data: analyticsData, error } = await supabase.functions.invoke(
-          `dashboard-user-analytics?profile_id=${profileId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`
-            }
-          }
-        );
+        const analyticsData = await fx(`dashboard-user-analytics`, 'GET', undefined, { profile_id: profileId });
 
-        if (error) {
-          console.error('[useUserAnalytics] Function error:', error);
-          throw error;
-        }
-        
         if (analyticsData?.ok) {
           setData(analyticsData);
         } else {

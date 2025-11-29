@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { invokeApi } from '@/lib/api-client';
+import { fx } from '@/lib/edge';
 import { FunnelUpsellDialog } from './FunnelUpsellDialog';
 
 interface Lesson {
@@ -42,9 +41,7 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
   useEffect(() => {
     (async () => {
       try {
-        const response = await invokeApi('/api/lessons/get', {
-          body: { slug }
-        });
+        const response = await fx('api-lessons-get', 'POST', { slug });
         if (response.ok && response.lesson) {
           setData(response.lesson);
         }
@@ -79,36 +76,30 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
     marks.forEach(([threshold, label]) => {
       if (pct >= threshold && !milestones[label]) {
         setMilestones(m => ({ ...m, [label]: true }));
-        supabase.functions.invoke('api-lessons-event', {
-          body: {
+        fx('api-lessons-event', 'POST', {
             profile_id: profileId,
             lesson_slug: slug,
             ev: label,
             at_sec: currentTime,
-          }
         }).catch(console.error);
       }
     });
   }, [currentTime, data?.duration_sec, milestones, profileId, slug]);
 
   const markComplete = async () => {
-    await supabase.functions.invoke('api-lessons-progress', {
-      body: {
+    await fx('api-lessons-progress', 'POST', {
         profile_id: profileId,
         lesson_slug: slug,
         last_position_sec: currentTime,
         watched_seconds: data?.duration_sec || 0,
         completed: true,
-      }
     });
 
-    await supabase.functions.invoke('api-lessons-event', {
-      body: {
+    await fx('api-lessons-event', 'POST', {
         profile_id: profileId,
         lesson_slug: slug,
         ev: 'cta_book',
         at_sec: currentTime,
-      }
     });
 
     // Show funnel upsell dialog after completion
@@ -116,13 +107,11 @@ export function LessonPlayerLite({ profileId, slug, onClose }: LessonPlayerLiteP
   };
 
   const saveProgress = async () => {
-    await supabase.functions.invoke('api-lessons-progress', {
-      body: {
+    await fx('api-lessons-progress', 'POST', {
         profile_id: profileId,
         lesson_slug: slug,
         last_position_sec: currentTime,
         watched_seconds: data?.duration_sec || 0,
-      }
     }).catch(console.error);
   };
 

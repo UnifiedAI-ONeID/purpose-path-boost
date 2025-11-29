@@ -2,7 +2,7 @@ import { ChangeEvent, useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 import { toast } from 'sonner';
 import { PLATFORM_DISPLAY_NAMES, PlatKey } from '@/lib/og/sizes';
 import { Loader2, Download, ExternalLink } from 'lucide-react';
@@ -60,18 +60,14 @@ export default function CoverComposer({ post }: CoverComposerProps) {
   async function genAll() {
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('og-render-all', {
-        body: {
+      const data = await fx('og-render-all', 'POST', {
           title: post.title,
           subtitle: post.excerpt || '',
           slug: post.slug,
           theme,
           lang,
           tag,
-        },
       });
-
-      if (error) throw error;
 
       const responseData = data as OgRenderAllResponse;
       const map: Record<string, string> = {};

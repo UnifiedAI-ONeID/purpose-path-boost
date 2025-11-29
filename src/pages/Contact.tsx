@@ -5,7 +5,7 @@ import { ROUTES } from '@/nav/routes';
 import ExpressPaySheet from '@/components/mobile/ExpressPaySheet';
 import { motion } from 'framer-motion';
 import ScrollReveal from '@/components/motion/ScrollReveal';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
 
@@ -154,12 +154,13 @@ export default function ContactPage(){
   },[]);
 
   async function loadExpressPrice(currency:string){
-    const { data, error } = await supabase.functions.invoke('api-express-price', {
-      body: { currency }
-    });
-    
-    if (!error && data?.ok) {
-      setExpressPrice({ amount_cents: data.amount_cents, currency: data.currency });
+    try {
+      const data = await fx('api-express-price', 'POST', { currency });
+      if (data?.ok) {
+        setExpressPrice({ amount_cents: data.amount_cents, currency: data.currency });
+      }
+    } catch (e) {
+      console.error('Failed to load express price', e);
     }
   }
 
@@ -187,11 +188,9 @@ export default function ContactPage(){
         source: 'contact_page',
       };
       
-      const { data, error } = await supabase.functions.invoke('api-contact-submit', {
-        body: payload
-      });
+      const data = await fx('api-contact-submit', 'POST', payload);
       
-      if (error || !data?.ok) {
+      if (!data?.ok) {
         toast.error('Failed to send message');
         setBusy(false);
         return;

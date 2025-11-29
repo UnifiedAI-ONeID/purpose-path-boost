@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 
 interface Session {
     start_at: string;
@@ -17,7 +17,7 @@ export default function UpcomingSessions({ profileId }: { profileId: string }) {
   useEffect(() => {
     async function load() {
       try {
-        const { data: result } = await supabase.functions.invoke('dashboard-user-summary');
+        const result = await fx('dashboard-user-summary');
         setData(result);
       } catch (error) {
         console.error('Failed to load sessions:', error);

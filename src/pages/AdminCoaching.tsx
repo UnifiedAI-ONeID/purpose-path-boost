@@ -1,8 +1,7 @@
 import AdminShell from '../components/admin/AdminShell';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { invokeApi } from '@/lib/api-client';
+import { fx } from '@/lib/edge';
 
 type Offer = {
   slug: string;
@@ -27,13 +26,7 @@ export default function AdminCoaching() {
   async function reload() {
     setLoading(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      const r = await invokeApi('/api/admin/coaching/list', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const r = await fx('api-admin-coaching-list', 'GET');
       setRows(r.rows || []);
     } catch (err) {
       console.error('Failed to load coaching offers:', err);
@@ -46,14 +39,7 @@ export default function AdminCoaching() {
   async function save(row: Offer) {
     setBusy(true);
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      if (!token) throw new Error('Not authenticated');
-
-      const r = await invokeApi('/api/admin/coaching/save', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: row
-      });
+      const r = await fx('api-admin-coaching-save', 'POST', row);
       
       if (r.ok) {
         toast.success('Saved successfully');

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import { fx } from '@/lib/edge';
 
 type NpsQuickProps = {
   profileId: string;
@@ -23,13 +23,11 @@ export default function NpsQuick({ profileId }: NpsQuickProps) {
 
   const handleVote = async (score: number) => {
     try {
-      await supabase.functions.invoke('api-telemetry-log', {
-        body: {
+      await fx('api-telemetry-log', 'POST', {
           event: 'nps_vote',
           props: { score },
           profile_id: profileId,
           ts: Date.now()
-        }
       });
 
       const currentMonth = new Date().toISOString().slice(0, 7);
