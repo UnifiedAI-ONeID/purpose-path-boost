@@ -7,6 +7,7 @@ export default {
   moduleNameMapper: {
     '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
     '^.+\\.svg$': 'jest-transformer-svg',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFilesAfterEnv: ['./src/setupTests.ts'],
   modulePathIgnorePatterns: ['<rootDir>/backend/package.json', '<rootDir>/supabase/functions/package.json'],

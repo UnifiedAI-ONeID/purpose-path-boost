@@ -1,7 +1,7 @@
 
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, OrderByDirection } from 'firebase-admin/firestore';
 import { Parser } from 'json2csv';
 
 initializeApp();
@@ -9,12 +9,21 @@ const db = getFirestore();
 
 const COLLECTION = 'leads';
 
-export const list = onCall(async (req) => {
+interface ListData {
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: OrderByDirection;
+    stage?: string;
+    source?: string;
+    search?: string;
+}
+
+export const list = onCall<{data: ListData}>(async (req) => {
   if (!req.auth?.token.roles?.includes('admin')) {
     throw new HttpsError('permission-denied', 'You must be an admin to access leads.');
   }
 
-  const { limit = 100, sortBy = 'created_at', sortOrder = 'desc', stage, source, search } = req.data;
+  const { limit = 100, sortBy = 'created_at', sortOrder = 'desc', stage, source, search } = req.data.data;
 
   let query: FirebaseFirestore.Query = db.collection(COLLECTION);
 
@@ -29,7 +38,7 @@ export const list = onCall(async (req) => {
     query = query.where('name', '>=', search).where('name', '<=', search + '\uf8ff');
   }
 
-  query = query.orderBy(sortBy, sortOrder as any).limit(limit);
+  query = query.orderBy(sortBy, sortOrder).limit(limit);
 
   const snapshot = await query.get();
   const leads = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

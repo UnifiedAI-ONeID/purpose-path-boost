@@ -19,7 +19,8 @@ async function setSecretValue(secretName: string, value: string) {
     await secretManager.getSecret({
       name: `projects/${PROJECT_ID}/secrets/${secretName}`,
     });
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as { code?: number };
     if (error.code === 5) {
       // Secret does not exist, so create it
       await secretManager.createSecret({
@@ -32,7 +33,7 @@ async function setSecretValue(secretName: string, value: string) {
         },
       });
     } else {
-      throw error;
+      throw err;
     }
   }
 
@@ -49,10 +50,17 @@ async function listSecrets() {
   const [secrets] = await secretManager.listSecrets({
     parent: `projects/${PROJECT_ID}`,
   });
-  return secrets.map(secret => secret.name.split("/").pop());
+  return secrets.map(secret => secret.name!.split("/").pop());
 }
 
-export const manageSecrets = functions.https.onCall(async (data, context) => {
+interface ManageSecretsData {
+  action: 'list' | 'set';
+  key?: string;
+  value?: string;
+  keys?: string;
+}
+
+export const manageSecrets = functions.https.onCall(async (data: ManageSecretsData, context) => {
   // Your authentication logic here
   // For example, check if the user is an admin
   // if (!context.auth?.token.admin) {
@@ -63,13 +71,18 @@ export const manageSecrets = functions.https.onCall(async (data, context) => {
 
   try {
     switch (action) {
-      case "list":
+      case "list": {
         const secretKeys = await listSecrets();
-        const existingKeys = (keys as string).split(',').filter(k => secretKeys.includes(k));
+        const existingKeys = (keys || '').split(',').filter(k => k && secretKeys.includes(k));
         return { data: existingKeys.map(k => ({key: k})) };
-      case "set":
+      }
+      case "set": {
+        if (!key || value === undefined) {
+             throw new functions.https.HttpsError("invalid-argument", "Key and value are required for set action.");
+        }
         await setSecretValue(key, value);
         return { success: true };
+      }
       default:
         throw new functions.https.HttpsError("invalid-argument", "Invalid action");
     }

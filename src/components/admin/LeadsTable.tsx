@@ -36,8 +36,8 @@ interface ListLeadsParams {
 
 interface ListLeadsResponse {
     ok: boolean;
-    leads: Lead[];
-    error: string;
+    leads?: Lead[];
+    error?: string;
 }
 
 interface UpdateLeadParams {
@@ -49,7 +49,7 @@ interface UpdateLeadParams {
 
 interface UpdateLeadResponse {
     ok: boolean;
-    error: string;
+    error?: string;
 }
 
 const listLeads = httpsCallable<ListLeadsParams, ListLeadsResponse>(functions, 'api-admin-leads-list');
@@ -82,7 +82,8 @@ export default function LeadsTable() {
       } else {
         throw new Error(data?.error || 'Failed to load leads');
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       console.error('[LeadsTable] Exception:', error);
       toast.error(error.message || 'Failed to load leads');
     } finally {
@@ -104,7 +105,8 @@ export default function LeadsTable() {
       } else {
         throw new Error(data?.error || 'Failed to update lead');
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       console.error('[LeadsTable] Exception:', error);
       toast.error(error.message || 'Failed to update lead');
     }
@@ -215,7 +217,7 @@ export default function LeadsTable() {
                   <TableCell>
                     <Select
                       value={r.stage}
-                      onValueChange={(value) => update(r.id, { stage: value as any })}
+                      onValueChange={(value: Lead['stage']) => update(r.id, { stage: value })}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />
@@ -256,7 +258,7 @@ export default function LeadsTable() {
 }
 
 function TagEditor({ value, onChange }: { value: string[]; onChange: (t: string[]) => void }) {
-  const [text, setText] = useState(value.join(', '));
+  const [text, setText] = useState(.join(', '));
   
   useEffect(() => setText(value.join(', ')), [value]);
   

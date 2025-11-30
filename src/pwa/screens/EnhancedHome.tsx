@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import SmartLink from '@/components/SmartLink';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { usePWA } from '../core/PWAProvider';
+import { usePWA } from '@/pwa/core/PWAProvider';
 import { 
   Target, Brain, GraduationCap, Calendar, 
   TrendingUp, Sparkles, ArrowRight 

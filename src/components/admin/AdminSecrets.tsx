@@ -24,6 +24,13 @@ interface SecretStatus {
   [key: string]: boolean;
 }
 
+interface ManageSecretsResponse {
+    success: boolean;
+    statuses?: SecretStatus;
+    error?: string;
+}
+
+
 export default function AdminSecrets() {
   const [secrets, setSecrets] = useState<{ [key: string]: string }>({});
   const [statuses, setStatuses] = useState<SecretStatus>({});
@@ -34,13 +41,15 @@ export default function AdminSecrets() {
     const getStatuses = async () => {
       setLoading(true);
       try {
-        const result: HttpsCallableResult<any> = await manageSecrets({ action: 'status' });
-        if (result.data.success) {
-          setStatuses(result.data.statuses);
+        const result: HttpsCallableResult<ManageSecretsResponse> = await manageSecrets({ action: 'status' });
+        const data = result.data;
+        if (data.success) {
+          setStatuses(data.statuses || {});
         } else {
-          toast.error(result.data.error || 'Failed to get secret statuses.');
+          toast.error(data.error || 'Failed to get secret statuses.');
         }
-      } catch (error: any) {
+      } catch (err: unknown) {
+        const error = err as { message?: string };
         console.error("Error fetching secret statuses:", error);
         toast.error('An error occurred while fetching secret statuses.');
       }
@@ -65,15 +74,17 @@ export default function AdminSecrets() {
 
     setSaving(key);
     try {
-      const result: HttpsCallableResult<any> = await manageSecrets({ action: 'set', key, value });
-      if (result.data.success) {
+      const result: HttpsCallableResult<ManageSecretsResponse> = await manageSecrets({ action: 'set', key, value });
+      const data = result.data;
+      if (data.success) {
         toast.success(`Secret "${labelFromKey(key)}" saved successfully.`);
         setSecrets(s => ({ ...s, [key]: '' })); // Clear input after save
         setStatuses(s => ({ ...s, [key]: true }));
       } else {
-        toast.error(result.data.error || `Failed to save secret "${labelFromKey(key)}".`);
+        toast.error(data.error || `Failed to save secret "${labelFromKey(key)}".`);
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       console.error(`Error saving secret ${key}:`, error);
       toast.error(`An error occurred while saving the secret: ${error.message}`);
     }
