@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-     "lint:auto-fix": "ts-node tools/auto-lint-fix.ts",
+    "lint:fix": "eslint . --fix",
+    "gemini:lint:auto": "ts-node tools/auto-lint-fix.ts",
     "preview": "vite preview",
     "test": "jest"
   },
