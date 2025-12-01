@@ -1,3 +1,11 @@
+/**
+ * @file This file provides a comprehensive client-side metrics tracking solution.
+ * It queues events and sends them in batches to a telemetry endpoint,
+ * handling session management, UTM parameter extraction, and graceful degradation
+ * in environments where necessary APIs (like sessionStorage or crypto) are not available.
+ */
+
+// --- Type Definitions ---
 
 interface UtmParams {
   utm_source?: string;
@@ -7,7 +15,7 @@ interface UtmParams {
   utm_term?: string;
 }
 
-type MetricPayloadValue = string | number | boolean | null | undefined;
+type MetricPayloadValue = string | number | boolean | null;
 type MetricPayload = Record<string, MetricPayloadValue>;
 
 interface MetricsEvent {
@@ -18,50 +26,33 @@ interface MetricsEvent {
   device?: string;
   lang?: string;
   payload?: MetricPayload;
-  ts?: number;
-  sessionId?: string;
+  ts: number; // Changed to mandatory
+  sessionId: string; // Changed to mandatory
 }
+
+// --- MetricsTracker Class ---
 
 class MetricsTracker {
   private sessionId: string;
   private queue: MetricsEvent[] = [];
   private flushTimeout: number | null = null;
-  private readonly FLUSH_INTERVAL = 5000; // 5 seconds
+  
+  private readonly FLUSH_INTERVAL_MS = 5000; // 5 seconds
   private readonly MAX_QUEUE_SIZE = 50;
+  private readonly API_ENDPOINT = '/api/telemetry/log';
 
   constructor() {
-    // Get or create session ID (safe for privacy modes)
-    let sid = '';
-    try {
-      sid = sessionStorage.getItem('metrics_session_id') || '';
-    } catch {
-      // sessionStorage can be null in private browsing or SSR
-    }
-    if (!sid) {
-      try {
-        sid = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      } catch {
-        sid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      }
-      try { 
-        sessionStorage.setItem('metrics_session_id', sid); 
-      } catch {
-        // sessionStorage can be null in private browsing or SSR
-      }
-    }
-    this.sessionId = sid;
-
-    // Flush on page unload
-    if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => this.flush(true));
-    }
+    this.sessionId = this.getSessionId();
+    this.addEventListeners();
   }
 
-  track(eventName: string, properties?: MetricPayload) {
-    // Check for Do Not Track
-    if (typeof navigator !== 'undefined' && navigator.doNotTrack === '1') {
+  /**
+   * Tracks a custom event.
+   * @param {string} eventName - The name of the event.
+   * @param {MetricPayload} [properties] - Additional data associated with the event.
+   */
+  public track(eventName: string, properties?: MetricPayload): void {
+    if (this.isDoNotTrackEnabled()) {
       return;
     }
 
@@ -74,27 +65,11 @@ class MetricsTracker {
       payload: properties,
       ts: Date.now(),
       sessionId: this.sessionId,
+      utm: this.getUtmParams(),
     };
-
-    // Extract UTM parameters
-    const params = new URLSearchParams(window.location.search);
-    const utm: UtmParams = {};
-    const utmKeys: (keyof UtmParams)[] = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-    
-    utmKeys.forEach(key => {
-      const value = params.get(key);
-      if (value) {
-        utm[key] = value;
-      }
-    });
-
-    if (Object.keys(utm).length > 0) {
-      event.utm = utm;
-    }
 
     this.queue.push(event);
 
-    // Auto-flush if queue is full
     if (this.queue.length >= this.MAX_QUEUE_SIZE) {
       this.flush();
     } else {
@@ -102,17 +77,57 @@ class MetricsTracker {
     }
   }
 
-  private scheduleFlush() {
+  // --- Private Methods ---
+
+  private getSessionId(): string {
+    try {
+      let sid = sessionStorage.getItem('metrics_session_id');
+      if (!sid) {
+        sid = self.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        sessionStorage.setItem('metrics_session_id', sid);
+      }
+      return sid;
+    } catch {
+      // Fallback for environments where sessionStorage is blocked
+      return 'session-storage-unavailable';
+    }
+  }
+
+  private addEventListeners(): void {
+    // Use sendBeacon for more reliable data transmission on page unload
+    window.addEventListener('beforeunload', () => this.flush(true));
+  }
+  
+  private isDoNotTrackEnabled(): boolean {
+    return navigator.doNotTrack === '1';
+  }
+
+  private getUtmParams(): UtmParams | undefined {
+    const params = new URLSearchParams(window.location.search);
+    const utmKeys: (keyof UtmParams)[] = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+    const utm: UtmParams = {};
+
+    utmKeys.forEach(key => {
+      const value = params.get(key);
+      if (value) {
+        utm[key] = value;
+      }
+    });
+
+    return Object.keys(utm).length > 0 ? utm : undefined;
+  }
+
+  private scheduleFlush(): void {
     if (this.flushTimeout) {
       clearTimeout(this.flushTimeout);
     }
-    this.flushTimeout = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL);
+    this.flushTimeout = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL_MS);
   }
 
-  private async flush(sync = false) {
+  private async flush(isUnloading = false): Promise<void> {
     if (this.queue.length === 0) return;
 
-    const events = [...this.queue];
+    const eventsToFlush = [...this.queue];
     this.queue = [];
 
     if (this.flushTimeout) {
@@ -120,98 +135,74 @@ class MetricsTracker {
       this.flushTimeout = null;
     }
 
-    try {
-      const payload = JSON.stringify({ events });
-      const url = '/api/telemetry/log';
+    const payload = JSON.stringify({ events: eventsToFlush });
 
-      if (sync && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        // Use sendBeacon for synchronous requests (on page unload)
-        const blob = new Blob([payload], { type: 'application/json' });
-        navigator.sendBeacon(url, blob);
+    try {
+      // Use sendBeacon for unloading, as it's more likely to succeed
+      if (isUnloading && navigator.sendBeacon) {
+        navigator.sendBeacon(this.API_ENDPOINT, new Blob([payload], { type: 'application/json' }));
       } else {
-        // Regular async request
-        await fetch(url, {
+        await fetch(this.API_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: payload,
+          keepalive: isUnloading, // keepalive helps ensure the request is sent even if the page is unloading
         });
-        console.log(`[Metrics] Tracked ${events.length} events`);
       }
     } catch (error) {
       console.error('[Metrics] Failed to track events:', error);
-      // Re-queue failed events if not unloading
-      if (!sync) {
-        this.queue = [...events, ...this.queue];
+      // If not unloading, re-queue the events to retry later
+      if (!isUnloading) {
+        this.queue.unshift(...eventsToFlush);
       }
     }
   }
 
-  private getDeviceType(): string {
-    if(typeof navigator === 'undefined') return 'unknown';
+  private getDeviceType(): 'tablet' | 'mobile' | 'desktop' {
     const ua = navigator.userAgent;
-    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-      return 'tablet';
-    }
-    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-      return 'mobile';
-    }
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return 'tablet';
+    if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return 'mobile';
     return 'desktop';
   }
 
-  // Track page view
-  pageView() {
+  // --- Public Tracking Methods for Common Events ---
+
+  public pageView(): void {
     this.track('page_view');
   }
 
-  // Track CTA clicks
-  ctaClick(button: string, location: string) {
+  public ctaClick(button: string, location: string): void {
     this.track('cta_click', { button, location });
   }
 
-  // Track booking funnel
-  bookStart() {
+  public bookStart(): void {
     this.track('book_start');
   }
 
-  bookComplete() {
+  public bookComplete(): void {
     this.track('book_complete');
   }
-
-  // Track quiz
-  quizComplete(score: number) {
-    this.track('quiz_complete', { score });
-  }
-
-  // Track blog engagement
-  blogRead(slug: string, category: string) {
-    this.track('blog_read', { slug, category });
-  }
 }
 
-// Export singleton instance
+// --- Singleton Instantiation and Export ---
+
 let metricsTrackerInstance: MetricsTracker | null = null;
+
+// Ensure this only runs in a browser environment
 if (typeof window !== 'undefined') {
   metricsTrackerInstance = new MetricsTracker();
-}
-export const metricsTracker = metricsTrackerInstance;
 
+  // Auto-track initial page view
+  metricsTrackerInstance.pageView();
 
-// Auto-track page views on route changes
-if (typeof window !== 'undefined' && metricsTracker) {
-  // Track initial page view
-  metricsTracker.pageView();
-
-  // Track subsequent page views (for SPA navigation)
+  // Auto-track subsequent page views for SPAs
   let lastPath = window.location.pathname;
-  const observer = new MutationObserver(() => {
+  new MutationObserver(() => {
     if (window.location.pathname !== lastPath) {
       lastPath = window.location.pathname;
-      metricsTracker.pageView();
+      metricsTrackerInstance?.pageView();
     }
-  });
-  
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  }).observe(document.body, { childList: true, subtree: true });
 }
+
+export const metricsTracker = metricsTrackerInstance;

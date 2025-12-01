@@ -1,156 +1,167 @@
+/**
+ * @file This file implements a "version guard" system to ensure that users are always
+ * running the latest version of the web application. It monitors a version number
+ * in Firestore and, upon detecting an update, clears all local caches and forces
+ * a page reload.
+ */
+
 import { db } from '@/firebase/config';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, DocumentData } from 'firebase/firestore';
+import { logger } from './log';
 
-const LS_KEY = 'zg.content.v';
-const CACHE_PREFIXES = [
-  'api-swr-',
-  'zg-img-',
-  'workbox-precache-',
-  'workbox-runtime-',
-  'STATIC',
-  'API',
-];
+// --- Constants ---
 
-const LS_PREFIXES = [
-  'cache:',
-  'zg.pwa.',
-  'zg.i18n.',
-  'zg.offer.',
-  'firebase.', // Changed from supabase.
-];
+const LS_VERSION_KEY = 'zg.content.version';
+const FIRESTORE_CONFIG_PATH = 'config/system';
 
-export function bootVersionGuard({ pollMs = 90000 }: { pollMs?: number } = {}) {
-  // 1) Realtime monitoring (instant updates) via Firestore
-  try {
-    const docRef = doc(db, 'config', 'system'); // Assuming /config/system exists
-    onSnapshot(docRef, (doc) => {
-      if (doc.exists()) {
-        console.log('[VersionGuard] System config updated via realtime');
-        // Assuming version is in 'version' field
-        const version = doc.data().version;
-        if (version) {
-          handleVersionUpdate(Number(version));
-        }
-      }
-    });
-  } catch (err) {
-    console.warn('[VersionGuard] Realtime subscription failed:', err);
+// Prefixes for identifying cache and localStorage keys that should be cleared.
+const CACHE_PREFIXES_TO_PURGE = ['api-swr-', 'zg-img-', 'workbox-precache', 'workbox-runtime'];
+const LS_PREFIXES_TO_PURGE = ['cache:', 'zg.pwa.', 'zg.i18n.', 'zg.offer.'];
+const IDB_NAMES_TO_PURGE = ['workbox-expiration', 'keyval-store', 'zg-idb'];
+
+// --- State ---
+
+let isInitialized = false;
+
+// --- Core Logic ---
+
+/**
+ * Handles the logic of comparing the remote version with the local version and
+ * triggering a refresh if necessary.
+ *
+ * @param {number} remoteVersion - The version number fetched from the remote source.
+ */
+async function handleVersionUpdate(remoteVersion: number): Promise<void> {
+  if (isNaN(remoteVersion)) {
+    logger.warn('[VersionGuard] Invalid remote version received.');
+    return;
   }
 
-  // 2) Polling fallback is less critical with Firestore offline support, but good for redundancy
-  // We can just fetch the doc periodically
-  setInterval(() => checkAndRefresh(), pollMs);
+  const localVersion = Number(localStorage.getItem(LS_VERSION_KEY) || '0');
+  logger.info(`[VersionGuard] Version check: Local=${localVersion}, Remote=${remoteVersion}`);
 
-  // 3) Initial check
-  setTimeout(() => checkAndRefresh(), 5000);
+  if (localVersion === 0) {
+    // This is the first run; just store the current version.
+    localStorage.setItem(LS_VERSION_KEY, String(remoteVersion));
+    return;
+  }
 
-  console.log('[VersionGuard] Initialized');
+  if (remoteVersion > localVersion) {
+    logger.warn(`[VersionGuard] New version detected (v${remoteVersion}). Purging caches and reloading.`);
+    
+    // Update local version immediately to prevent reload loops.
+    localStorage.setItem(LS_VERSION_KEY, String(remoteVersion));
+    
+    await purgeAllCaches();
+    
+    // A short delay can help ensure all cleanup tasks complete.
+    setTimeout(() => window.location.reload(), 500);
+  }
 }
 
-async function fetchVersion(): Promise<number> {
+/**
+ * Fetches the current application version from Firestore.
+ * @returns {Promise<number>} The version number, or 0 if it cannot be fetched.
+ */
+async function fetchRemoteVersion(): Promise<number> {
   try {
-    const docRef = doc(db, 'config', 'system');
+    const docRef = doc(db, FIRESTORE_CONFIG_PATH);
     const snap = await getDoc(docRef);
-    return Number(snap.data()?.version || 1);
-  } catch (err) {
-    console.warn('[VersionGuard] Failed to fetch version:', err);
-    return Number(localStorage.getItem(LS_KEY) || 1);
+    return Number(snap.data()?.version || 0);
+  } catch (error) {
+    logger.error('[VersionGuard] Failed to fetch remote version.', { error });
+    return 0; // Return 0 to prevent accidental purges on network errors.
   }
 }
 
-async function handleVersionUpdate(remote: number) {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+/**
+ * Wipes all known client-side storage to ensure a clean slate for the new version.
+ */
+async function purgeAllCaches(): Promise<void> {
+  logger.info('[VersionGuard] Starting cache purge...');
+  
+  const purgePromises: Promise<any>[] = [];
 
-  const local = Number(localStorage.getItem(LS_KEY) || 0);
-  console.log('[VersionGuard] Version check:', { local, remote });
-
-  if (remote > local && local > 0) {
-    console.log('[VersionGuard] Version mismatch - purging caches and reloading');
-    localStorage.setItem(LS_KEY, String(remote));
-
-    try {
-      await nukeCaches();
-    } catch (e) {
-      console.warn('[VersionGuard] Cache purge failed, proceeding to reload', e);
-    }
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
-  } else if (local === 0) {
-    localStorage.setItem(LS_KEY, String(remote));
-  }
-}
-
-async function checkAndRefresh() {
-  const remote = await fetchVersion();
-  await handleVersionUpdate(remote);
-}
-
-async function nukeCaches() {
-  console.log('[VersionGuard] Nuking all caches...');
-
-  // 1) Tell service worker to purge
-  try {
-    if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage('ZG_PURGE_ALL');
-      console.log('[VersionGuard] Sent purge message to service worker');
-    }
-  } catch (err) {
-    console.warn('[VersionGuard] Failed to message service worker:', err);
+  // 1. Service Worker Cache (via message)
+  if (navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage('PURGE_CACHES');
+    logger.debug('[VersionGuard] Sent PURGE_CACHES message to service worker.');
   }
 
-  // 2) Clear CacheStorage
+  // 2. CacheStorage API
   try {
     const cacheNames = await caches.keys();
-    const matchingCaches = cacheNames.filter((name) =>
-      CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))
-    );
-    
-    await Promise.all(matchingCaches.map((name) => {
-      console.log('[VersionGuard] Deleting cache:', name);
-      return caches.delete(name);
-    }));
-    
-    console.log('[VersionGuard] Cleared', matchingCaches.length, 'cache(s)');
-  } catch (err) {
-    console.warn('[VersionGuard] Failed to clear caches:', err);
-  }
-
-  // 3) Clear localStorage namespaces
-  try {
-    const keysToRemove: string[] = [];
-    for (const key of Object.keys(localStorage)) {
-      if (LS_PREFIXES.some((prefix) => key.startsWith(prefix))) {
-        keysToRemove.push(key);
+    for (const name of cacheNames) {
+      if (CACHE_PREFIXES_TO_PURGE.some(prefix => name.startsWith(prefix))) {
+        purgePromises.push(caches.delete(name).then(() => logger.debug(`Deleted cache: ${name}`)));
       }
     }
-    
-    keysToRemove.forEach((key) => {
-      console.log('[VersionGuard] Removing localStorage key:', key);
-      localStorage.removeItem(key);
-    });
-    
-    console.log('[VersionGuard] Cleared', keysToRemove.length, 'localStorage key(s)');
-  } catch (err) {
-    console.warn('[VersionGuard] Failed to clear localStorage:', err);
+  } catch (error) {
+    logger.error('[VersionGuard] Failed to purge CacheStorage.', { error });
   }
 
-  // 4) Clear IndexedDB
+  // 3. LocalStorage
   try {
-    const dbNames = ['workbox-expiration', 'keyval-store', 'zg-idb'];
-    await Promise.all(
-      dbNames.map((db) => {
-        console.log('[VersionGuard] Deleting IndexedDB:', db);
-        return new Promise((resolve) => {
-          const request = indexedDB.deleteDatabase(db);
-          request.onsuccess = () => resolve(true);
-          request.onerror = () => resolve(false);
-        });
-      })
-    );
-    console.log('[VersionGuard] Cleared IndexedDB databases');
-  } catch (err) {
-    console.warn('[VersionGuard] Failed to clear IndexedDB:', err);
+    for (const key in localStorage) {
+      if (LS_PREFIXES_TO_PURGE.some(prefix => key.startsWith(prefix))) {
+        purgePromises.push(Promise.resolve().then(() => {
+          localStorage.removeItem(key);
+          logger.debug(`Removed localStorage key: ${key}`);
+        }));
+      }
+    }
+  } catch (error) {
+    logger.error('[VersionGuard] Failed to purge LocalStorage.', { error });
+  }
+
+  // 4. IndexedDB
+  try {
+    for (const dbName of IDB_NAMES_TO_PURGE) {
+      purgePromises.push(new Promise<void>((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(dbName);
+        request.onsuccess = () => { logger.debug(`Deleted IndexedDB: ${dbName}`); resolve(); };
+        request.onerror = () => reject(request.error);
+      }));
+    }
+  } catch (error) {
+    logger.error('[VersionGuard] Failed to purge IndexedDB.', { error });
+  }
+
+  await Promise.all(purgePromises);
+  logger.info('[VersionGuard] Cache purge completed.');
+}
+
+// --- Initialization ---
+
+/**
+ * Initializes the version guard system. It sets up a real-time listener on Firestore
+ * to detect version changes and performs an initial check.
+ */
+export function bootVersionGuard(): void {
+  if (isInitialized || typeof window === 'undefined') {
+    return;
+  }
+  isInitialized = true;
+
+  try {
+    const docRef = doc(db, FIRESTORE_CONFIG_PATH);
+    
+    // Set up a real-time listener for instant updates.
+    onSnapshot(docRef, (docSnap: DocumentData) => {
+      const remoteVersion = Number(docSnap.data()?.version || 0);
+      if (remoteVersion > 0) {
+        handleVersionUpdate(remoteVersion);
+      }
+    }, error => {
+      logger.error('[VersionGuard] Real-time subscription failed.', { error });
+    });
+
+    // Perform an initial check on boot, in case the listener is slow to attach.
+    fetchRemoteVersion().then(handleVersionUpdate);
+    
+    logger.info('[VersionGuard] Initialized.');
+
+  } catch (error) {
+    logger.error('[VersionGuard] Failed to initialize.', { error });
   }
 }
