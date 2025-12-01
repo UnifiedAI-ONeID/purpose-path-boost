@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/edge';
+import { httpsCallable } from 'firebase/functions';
+import { functions, auth } from '@/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { TrendingUp, Users, DollarSign, Target, Eye, MousePointer } from 'lucide-react';
 import { trackEvent } from '@/lib/trackEvent';
+
+const getDashboardMetrics = httpsCallable(functions, 'dashboard-admin-metrics');
 
 interface MetricsData {
   kpi: {
@@ -31,29 +35,20 @@ export default function Analytics() {
 
   useEffect(() => {
     trackEvent('admin_analytics_view');
-    loadMetrics();
-    
-    // Refresh every minute
-    const interval = setInterval(loadMetrics, 60000);
-    return () => clearInterval(interval);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loadMetrics();
+        const interval = setInterval(loadMetrics, 60000);
+        return () => clearInterval(interval);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   async function loadMetrics() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      
-      if (!sessionData?.session) {
-        console.error('No session found');
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('dashboard-admin-metrics', {
-        headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
-        }
-      });
-
-      if (error) throw error;
+      const result = await getDashboardMetrics();
+      const data = result.data as any; // Assuming data is of a certain type
       if (data?.ok) {
         setMetrics(data);
       }

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { useSearchParams } from 'react-router-dom';
 import SmartLink from '@/components/SmartLink';
@@ -7,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { fx } from '@/lib/edge';
 
 interface CoachingOffer {
   id: string;
@@ -20,6 +21,8 @@ interface CoachingOffer {
   score?: number;
 }
 
+const getPwaCoachingRecommend = httpsCallable(functions, 'pwa-coaching-recommend');
+
 export default function Coaching() {
   const { lang } = usePrefs();
   const [searchParams] = useSearchParams();
@@ -29,13 +32,15 @@ export default function Coaching() {
   useEffect(() => {
     const tags = searchParams.get('tags') || '';
     
-    fx('pwa-coaching-recommend', 'POST', { lang, tags }).then((data) => {
+    getPwaCoachingRecommend({ lang, tags })
+      .then((result) => {
+        const data = result.data as any; // Assuming data is of a certain type
         if (data?.ok) {
-        setOffers(data.rows || []);
+          setOffers(data.rows || []);
         }
         setLoading(false);
-    })
-    .catch(() => setLoading(false));
+      })
+      .catch(() => setLoading(false));
   }, [lang, searchParams]);
 
   if (loading) {

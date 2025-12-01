@@ -1,5 +1,14 @@
-// Analytics utilities for Umami and PostHog
+declare global {
+  interface Window {
+    umami?: (eventName: string, data?: any) => void;
+    posthog?: {
+      capture: (eventName: string, properties?: Record<string, any>) => void;
+      identify: (userId: string, properties?: Record<string, any>) => void;
+    };
+  }
+}
 
+// Analytics utilities for Umami and PostHog
 export const trackEvent = (
   eventName: string,
   properties?: Record<string, any>

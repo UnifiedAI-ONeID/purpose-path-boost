@@ -1,5 +1,5 @@
 import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, ElementType } from "react";
 
 type TDir = "up" | "down" | "left" | "right" | "none";
 type Props = {
@@ -7,7 +7,7 @@ type Props = {
   once?: boolean;
   delay?: number;
   dir?: TDir;
-  as?: any;
+  as?: ElementType;
   className?: string;
   threshold?: number;
 };

@@ -14,12 +14,19 @@ export interface PaymentLinkResponse {
   id: string;
 }
 
+interface ApiResponse {
+  ok: boolean;
+  url?: string;
+  id?: string;
+  error?: string;
+}
+
 export const createPaymentLink = async (
   data: PaymentLinkRequest
 ): Promise<PaymentLinkResponse> => {
   try {
     const { invokeApi } = await import('@/lib/api-client');
-    const result = await invokeApi('/api/create-payment-link', {
+    const result: ApiResponse = await invokeApi('/api/create-payment-link', {
       method: 'POST',
       body: data
     });

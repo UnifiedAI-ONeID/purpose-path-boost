@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/edge';
+import { httpsCallable } from 'firebase/functions';
+import { functions, auth } from '@/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { isMobileDevice } from '@/lib/deviceDetect';
+
+const checkAdminRole = httpsCallable(functions, 'admin-check-role');
 
 /**
  * DashboardRedirect - Redirects authenticated users to the appropriate dashboard
@@ -14,78 +18,53 @@ export default function DashboardRedirect() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function redirect() {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         console.log('[DashboardRedirect] Starting redirect logic');
-        // Check authentication
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        console.log('[DashboardRedirect] Session check:', { 
-          hasSession: !!session, 
-          userId: session?.user?.id 
-        });
-        
-        if (!session) {
-          // Not authenticated - go to auth page
+        if (!user) {
           console.log('[DashboardRedirect] No session, redirecting to auth');
           navigate('/auth?returnTo=/dashboard');
           return;
         }
 
-        // Check admin status using edge function
-        console.log('[DashboardRedirect] Calling admin check edge function');
-        const { data: adminData, error: adminError } = await supabase.functions.invoke('api-admin-check-role', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
-        });
-        
-        console.log('[DashboardRedirect] Admin check response:', { adminData, adminError });
-        
-        if (adminError) {
-          console.error('[DashboardRedirect] Admin check error:', adminError);
-          // Default to appropriate dashboard based on device
-          const shouldUseMobile = isMobileDevice();
-          const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
-          console.log('[DashboardRedirect] Error fallback to', fallbackRoute);
-          navigate(fallbackRoute, { replace: true });
-          return;
-        }
-        
-        // Route based on role
+        console.log('[DashboardRedirect] Calling admin check function');
+        const result = await checkAdminRole();
+        const adminData = result.data as any; // Assuming data is of a certain type
+
+        console.log('[DashboardRedirect] Admin check response:', { adminData });
+
         const isAdmin = adminData?.is_admin === true;
-        console.log('[DashboardRedirect] Routing user:', { isAdmin, userId: session.user.id });
-        
+        console.log('[DashboardRedirect] Routing user:', { isAdmin, userId: user.uid });
+
         if (isAdmin) {
-          // Admins always go to /admin regardless of device
           console.log('[DashboardRedirect] Navigating admin to /admin');
           navigate('/admin', { replace: true });
         } else {
-          // Check device preference for non-admin users
           let devicePreference: string | null = null;
           try {
             devicePreference = localStorage.getItem('zg.devicePreference');
           } catch (e) {
             console.warn('localStorage not available:', e);
           }
-          
-          const shouldUseMobile = devicePreference 
-            ? devicePreference === 'mobile' 
+
+          const shouldUseMobile = devicePreference
+            ? devicePreference === 'mobile'
             : isMobileDevice();
-          
-          // Route to appropriate dashboard based on device
+
           const targetRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
           console.log('[DashboardRedirect] Navigating user to', targetRoute, { shouldUseMobile });
           navigate(targetRoute, { replace: true });
         }
       } catch (error) {
         console.error('[DashboardRedirect] Error:', error);
-        // Default to auth page on exception
-        navigate('/auth?returnTo=/dashboard');
+        const shouldUseMobile = isMobileDevice();
+        const fallbackRoute = shouldUseMobile ? '/pwa/dashboard' : '/me';
+        console.log('[DashboardRedirect] Error fallback to', fallbackRoute);
+        navigate(fallbackRoute, { replace: true });
       }
-    }
+    });
 
-    redirect();
+    return () => unsubscribe();
   }, [navigate]);
 
   return (

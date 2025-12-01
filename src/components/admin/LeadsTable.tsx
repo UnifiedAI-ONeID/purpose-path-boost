@@ -258,7 +258,7 @@ export default function LeadsTable() {
 }
 
 function TagEditor({ value, onChange }: { value: string[]; onChange: (t: string[]) => void }) {
-  const [text, setText] = useState(.join(', '));
+  const [text, setText] = useState(value.join(', '));
   
   useEffect(() => setText(value.join(', ')), [value]);
   

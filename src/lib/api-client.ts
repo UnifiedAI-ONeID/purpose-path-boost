@@ -1,9 +1,12 @@
 
-interface InvokeApiOptions extends RequestInit {
-  body?: any;
+interface InvokeApiOptions<T = any> extends RequestInit {
+  body?: T;
 }
 
-export async function invokeApi(endpoint: string, options: InvokeApiOptions = {}) {
+export async function invokeApi<T = any>(
+  endpoint: string, 
+  options: InvokeApiOptions<T> = {}
+) {
   const { body, headers, ...rest } = options;
   
   const headersInit: HeadersInit = {

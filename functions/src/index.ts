@@ -1,5 +1,5 @@
-
 import { list, update, exportCsv } from './api';
+import { adminCrm } from './admin-crm';
 
 // This structure creates callable functions with names like 'api-admin-leads-list'
 export const api = {
@@ -9,5 +9,6 @@ export const api = {
       update: update,
       export: exportCsv,
     },
+    crm: adminCrm,
   },
 };

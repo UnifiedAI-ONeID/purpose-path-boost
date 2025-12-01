@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, DependencyList } from 'react';
 import { usePrefs } from '@/prefs/PrefsProvider';
 
 /**
@@ -17,9 +17,9 @@ import { usePrefs } from '@/prefs/PrefsProvider';
  * );
  * ```
  */
-export function useI18nFetch<T = any>(
+export function useI18nFetch<T = unknown>(
   url: string | ((lang: string) => string),
-  deps: any[] = []
+  deps: DependencyList = []
 ) {
   const { lang } = usePrefs();
   const [data, setData] = useState<T | null>(null);
@@ -73,6 +73,7 @@ export function useI18nFetch<T = any>(
     return () => { 
       alive = false; 
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang, url, ...deps]);
 
   return { data, loading, error, lang };

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/edge';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserPlus, Filter, Download } from 'lucide-react';
 import { toast } from 'sonner';
+
+const getAdminCrm = httpsCallable(functions, 'admin-crm');
 
 export default function CRM() {
   const [contacts, setContacts] = useState<any[]>([]);
@@ -17,14 +20,11 @@ export default function CRM() {
 
   async function loadData() {
     try {
-      // Load contacts (leads + profiles)
-      const { data: leadsData } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const result = await getAdminCrm();
+      const data = result.data as any; // Assuming data is of a certain type
 
-      if (leadsData) {
+      if (data?.ok) {
+        const leadsData = data.leads;
         setContacts(leadsData);
         setStats({
           total: leadsData.length,

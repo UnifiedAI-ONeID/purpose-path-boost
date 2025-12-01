@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions, auth } from '@/firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import AdminShell from '@/components/admin/AdminShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +10,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/lib/edge';
 import { toast } from 'sonner';
 
 const PLATFORMS = ['linkedin', 'facebook', 'x', 'wechat', 'xiaohongshu', 'instagram'] as const;
+
+const listCrossposts = httpsCallable(functions, 'admin-crosspost-list');
+const generateCrosspostVariants = httpsCallable(functions, 'admin-crosspost-variants');
+const queueCrossposts = httpsCallable(functions, 'admin-crosspost-queue');
+const publishCrosspost = httpsCallable(functions, 'admin-crosspost-publish');
 
 export default function CrossPostStudio() {
   const [title, setTitle] = useState('');
@@ -21,23 +28,21 @@ export default function CrossPostStudio() {
   const [queue, setQueue] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchQueue();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchQueue();
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   async function fetchQueue() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { data, error } = await supabase.functions.invoke(
-        'api-admin-crosspost-list',
-        {
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
-      setQueue(data?.rows || []);
+      const result = await listCrossposts();
+      const data = result.data as any; // Assuming data is of a certain type
+      if (data?.ok) {
+        setQueue(data.rows || []);
+      }
     } catch (error) {
       console.error('[CrossPostStudio] Fetch failed:', error);
     }
@@ -45,20 +50,12 @@ export default function CrossPostStudio() {
 
   async function handleGenerateVariants() {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { data, error } = await supabase.functions.invoke(
-        'api-admin-crosspost-variants',
-        {
-          body: { title, summary },
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
-      setVariants(data?.variants || {});
-      toast.success('Variants generated!');
+      const result = await generateCrosspostVariants({ title, summary });
+      const data = result.data as any; // Assuming data is of a certain type
+      if (data?.ok) {
+        setVariants(data.variants || {});
+        toast.success('Variants generated!');
+      }
     } catch (error) {
       console.error('[CrossPostStudio] Generate failed:', error);
       toast.error('Failed to generate variants');
@@ -84,23 +81,15 @@ export default function CrossPostStudio() {
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
+      const result = await queueCrossposts({ items });
+      const data = result.data as any; // Assuming data is of a certain type
+      if (data?.ok) {
+        toast.success('Posts queued!');
+        fetchQueue();
 
-      const { data, error } = await supabase.functions.invoke(
-        'api-admin-crosspost-queue',
-        {
-          body: { items },
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
+        if (publishNow && data?.rows?.[0]?.id) {
+          await handlePublish(data.rows[0].id);
         }
-      );
-
-      if (error) throw error;
-      toast.success('Posts queued!');
-      fetchQueue();
-
-      if (publishNow && data?.rows?.[0]?.id) {
-        await handlePublish(data.rows[0].id);
       }
     } catch (error) {
       console.error('[CrossPostStudio] Queue failed:', error);
@@ -110,20 +99,12 @@ export default function CrossPostStudio() {
 
   async function handlePublish(queueId: string) {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) return;
-
-      const { error } = await supabase.functions.invoke(
-        'api-admin-crosspost-publish',
-        {
-          body: { queue_id: queueId },
-          headers: { Authorization: `Bearer ${sessionData.session.access_token}` }
-        }
-      );
-
-      if (error) throw error;
-      toast.success('Post published!');
-      fetchQueue();
+      const result = await publishCrosspost({ queue_id: queueId });
+      const data = result.data as any; // Assuming data is of a certain type
+      if (data?.ok) {
+        toast.success('Post published!');
+        fetchQueue();
+      }
     } catch (error) {
       console.error('[CrossPostStudio] Publish failed:', error);
       toast.error('Failed to publish post');

@@ -55,5 +55,5 @@ export const adminDict = {
 export type AdminKey = keyof typeof adminDict['en'];
 
 export function at(lang: 'en' | 'zh-CN' | 'zh-TW', key: AdminKey): string {
-  return (adminDict as any)[lang][key] || (adminDict as any).en[key];
+  return adminDict[lang][key] || adminDict.en[key];
 }

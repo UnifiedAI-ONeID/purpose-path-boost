@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export default function SmartCTA({
@@ -8,7 +8,7 @@ export default function SmartCTA({
 }: {
   children: React.ReactNode;
   className?: string;
-} & any) {
+} & HTMLMotionProps<"button">) {
   const [ping, setPing] = useState(false);
   
   useEffect(() => {

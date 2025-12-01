@@ -18,7 +18,11 @@ import commonCN from './zh-CN/common.json';
 import aboutTW from './zh-TW/about.json';
 import commonTW from './zh-TW/common.json';
 
-const TRANSLATE_API = import.meta.env.VITE_TRANSLATE_API || 'https://libretranslate.com';
+interface ImportMetaEnv {
+  readonly VITE_TRANSLATE_API: string;
+}
+
+const TRANSLATE_API = (import.meta.env as ImportMetaEnv).VITE_TRANSLATE_API || 'https://libretranslate.com';
 
 // Auto-translate helper
 export const translateAndCache = async (

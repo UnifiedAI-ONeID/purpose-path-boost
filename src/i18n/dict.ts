@@ -43,7 +43,19 @@ export function t(lang:'en'|'zh-CN'|'zh-TW', key:string){
   return dict[lang]?.[key] || dict['en']?.[key] || key; 
 }
 
-export function pickLang<T extends Record<string,any>>(row:T, lang:'en'|'zh-CN'|'zh-TW'){
+type Localizable = {
+  title_en: string;
+  title_zh_cn?: string;
+  title_zh_tw?: string;
+  summary_en: string;
+  summary_zh_cn?: string;
+  summary_zh_tw?: string;
+  body_html_en: string;
+  body_html_zh_cn?: string;
+  body_html_zh_tw?: string;
+};
+
+export function pickLang<T extends Localizable>(row:T, lang:'en'|'zh-CN'|'zh-TW'){
   const title = lang==='zh-CN' ? (row.title_zh_cn||row.title_en) : lang==='zh-TW'? (row.title_zh_tw||row.title_en) : row.title_en;
   const summary = lang==='zh-CN' ? (row.summary_zh_cn||row.summary_en) : lang==='zh-TW'? (row.summary_zh_tw||row.summary_en) : row.summary_en;
   const body = lang==='zh-CN' ? (row.body_html_zh_cn||row.body_html_en) : lang==='zh-TW'? (row.body_html_zh_tw||row.body_html_en) : row.body_html_en;

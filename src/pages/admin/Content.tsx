@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,7 +9,8 @@ import AdminShell from '@/components/admin/AdminShell';
 import { AdminBlogList } from '@/components/admin/AdminBlogList';
 import ContentLeaderboard from '@/components/admin/ContentLeaderboard';
 import { VersionControl } from '@/components/admin/VersionControl';
-import { supabase } from '@/lib/edge';
+
+const getContentLeaderboard = httpsCallable(functions, 'content-leaderboard');
 
 export default function Content() {
   const [tab, setTab] = useState<'pages' | 'blog' | 'analytics'>('pages');
@@ -21,9 +24,10 @@ export default function Content() {
 
   async function loadTopContent() {
     try {
-      const { data, error } = await supabase.rpc('content_leaderboard_30d');
-      if (!error && data) {
-        setTopContent(data);
+      const result = await getContentLeaderboard();
+      const data = result.data as any; // Assuming data is of a certain type
+      if (data?.ok) {
+        setTopContent(data.leaderboard);
       }
     } catch (error) {
       console.error('[Content] Failed to load top content:', error);

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +12,8 @@ import {
   TrendingUp, Sparkles, ArrowRight 
 } from 'lucide-react';
 import { usePrefs } from '@/prefs/PrefsProvider';
-import { fx } from '@/lib/edge';
+
+const getPwaMeSummary = httpsCallable(functions, 'pwa-me-summary');
 
 export default function EnhancedHome() {
   const { lang } = usePrefs();
@@ -20,12 +23,14 @@ export default function EnhancedHome() {
   const heroTitle = bootData?.hero?.title_en || 'Grow with Clarity';
   const heroSubtitle = 'Your personal growth companion';
 
-  // Fetch quick stats for authenticated users
   useEffect(() => {
     if (!isGuest && isOnline) {
-      fx('pwa-me-summary').then((data) => {
-        if (data?.ok) setQuickStats(data);
-      });
+      getPwaMeSummary()
+        .then((result) => {
+          const data = result.data as any; // Assuming data is of a certain type
+          if (data?.ok) setQuickStats(data);
+        })
+        .catch((error) => console.error("Error fetching PWA summary:", error));
     }
   }, [isGuest, isOnline]);
 

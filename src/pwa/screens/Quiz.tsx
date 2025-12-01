@@ -1,6 +1,8 @@
 
 
 import { useEffect, useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/firebase/config';
 import { usePrefs } from '@/prefs/PrefsProvider';
 import { useNav } from '@/nav/useNav';
 import { ROUTES } from '@/nav/routes';
@@ -8,7 +10,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { SEOHelmet } from '@/components/SEOHelmet';
-import { fx } from '@/lib/edge';
+
+const pwaBoot = httpsCallable(functions, 'pwa-boot');
+const pwaQuizAnswer = httpsCallable(functions, 'pwa-quiz-answer');
 
 function langKey(l: string) {
   return l === 'zh-CN' ? 'zh_cn' : l === 'zh-TW' ? 'zh_tw' : 'en';
@@ -22,15 +26,18 @@ export default function Quiz() {
   const [tags, setTags] = useState<string[]>([]);
 
   useEffect(() => {
-    fx('pwa-boot', 'POST', { lang }).then((data) => {
+    pwaBoot({ lang })
+      .then((result) => {
+        const data = result.data as any; // Assuming data is of a certain type
         if (data?.ok) setCfg(data.quiz || []);
-    });
+      })
+      .catch((error) => console.error("Error fetching PWA boot data:", error));
   }, [lang]);
 
   async function choose(choice: any) {
     const device_id = localStorage.getItem('zg.device')!;
     
-    fx('pwa-quiz-answer', 'POST', {
+    pwaQuizAnswer({
       device_id,
       question_key: cfg[idx].key,
       choice_value: choice.value
