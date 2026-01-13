@@ -13,11 +13,8 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exportCsv = exports.update = exports.list = void 0;
 const https_1 = require("firebase-functions/v2/https");
-const app_1 = require("firebase-admin/app");
-const firestore_1 = require("firebase-admin/firestore");
 const json2csv_1 = require("json2csv");
-(0, app_1.initializeApp)();
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 const COLLECTION = 'leads';
 exports.list = (0, https_1.onCall)(async (req) => {
     var _a, _b;
@@ -25,7 +22,7 @@ exports.list = (0, https_1.onCall)(async (req) => {
         throw new https_1.HttpsError('permission-denied', 'You must be an admin to access leads.');
     }
     const { limit = 100, sortBy = 'created_at', sortOrder = 'desc', stage, source, search } = req.data.data;
-    let query = db.collection(COLLECTION);
+    let query = firebase_init_1.db.collection(COLLECTION);
     if (stage) {
         query = query.where('stage', '==', stage);
     }
@@ -50,7 +47,7 @@ exports.update = (0, https_1.onCall)(async (req) => {
     if (!id) {
         throw new https_1.HttpsError('invalid-argument', 'Lead ID is required.');
     }
-    await db.collection(COLLECTION).doc(id).update(data);
+    await firebase_init_1.db.collection(COLLECTION).doc(id).update(data);
     return { ok: true };
 });
 exports.exportCsv = (0, https_1.onCall)(async (req) => {
@@ -58,7 +55,7 @@ exports.exportCsv = (0, https_1.onCall)(async (req) => {
     if (!((_b = (_a = req.auth) === null || _a === void 0 ? void 0 : _a.token.roles) === null || _b === void 0 ? void 0 : _b.includes('admin'))) {
         throw new https_1.HttpsError('permission-denied', 'You must be an admin to export leads.');
     }
-    const snapshot = await db.collection(COLLECTION).orderBy('created_at', 'desc').get();
+    const snapshot = await firebase_init_1.db.collection(COLLECTION).orderBy('created_at', 'desc').get();
     const leads = snapshot.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
     if (leads.length === 0) {
         return '';

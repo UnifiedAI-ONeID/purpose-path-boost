@@ -5,9 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { db } from './firebase-init';
 
 // Helper to verify admin role
 async function verifyAdmin(context: functions.https.CallableContext): Promise<void> {

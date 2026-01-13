@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiAdminMetricsSummary = exports.apiAdminCalendarFeed = exports.apiAdminFxUpdate = exports.apiAdminFxRates = exports.apiAdminSeoResolve = exports.apiAdminSitemapRebuild = exports.apiAdminCacheBust = exports.apiAdminBlogDelete = exports.apiAdminBlogList = exports.apiAdminSeoAlert = exports.apiAdminBumpVersion = void 0;
 const functions = require("firebase-functions");
 const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Helper to check admin auth
 function requireAdmin(context) {
     if (!context.auth) {
@@ -21,7 +21,7 @@ exports.apiAdminBumpVersion = functions.https.onCall(async (data, context) => {
     requireAdmin(context);
     try {
         const version = Date.now().toString();
-        await db.collection('_system').doc('config').set({
+        await firebase_init_1.db.collection('_system').doc('config').set({
             content_version: version,
             updated_at: firestore_1.FieldValue.serverTimestamp(),
         }, { merge: true });
@@ -42,7 +42,7 @@ exports.apiAdminSeoAlert = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Message is required');
     }
     try {
-        await db.collection('seo_alerts').add({
+        await firebase_init_1.db.collection('seo_alerts').add({
             message,
             expire_at: expire_at || null,
             resolved: false,
@@ -62,7 +62,7 @@ exports.apiAdminSeoAlert = functions.https.onCall(async (data, context) => {
 exports.apiAdminBlogList = functions.https.onCall(async (data, context) => {
     requireAdmin(context);
     try {
-        const snapshot = await db.collection('blog_posts')
+        const snapshot = await firebase_init_1.db.collection('blog_posts')
             .orderBy('created_at', 'desc')
             .limit(100)
             .get();
@@ -84,7 +84,7 @@ exports.apiAdminBlogDelete = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Blog post ID is required');
     }
     try {
-        await db.collection('blog_posts').doc(id).delete();
+        await firebase_init_1.db.collection('blog_posts').doc(id).delete();
         return { ok: true };
     }
     catch (error) {
@@ -99,7 +99,7 @@ exports.apiAdminCacheBust = functions.https.onCall(async (data, context) => {
     requireAdmin(context);
     try {
         const version = Date.now().toString();
-        await db.collection('_system').doc('cache').set({
+        await firebase_init_1.db.collection('_system').doc('cache').set({
             bust_version: version,
             busted_at: firestore_1.FieldValue.serverTimestamp(),
             busted_by: context.auth.uid,
@@ -119,8 +119,8 @@ exports.apiAdminSitemapRebuild = functions.https.onCall(async (data, context) =>
     try {
         // Get all published blog posts and pages
         const [blogsSnap, pagesSnap] = await Promise.all([
-            db.collection('blog_posts').where('status', '==', 'published').get(),
-            db.collection('pages').where('status', '==', 'published').get(),
+            firebase_init_1.db.collection('blog_posts').where('status', '==', 'published').get(),
+            firebase_init_1.db.collection('pages').where('status', '==', 'published').get(),
         ]);
         const urls = [];
         const baseUrl = 'https://zhengrowth.com';
@@ -141,7 +141,7 @@ exports.apiAdminSitemapRebuild = functions.https.onCall(async (data, context) =>
             urls.push(`${baseUrl}/${slug}`);
         });
         // Store sitemap data
-        await db.collection('_system').doc('sitemap').set({
+        await firebase_init_1.db.collection('_system').doc('sitemap').set({
             urls,
             rebuilt_at: firestore_1.FieldValue.serverTimestamp(),
             rebuilt_by: context.auth.uid,
@@ -164,7 +164,7 @@ exports.apiAdminSeoResolve = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Alert ID is required');
     }
     try {
-        await db.collection('seo_alerts').doc(id).update({
+        await firebase_init_1.db.collection('seo_alerts').doc(id).update({
             resolved: true,
             resolved_at: firestore_1.FieldValue.serverTimestamp(),
             resolved_by: context.auth.uid,
@@ -182,7 +182,7 @@ exports.apiAdminSeoResolve = functions.https.onCall(async (data, context) => {
 exports.apiAdminFxRates = functions.https.onCall(async (data, context) => {
     requireAdmin(context);
     try {
-        const doc = await db.collection('_system').doc('fx_rates').get();
+        const doc = await firebase_init_1.db.collection('_system').doc('fx_rates').get();
         const rates = doc.exists ? doc.data() : { USD: 1, CNY: 7.2, EUR: 0.92 };
         return { ok: true, rates };
     }
@@ -201,7 +201,7 @@ exports.apiAdminFxUpdate = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Rates object is required');
     }
     try {
-        await db.collection('_system').doc('fx_rates').set(Object.assign(Object.assign({}, rates), { updated_at: firestore_1.FieldValue.serverTimestamp(), updated_by: context.auth.uid }));
+        await firebase_init_1.db.collection('_system').doc('fx_rates').set(Object.assign(Object.assign({}, rates), { updated_at: firestore_1.FieldValue.serverTimestamp(), updated_by: context.auth.uid }));
         return { ok: true };
     }
     catch (error) {
@@ -218,7 +218,7 @@ exports.apiAdminCalendarFeed = functions.https.onCall(async (data, context) => {
         const now = new Date();
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-        const snapshot = await db.collection('bookings')
+        const snapshot = await firebase_init_1.db.collection('bookings')
             .where('start_time', '>=', thirtyDaysAgo)
             .where('start_time', '<=', thirtyDaysFromNow)
             .orderBy('start_time', 'asc')
@@ -241,10 +241,10 @@ exports.apiAdminMetricsSummary = functions.https.onCall(async (data, context) =>
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         // Get counts from various collections
         const [usersSnap, leadsSnap, bookingsSnap, lessonsSnap] = await Promise.all([
-            db.collection('users').count().get(),
-            db.collection('leads').where('created_at', '>=', thirtyDaysAgo).count().get(),
-            db.collection('bookings').where('created_at', '>=', thirtyDaysAgo).count().get(),
-            db.collection('lesson_progress').where('updated_at', '>=', thirtyDaysAgo).count().get(),
+            firebase_init_1.db.collection('users').count().get(),
+            firebase_init_1.db.collection('leads').where('created_at', '>=', thirtyDaysAgo).count().get(),
+            firebase_init_1.db.collection('bookings').where('created_at', '>=', thirtyDaysAgo).count().get(),
+            firebase_init_1.db.collection('lesson_progress').where('updated_at', '>=', thirtyDaysAgo).count().get(),
         ]);
         return {
             ok: true,

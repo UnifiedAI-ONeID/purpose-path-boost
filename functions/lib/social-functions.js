@@ -7,14 +7,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminCrosspostPublish = exports.adminCrosspostQueue = exports.adminCrosspostVariants = exports.testSocialConnection = exports.manageSocialConfig = exports.postSuggestions = exports.socialWorker = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Helper to verify admin role
 async function verifyAdmin(context) {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
-    const userDoc = await db.collection('admins').doc(context.auth.uid).get();
+    const userDoc = await firebase_init_1.db.collection('admins').doc(context.auth.uid).get();
     if (!userDoc.exists) {
         throw new functions.https.HttpsError('permission-denied', 'Admin access required');
     }
@@ -34,7 +33,7 @@ exports.socialWorker = functions.https.onCall(async (data, context) => {
             }
             case 'schedule': {
                 // Schedule for later
-                await db.collection('social_queue').add({
+                await firebase_init_1.db.collection('social_queue').add({
                     contentId,
                     platforms,
                     scheduled_at: scheduledAt,
@@ -70,7 +69,7 @@ exports.postSuggestions = functions.https.onCall(async (data, context) => {
         // Generate suggestions based on input
         const suggestions = generatePostSuggestions(topic, platform, tone, contentType);
         // Log suggestion request
-        await db.collection('ai_suggestions_log').add({
+        await firebase_init_1.db.collection('ai_suggestions_log').add({
             input: { topic, platform, tone, contentType },
             suggestions,
             created_at: new Date().toISOString(),
@@ -89,7 +88,7 @@ exports.postSuggestions = functions.https.onCall(async (data, context) => {
 exports.manageSocialConfig = functions.https.onCall(async (data, context) => {
     await verifyAdmin(context);
     const { action, platform, config } = data || {};
-    const configRef = db.collection('social_config');
+    const configRef = firebase_init_1.db.collection('social_config');
     try {
         switch (action) {
             case 'list': {
@@ -140,7 +139,7 @@ exports.testSocialConnection = functions.https.onCall(async (data, context) => {
     }
     try {
         // Get platform config
-        const configDoc = await db.collection('social_config').doc(platform).get();
+        const configDoc = await firebase_init_1.db.collection('social_config').doc(platform).get();
         if (!configDoc.exists) {
             return { ok: false, error: 'Platform not configured' };
         }
@@ -165,7 +164,7 @@ exports.adminCrosspostVariants = functions.https.onCall(async (data, context) =>
     }
     try {
         // Get original content
-        const contentDoc = await db.collection('blogs').doc(contentId).get();
+        const contentDoc = await firebase_init_1.db.collection('blogs').doc(contentId).get();
         if (!contentDoc.exists) {
             throw new functions.https.HttpsError('not-found', 'Content not found');
         }
@@ -200,8 +199,8 @@ exports.adminCrosspostQueue = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Content ID and posts required');
     }
     try {
-        const batch = db.batch();
-        const queueRef = db.collection('crosspost_queue');
+        const batch = firebase_init_1.db.batch();
+        const queueRef = firebase_init_1.db.collection('crosspost_queue');
         for (const post of posts) {
             const docRef = queueRef.doc();
             batch.set(docRef, {
@@ -233,7 +232,7 @@ exports.adminCrosspostPublish = functions.https.onCall(async (data, context) => 
         throw new functions.https.HttpsError('invalid-argument', 'Queue ID required');
     }
     try {
-        const queueDoc = await db.collection('crosspost_queue').doc(queueId).get();
+        const queueDoc = await firebase_init_1.db.collection('crosspost_queue').doc(queueId).get();
         if (!queueDoc.exists) {
             throw new functions.https.HttpsError('not-found', 'Queued post not found');
         }

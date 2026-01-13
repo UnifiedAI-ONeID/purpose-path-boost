@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiLessonsEvent = exports.apiLessonsProgress = exports.apiLessonsContinue = exports.apiLessonsGet = void 0;
 const functions = require("firebase-functions");
 const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 /**
  * Get a lesson by slug
  */
@@ -14,7 +14,7 @@ exports.apiLessonsGet = functions.https.onCall(async (data, context) => {
     }
     try {
         // Find lesson by slug
-        const snapshot = await db.collection('lessons')
+        const snapshot = await firebase_init_1.db.collection('lessons')
             .where('slug', '==', slug)
             .limit(1)
             .get();
@@ -26,7 +26,7 @@ exports.apiLessonsGet = functions.https.onCall(async (data, context) => {
         // If user is authenticated, get their progress
         let progress = null;
         if (context.auth) {
-            const progressDoc = await db.collection('lesson_progress')
+            const progressDoc = await firebase_init_1.db.collection('lesson_progress')
                 .doc(`${context.auth.uid}_${doc.id}`)
                 .get();
             if (progressDoc.exists) {
@@ -51,7 +51,7 @@ exports.apiLessonsContinue = functions.https.onCall(async (data, context) => {
     }
     try {
         // Get user's progress records sorted by updated_at
-        const progressSnap = await db.collection('lesson_progress')
+        const progressSnap = await firebase_init_1.db.collection('lesson_progress')
             .where('user_id', '==', context.auth.uid)
             .where('completed', '==', false)
             .orderBy('updated_at', 'desc')
@@ -63,7 +63,7 @@ exports.apiLessonsContinue = functions.https.onCall(async (data, context) => {
         // Get the actual lesson data for each progress record
         const lessons = await Promise.all(progressSnap.docs.map(async (progressDoc) => {
             const progressData = progressDoc.data();
-            const lessonDoc = await db.collection('lessons').doc(progressData.lesson_id).get();
+            const lessonDoc = await firebase_init_1.db.collection('lessons').doc(progressData.lesson_id).get();
             if (!lessonDoc.exists)
                 return null;
             return Object.assign(Object.assign({ id: lessonDoc.id }, lessonDoc.data()), { progress: progressData });
@@ -96,7 +96,7 @@ exports.apiLessonsProgress = functions.https.onCall(async (data, context) => {
             completed: completed || false,
             updated_at: firestore_1.FieldValue.serverTimestamp(),
         };
-        await db.collection('lesson_progress').doc(progressId).set(progressData, { merge: true });
+        await firebase_init_1.db.collection('lesson_progress').doc(progressId).set(progressData, { merge: true });
         return { ok: true };
     }
     catch (error) {
@@ -114,7 +114,7 @@ exports.apiLessonsEvent = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Lesson ID and event type are required');
     }
     try {
-        await db.collection('lesson_events').add({
+        await firebase_init_1.db.collection('lesson_events').add({
             lesson_id,
             event_type,
             metadata: metadata || {},

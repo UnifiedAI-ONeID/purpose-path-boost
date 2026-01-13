@@ -1,11 +1,7 @@
-
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { initializeApp } from 'firebase-admin/app';
-import { getFirestore, OrderByDirection } from 'firebase-admin/firestore';
+import { OrderByDirection } from 'firebase-admin/firestore';
 import { Parser } from 'json2csv';
-
-initializeApp();
-const db = getFirestore();
+import { db } from './firebase-init';
 
 const COLLECTION = 'leads';
 

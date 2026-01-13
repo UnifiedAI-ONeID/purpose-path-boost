@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiTelemetryLogBatch = exports.apiTelemetryLog = exports.apiPaywallMarkWatch = exports.apiPaywallCanWatch = void 0;
 const functions = require("firebase-functions");
 const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 /**
  * Check if user can watch a lesson (paywall logic)
  */
@@ -14,7 +14,7 @@ exports.apiPaywallCanWatch = functions.https.onCall(async (data, context) => {
     }
     try {
         // Get the lesson to check if it's gated
-        const lessonDoc = await db.collection('lessons').doc(lesson_id).get();
+        const lessonDoc = await firebase_init_1.db.collection('lessons').doc(lesson_id).get();
         if (!lessonDoc.exists) {
             throw new functions.https.HttpsError('not-found', 'Lesson not found');
         }
@@ -28,7 +28,7 @@ exports.apiPaywallCanWatch = functions.https.onCall(async (data, context) => {
             return { ok: true, can_watch: false, reason: 'not_authenticated' };
         }
         // Check if user has an active subscription
-        const subSnap = await db.collection('subscriptions')
+        const subSnap = await firebase_init_1.db.collection('subscriptions')
             .where('user_id', '==', context.auth.uid)
             .where('status', '==', 'active')
             .limit(1)
@@ -37,7 +37,7 @@ exports.apiPaywallCanWatch = functions.https.onCall(async (data, context) => {
             return { ok: true, can_watch: true, reason: 'active_subscription' };
         }
         // Check if user has purchased this specific lesson/course
-        const purchaseSnap = await db.collection('purchases')
+        const purchaseSnap = await firebase_init_1.db.collection('purchases')
             .where('user_id', '==', context.auth.uid)
             .where('item_id', '==', lesson_id)
             .limit(1)
@@ -46,7 +46,7 @@ exports.apiPaywallCanWatch = functions.https.onCall(async (data, context) => {
             return { ok: true, can_watch: true, reason: 'purchased' };
         }
         // Check free preview count
-        const previewDoc = await db.collection('user_previews')
+        const previewDoc = await firebase_init_1.db.collection('user_previews')
             .doc(context.auth.uid)
             .get();
         const previews = previewDoc.exists ? previewDoc.data() : {};
@@ -76,7 +76,7 @@ exports.apiPaywallMarkWatch = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Lesson ID is required');
     }
     try {
-        await db.collection('user_previews').doc(context.auth.uid).set({
+        await firebase_init_1.db.collection('user_previews').doc(context.auth.uid).set({
             watched_premium: {
                 [lesson_id]: firestore_1.FieldValue.serverTimestamp(),
             },
@@ -99,7 +99,7 @@ exports.apiTelemetryLog = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('invalid-argument', 'Event name is required');
     }
     try {
-        await db.collection('analytics_events').add({
+        await firebase_init_1.db.collection('analytics_events').add({
             event_name,
             properties: properties || {},
             session_id: session_id || null,
@@ -127,8 +127,8 @@ exports.apiTelemetryLogBatch = functions.https.onCall(async (data, context) => {
         return { ok: true, logged: 0 };
     }
     try {
-        const batch = db.batch();
-        const eventsCollection = db.collection('analytics_events');
+        const batch = firebase_init_1.db.batch();
+        const eventsCollection = firebase_init_1.db.collection('analytics_events');
         for (const event of events) {
             const docRef = eventsCollection.doc();
             batch.set(docRef, {

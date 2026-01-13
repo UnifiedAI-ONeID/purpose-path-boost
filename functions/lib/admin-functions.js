@@ -7,15 +7,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.captureQuizLead = exports.seoWatch = exports.contentLeaderboard = exports.adminReferralsCreate = exports.adminReferralsSettings = exports.adminReferralsOverview = exports.dashboardAdminMetrics = exports.adminGetVersion = exports.adminCheckRole = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Helper to verify admin role
 async function verifyAdmin(context) {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
     // Check admin role in Firestore
-    const userDoc = await db.collection('admins').doc(context.auth.uid).get();
+    const userDoc = await firebase_init_1.db.collection('admins').doc(context.auth.uid).get();
     if (!userDoc.exists) {
         throw new functions.https.HttpsError('permission-denied', 'Admin access required');
     }
@@ -29,7 +28,7 @@ exports.adminCheckRole = functions.https.onCall(async (data, context) => {
         return { isAdmin: false };
     }
     try {
-        const userDoc = await db.collection('admins').doc(context.auth.uid).get();
+        const userDoc = await firebase_init_1.db.collection('admins').doc(context.auth.uid).get();
         const isAdmin = userDoc.exists;
         const role = ((_a = userDoc.data()) === null || _a === void 0 ? void 0 : _a.role) || 'viewer';
         return { isAdmin, role };
@@ -45,7 +44,7 @@ exports.adminCheckRole = functions.https.onCall(async (data, context) => {
 exports.adminGetVersion = functions.https.onCall(async (data, context) => {
     await verifyAdmin(context);
     try {
-        const versionDoc = await db.collection('system').doc('version').get();
+        const versionDoc = await firebase_init_1.db.collection('system').doc('version').get();
         const versionData = versionDoc.data() || { version: '0.0.1', updated_at: null };
         return Object.assign({ ok: true }, versionData);
     }
@@ -67,26 +66,26 @@ exports.dashboardAdminMetrics = functions.https.onCall(async (data, context) => 
         const startDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
         const startDateStr = startDate.toISOString();
         // Get leads count
-        const leadsSnap = await db.collection('leads')
+        const leadsSnap = await firebase_init_1.db.collection('leads')
             .where('created_at', '>=', startDateStr)
             .get();
         // Get bookings count
-        const bookingsSnap = await db.collection('bookings')
+        const bookingsSnap = await firebase_init_1.db.collection('bookings')
             .where('created_at', '>=', startDateStr)
             .get();
         // Get users count
-        const usersSnap = await db.collection('users')
+        const usersSnap = await firebase_init_1.db.collection('users')
             .where('created_at', '>=', startDateStr)
             .get();
         // Get lesson views
-        const viewsSnap = await db.collection('lesson_events')
+        const viewsSnap = await firebase_init_1.db.collection('lesson_events')
             .where('timestamp', '>=', startDateStr)
             .where('event', '==', 'view')
             .get();
         // Revenue (if payments collection exists)
         let totalRevenue = 0;
         try {
-            const paymentsSnap = await db.collection('payments')
+            const paymentsSnap = await firebase_init_1.db.collection('payments')
                 .where('created_at', '>=', startDateStr)
                 .where('status', '==', 'completed')
                 .get();
@@ -126,10 +125,10 @@ exports.adminReferralsOverview = functions.https.onCall(async (data, context) =>
     await verifyAdmin(context);
     try {
         // Get all referral codes
-        const codesSnap = await db.collection('referral_codes').get();
+        const codesSnap = await firebase_init_1.db.collection('referral_codes').get();
         const codes = codesSnap.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
         // Get referral usage stats
-        const usageSnap = await db.collection('referral_usage')
+        const usageSnap = await firebase_init_1.db.collection('referral_usage')
             .orderBy('used_at', 'desc')
             .limit(100)
             .get();
@@ -161,7 +160,7 @@ exports.adminReferralsSettings = functions.https.onCall(async (data, context) =>
     await verifyAdmin(context);
     const { action, settings } = data || {};
     try {
-        const settingsRef = db.collection('system').doc('referral_settings');
+        const settingsRef = firebase_init_1.db.collection('system').doc('referral_settings');
         if (action === 'get') {
             const doc = await settingsRef.get();
             return { ok: true, settings: doc.data() || {} };
@@ -190,12 +189,12 @@ exports.adminReferralsCreate = functions.https.onCall(async (data, context) => {
     }
     try {
         // Check if code already exists
-        const existingDoc = await db.collection('referral_codes').doc(code).get();
+        const existingDoc = await firebase_init_1.db.collection('referral_codes').doc(code).get();
         if (existingDoc.exists) {
             throw new functions.https.HttpsError('already-exists', 'Referral code already exists');
         }
         // Create new code
-        await db.collection('referral_codes').doc(code).set({
+        await firebase_init_1.db.collection('referral_codes').doc(code).set({
             code,
             discount: discount || 10,
             maxUses: maxUses || null,
@@ -223,7 +222,7 @@ exports.contentLeaderboard = functions.https.onCall(async (data, context) => {
     const { type = 'all', limit = 20 } = data || {};
     try {
         // Get blogs
-        let blogsQuery = db.collection('blogs')
+        let blogsQuery = firebase_init_1.db.collection('blogs')
             .orderBy('views', 'desc')
             .limit(limit);
         if (type === 'published') {
@@ -232,7 +231,7 @@ exports.contentLeaderboard = functions.https.onCall(async (data, context) => {
         const blogsSnap = await blogsQuery.get();
         const blogs = blogsSnap.docs.map(doc => (Object.assign({ id: doc.id, type: 'blog' }, doc.data())));
         // Get lessons
-        const lessonsSnap = await db.collection('lessons')
+        const lessonsSnap = await firebase_init_1.db.collection('lessons')
             .orderBy('views', 'desc')
             .limit(limit)
             .get();
@@ -259,16 +258,16 @@ exports.seoWatch = functions.https.onCall(async (data, context) => {
     await verifyAdmin(context);
     try {
         // Get recent SEO alerts
-        const alertsSnap = await db.collection('seo_alerts')
+        const alertsSnap = await firebase_init_1.db.collection('seo_alerts')
             .orderBy('created_at', 'desc')
             .limit(50)
             .get();
         const alerts = alertsSnap.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
         // Get SEO metrics summary
-        const metricsDoc = await db.collection('system').doc('seo_metrics').get();
+        const metricsDoc = await firebase_init_1.db.collection('system').doc('seo_metrics').get();
         const metrics = metricsDoc.data() || {};
         // Get sitemap status
-        const sitemapDoc = await db.collection('system').doc('sitemap').get();
+        const sitemapDoc = await firebase_init_1.db.collection('system').doc('sitemap').get();
         const sitemap = sitemapDoc.data() || {};
         return {
             ok: true,
@@ -293,7 +292,7 @@ exports.captureQuizLead = functions.https.onCall(async (data, context) => {
     }
     try {
         // Check for existing lead
-        const existingSnap = await db.collection('leads')
+        const existingSnap = await firebase_init_1.db.collection('leads')
             .where('email', '==', email.toLowerCase())
             .limit(1)
             .get();
@@ -318,12 +317,12 @@ exports.captureQuizLead = functions.https.onCall(async (data, context) => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
-        const docRef = await db.collection('leads').add(leadData);
+        const docRef = await firebase_init_1.db.collection('leads').add(leadData);
         // Process referral if provided
         if (referralCode) {
-            const codeDoc = await db.collection('referral_codes').doc(referralCode).get();
+            const codeDoc = await firebase_init_1.db.collection('referral_codes').doc(referralCode).get();
             if (codeDoc.exists) {
-                await db.collection('referral_usage').add({
+                await firebase_init_1.db.collection('referral_usage').add({
                     code: referralCode,
                     lead_id: docRef.id,
                     email: email.toLowerCase(),

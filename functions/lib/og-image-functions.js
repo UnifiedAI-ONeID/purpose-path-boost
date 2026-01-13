@@ -7,8 +7,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ogRenderSingle = exports.ogRenderAll = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Platform sizes configuration
 const PLAT_SIZES = {
     linkedin: { w: 1200, h: 627 }, // LinkedIn link share
@@ -43,7 +42,7 @@ exports.ogRenderAll = functions.https.onCall(async (data, context) => {
     }
     const userId = context.auth.uid;
     // Verify admin access
-    const adminDoc = await db.collection('admins').doc(userId).get();
+    const adminDoc = await firebase_init_1.db.collection('admins').doc(userId).get();
     if (!adminDoc.exists) {
         throw new functions.https.HttpsError('permission-denied', 'Admin access required');
     }
@@ -82,7 +81,7 @@ exports.ogRenderAll = functions.https.onCall(async (data, context) => {
             });
         }
         // Store the generation config for reference
-        await db.collection('og_generations').add({
+        await firebase_init_1.db.collection('og_generations').add({
             userId,
             slug,
             title,

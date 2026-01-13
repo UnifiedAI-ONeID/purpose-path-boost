@@ -3,12 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCalendarBooking = exports.syncCalendarBookings = exports.getCalendarBookings = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
-const admin = require("firebase-admin");
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
-const db = admin.firestore();
+const firebase_init_1 = require("./firebase-init");
 // Define Cal.com API key as a secret
 const calcomApiKey = (0, params_1.defineSecret)('CALCOM_API_KEY');
 // Fetch bookings from Cal.com API
@@ -66,7 +61,7 @@ async function fetchCalcomBookings() {
 // Get integration setting from Firestore
 async function getIntegrationSetting(integration, key) {
     try {
-        const doc = await db.collection('settings').doc(integration).get();
+        const doc = await firebase_init_1.db.collection('settings').doc(integration).get();
         if (doc.exists) {
             const data = doc.data();
             return (data === null || data === void 0 ? void 0 : data[key]) || null;
@@ -81,10 +76,10 @@ async function getIntegrationSetting(integration, key) {
 // Save bookings to Firestore cache
 async function cacheBookings(bookings) {
     try {
-        const batch = db.batch();
+        const batch = firebase_init_1.db.batch();
         const now = new Date();
         // Update cache with timestamp
-        batch.set(db.collection('_cache').doc('calendar_bookings'), {
+        batch.set(firebase_init_1.db.collection('_cache').doc('calendar_bookings'), {
             bookings,
             updated_at: now,
             ttl: new Date(now.getTime() + 3600000), // 1 hour TTL
@@ -99,7 +94,7 @@ async function cacheBookings(bookings) {
 async function getBookings() {
     try {
         // Try to get from cache first
-        const cacheDoc = await db.collection('_cache').doc('calendar_bookings').get();
+        const cacheDoc = await firebase_init_1.db.collection('_cache').doc('calendar_bookings').get();
         if (cacheDoc.exists) {
             const cache = cacheDoc.data();
             if ((cache === null || cache === void 0 ? void 0 : cache.ttl) && cache.ttl.toDate() > new Date()) {
@@ -178,7 +173,7 @@ exports.syncCalendarBookings = (0, https_1.onRequest)({ region: 'us-west1', secr
     }
     try {
         // Force refresh by deleting cache
-        await db.collection('_cache').doc('calendar_bookings').delete();
+        await firebase_init_1.db.collection('_cache').doc('calendar_bookings').delete();
         // Fetch fresh bookings
         const bookings = await fetchCalcomBookings();
         await cacheBookings(bookings);
@@ -228,7 +223,7 @@ exports.deleteCalendarBooking = (0, https_1.onRequest)({ region: 'us-west1', sec
             return;
         }
         // Clear cache to force refresh
-        await db.collection('_cache').doc('calendar_bookings').delete();
+        await firebase_init_1.db.collection('_cache').doc('calendar_bookings').delete();
         res.json({ success: true });
     }
     catch (error) {

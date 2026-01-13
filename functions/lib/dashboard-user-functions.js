@@ -7,8 +7,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.dashboardUserAnalytics = exports.dashboardUserSummary = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 /**
  * Dashboard User Summary - Get basic summary for user dashboard
  * Used by PlanBadge and UpcomingSessions components
@@ -20,12 +19,12 @@ exports.dashboardUserSummary = functions.https.onCall(async (data, context) => {
     const userId = context.auth.uid;
     try {
         // Get user profile to determine plan
-        const userDoc = await db.collection('users').doc(userId).get();
+        const userDoc = await firebase_init_1.db.collection('users').doc(userId).get();
         const userData = userDoc.data() || {};
         const plan = userData.plan || userData.subscription_tier || 'free';
         // Get next upcoming session/booking
         const now = new Date().toISOString();
-        const bookingsSnap = await db.collection('bookings')
+        const bookingsSnap = await firebase_init_1.db.collection('bookings')
             .where('user_id', '==', userId)
             .where('start_at', '>=', now)
             .where('status', 'in', ['confirmed', 'scheduled'])
@@ -69,7 +68,7 @@ exports.dashboardUserAnalytics = functions.https.onCall(async (data, context) =>
     const targetUserId = profile_id || userId;
     try {
         // Get user profile
-        const userDoc = await db.collection('users').doc(targetUserId).get();
+        const userDoc = await firebase_init_1.db.collection('users').doc(targetUserId).get();
         const userData = userDoc.data() || {};
         // Calculate date ranges
         const now = new Date();
@@ -80,7 +79,7 @@ exports.dashboardUserAnalytics = functions.https.onCall(async (data, context) =>
         // Get streak from user data or calculate
         const streak = userData.current_streak || userData.streak_days || 0;
         // Get lesson events for minutes watched
-        const eventsD30Snap = await db.collection('lesson_events')
+        const eventsD30Snap = await firebase_init_1.db.collection('lesson_events')
             .where('user_id', '==', targetUserId)
             .where('timestamp', '>=', d30Ago.toISOString())
             .get();
@@ -104,7 +103,7 @@ exports.dashboardUserAnalytics = functions.https.onCall(async (data, context) =>
             }
         });
         // Get bookings for the month
-        const bookingsSnap = await db.collection('bookings')
+        const bookingsSnap = await firebase_init_1.db.collection('bookings')
             .where('user_id', '==', targetUserId)
             .where('start_at', '>=', monthStart.toISOString())
             .where('start_at', '<=', monthEnd.toISOString())
@@ -136,7 +135,7 @@ exports.dashboardUserAnalytics = functions.https.onCall(async (data, context) =>
             remaining = Math.max(0, 8 - bookedCount);
         }
         // Get referrals
-        const referralsSnap = await db.collection('referrals')
+        const referralsSnap = await firebase_init_1.db.collection('referrals')
             .where('referrer_id', '==', targetUserId)
             .get();
         let invited = 0;
@@ -149,7 +148,7 @@ exports.dashboardUserAnalytics = functions.https.onCall(async (data, context) =>
             }
         });
         // Get habits count
-        const habitsSnap = await db.collection('users').doc(targetUserId)
+        const habitsSnap = await firebase_init_1.db.collection('users').doc(targetUserId)
             .collection('habits')
             .where('active', '==', true)
             .get();

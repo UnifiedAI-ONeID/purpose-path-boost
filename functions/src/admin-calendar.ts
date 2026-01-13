@@ -1,13 +1,6 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-const db = admin.firestore();
+import { db } from './firebase-init';
 
 // Define Cal.com API key as a secret
 const calcomApiKey = defineSecret('CALCOM_API_KEY');

@@ -5,9 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { db } from './firebase-init';
 
 // Content topic templates for fallback suggestions
 const TOPIC_TEMPLATES = {

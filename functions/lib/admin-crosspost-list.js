@@ -2,15 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminCrosspostList = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
+const firebase_init_1 = require("./firebase-init");
 exports.adminCrosspostList = functions.https.onCall(async (data, context) => {
     // Verify admin auth
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
     try {
-        const db = (0, firestore_1.getFirestore)();
-        const crossposts = await db.collection('crossposts')
+        const crossposts = await firebase_init_1.db.collection('crossposts')
             .orderBy('created_at', 'desc')
             .limit(50)
             .get();

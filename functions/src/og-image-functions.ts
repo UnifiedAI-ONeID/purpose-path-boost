@@ -5,9 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { db } from './firebase-init';
 
 // Platform sizes configuration
 const PLAT_SIZES: Record<string, { w: number; h: number }> = {

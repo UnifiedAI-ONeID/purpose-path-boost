@@ -10,9 +10,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { db } from './firebase-init';
 
 /**
  * PWA Boot - Initialize user session and fetch essential data

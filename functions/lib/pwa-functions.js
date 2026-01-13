@@ -12,8 +12,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.pwaMeGoals = exports.pwaMeSummary = exports.pwaCoachingRecommend = exports.pwaAiSuggest = exports.pwaQuizAnswer = exports.pwaBoot = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 /**
  * PWA Boot - Initialize user session and fetch essential data
  */
@@ -24,7 +23,7 @@ exports.pwaBoot = functions.https.onCall(async (data, context) => {
     const userId = context.auth.uid;
     try {
         // Get or create user profile
-        const userRef = db.collection('users').doc(userId);
+        const userRef = firebase_init_1.db.collection('users').doc(userId);
         const userDoc = await userRef.get();
         let userData = userDoc.data();
         if (!userDoc.exists) {
@@ -42,12 +41,12 @@ exports.pwaBoot = functions.https.onCall(async (data, context) => {
             await userRef.update({ last_active: new Date().toISOString() });
         }
         // Get active goals count
-        const goalsSnap = await db.collection('users').doc(userId)
+        const goalsSnap = await firebase_init_1.db.collection('users').doc(userId)
             .collection('goals')
             .where('status', '==', 'active')
             .get();
         // Get recent lesson progress
-        const progressSnap = await db.collection('users').doc(userId)
+        const progressSnap = await firebase_init_1.db.collection('users').doc(userId)
             .collection('lesson_progress')
             .orderBy('updated_at', 'desc')
             .limit(5)
@@ -77,7 +76,7 @@ exports.pwaQuizAnswer = functions.https.onCall(async (data, context) => {
     }
     try {
         // Store answer
-        const answerRef = db.collection('users').doc(userId)
+        const answerRef = firebase_init_1.db.collection('users').doc(userId)
             .collection('quiz_answers').doc(questionId);
         await answerRef.set({
             answer,
@@ -85,13 +84,13 @@ exports.pwaQuizAnswer = functions.https.onCall(async (data, context) => {
         }, { merge: true });
         // If last question, calculate results
         if (isLastQuestion) {
-            const answersSnap = await db.collection('users').doc(userId)
+            const answersSnap = await firebase_init_1.db.collection('users').doc(userId)
                 .collection('quiz_answers').get();
             const answers = answersSnap.docs.map(doc => (Object.assign({ questionId: doc.id, answer: doc.data().answer }, doc.data())));
             // Calculate personality profile/recommendations based on answers
             const profile = calculateQuizProfile(answers);
             // Store results
-            await db.collection('users').doc(userId).update({
+            await firebase_init_1.db.collection('users').doc(userId).update({
                 quiz_completed: true,
                 quiz_profile: profile,
                 quiz_completed_at: new Date().toISOString()
@@ -119,12 +118,12 @@ exports.pwaAiSuggest = functions.https.onCall(async (data, context) => {
     }
     try {
         // Get user profile for personalization
-        const userDoc = await db.collection('users').doc(userId).get();
+        const userDoc = await firebase_init_1.db.collection('users').doc(userId).get();
         const userData = userDoc.data() || {};
         // Build contextual prompt
         const suggestions = await generateAiSuggestions(prompt, Object.assign({ quizProfile: userData.quiz_profile, goals: userData.current_goals }, userContext));
         // Log AI interaction
-        await db.collection('ai_interactions').add({
+        await firebase_init_1.db.collection('ai_interactions').add({
             userId,
             prompt,
             suggestions,
@@ -147,10 +146,10 @@ exports.pwaCoachingRecommend = functions.https.onCall(async (data, context) => {
     const userId = context.auth.uid;
     try {
         // Get user data
-        const userDoc = await db.collection('users').doc(userId).get();
+        const userDoc = await firebase_init_1.db.collection('users').doc(userId).get();
         const userData = userDoc.data() || {};
         // Get available coaching packages
-        const packagesSnap = await db.collection('coaching_packages')
+        const packagesSnap = await firebase_init_1.db.collection('coaching_packages')
             .where('active', '==', true)
             .get();
         const packages = packagesSnap.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
@@ -173,24 +172,24 @@ exports.pwaMeSummary = functions.https.onCall(async (data, context) => {
     const userId = context.auth.uid;
     try {
         // Get user profile
-        const userDoc = await db.collection('users').doc(userId).get();
+        const userDoc = await firebase_init_1.db.collection('users').doc(userId).get();
         const userData = userDoc.data() || {};
         // Get goals
-        const goalsSnap = await db.collection('users').doc(userId)
+        const goalsSnap = await firebase_init_1.db.collection('users').doc(userId)
             .collection('goals')
             .orderBy('created_at', 'desc')
             .limit(10)
             .get();
         const goals = goalsSnap.docs.map(doc => (Object.assign({ id: doc.id }, doc.data())));
         // Get lesson progress
-        const progressSnap = await db.collection('users').doc(userId)
+        const progressSnap = await firebase_init_1.db.collection('users').doc(userId)
             .collection('lesson_progress')
             .orderBy('updated_at', 'desc')
             .limit(10)
             .get();
         const progress = progressSnap.docs.map(doc => (Object.assign({ lessonId: doc.id }, doc.data())));
         // Get achievements
-        const achievementsSnap = await db.collection('users').doc(userId)
+        const achievementsSnap = await firebase_init_1.db.collection('users').doc(userId)
             .collection('achievements')
             .where('unlocked', '==', true)
             .get();
@@ -230,7 +229,7 @@ exports.pwaMeGoals = functions.https.onCall(async (data, context) => {
     }
     const { action, goalId, goalData } = data || {};
     const userId = context.auth.uid;
-    const goalsRef = db.collection('users').doc(userId).collection('goals');
+    const goalsRef = firebase_init_1.db.collection('users').doc(userId).collection('goals');
     try {
         switch (action) {
             case 'list': {

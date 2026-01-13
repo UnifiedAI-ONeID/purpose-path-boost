@@ -7,8 +7,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.aiSuggestTopics = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Content topic templates for fallback suggestions
 const TOPIC_TEMPLATES = {
     mindset: [
@@ -66,18 +65,18 @@ exports.aiSuggestTopics = functions.https.onCall(async (data, context) => {
     const { category, count = 5 } = data || {};
     try {
         // Check if user is admin
-        const adminDoc = await db.collection('admins').doc(userId).get();
+        const adminDoc = await firebase_init_1.db.collection('admins').doc(userId).get();
         if (!adminDoc.exists) {
             throw new functions.https.HttpsError('permission-denied', 'Admin access required');
         }
         // Get recent blog posts to avoid duplicates
-        const recentPosts = await db.collection('blog_posts')
+        const recentPosts = await firebase_init_1.db.collection('blog_posts')
             .orderBy('created_at', 'desc')
             .limit(20)
             .get();
         const existingTopics = new Set(recentPosts.docs.map(doc => { var _a; return (_a = doc.data().title) === null || _a === void 0 ? void 0 : _a.toLowerCase(); }));
         // Get analytics to understand popular content
-        const viewsSnap = await db.collection('lesson_events')
+        const viewsSnap = await firebase_init_1.db.collection('lesson_events')
             .where('event', '==', 'view')
             .orderBy('timestamp', 'desc')
             .limit(100)
@@ -124,7 +123,7 @@ exports.aiSuggestTopics = functions.https.onCall(async (data, context) => {
             .map((topic, i) => `${i + 1}. ${topic}`)
             .join('\n');
         // Log the suggestion request
-        await db.collection('ai_interactions').add({
+        await firebase_init_1.db.collection('ai_interactions').add({
             userId,
             type: 'content_suggestions',
             category: targetCategory,

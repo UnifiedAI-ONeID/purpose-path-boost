@@ -7,14 +7,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.funnelUnsubscribe = exports.funnelSubscribe = exports.funnelCampaignList = exports.funnelCampaignCreate = exports.funnelProcessQueue = exports.funnelSendEmail = void 0;
 const functions = require("firebase-functions");
-const firestore_1 = require("firebase-admin/firestore");
-const db = (0, firestore_1.getFirestore)();
+const firebase_init_1 = require("./firebase-init");
 // Helper to verify admin role
 async function verifyAdmin(context) {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
     }
-    const userDoc = await db.collection('admins').doc(context.auth.uid).get();
+    const userDoc = await firebase_init_1.db.collection('admins').doc(context.auth.uid).get();
     if (!userDoc.exists) {
         throw new functions.https.HttpsError('permission-denied', 'Admin access required');
     }
@@ -40,7 +39,7 @@ exports.funnelSendEmail = functions.https.onCall(async (data, context) => {
             created_at: new Date().toISOString(),
             created_by: context.auth.uid
         };
-        const docRef = await db.collection('email_queue').add(emailData);
+        const docRef = await firebase_init_1.db.collection('email_queue').add(emailData);
         // In production, this would integrate with an email service
         // For now, we simulate sending
         await simulateSendEmail(emailData);
@@ -64,7 +63,7 @@ exports.funnelProcessQueue = functions.https.onCall(async (data, context) => {
     const { limit = 50 } = data || {};
     try {
         // Get pending emails
-        const pendingSnap = await db.collection('email_queue')
+        const pendingSnap = await firebase_init_1.db.collection('email_queue')
             .where('status', '==', 'pending')
             .orderBy('created_at', 'asc')
             .limit(limit)
@@ -130,7 +129,7 @@ exports.funnelCampaignCreate = functions.https.onCall(async (data, context) => {
             created_at: new Date().toISOString(),
             created_by: context.auth.uid
         };
-        const docRef = await db.collection('campaigns').add(campaignData);
+        const docRef = await firebase_init_1.db.collection('campaigns').add(campaignData);
         return { ok: true, campaignId: docRef.id, campaign: campaignData };
     }
     catch (error) {
@@ -145,7 +144,7 @@ exports.funnelCampaignList = functions.https.onCall(async (data, context) => {
     await verifyAdmin(context);
     const { status, limit = 50 } = data || {};
     try {
-        let query = db.collection('campaigns')
+        let query = firebase_init_1.db.collection('campaigns')
             .orderBy('created_at', 'desc')
             .limit(limit);
         if (status) {
@@ -170,7 +169,7 @@ exports.funnelSubscribe = functions.https.onCall(async (data, context) => {
     }
     try {
         // Check for existing subscriber
-        const existingSnap = await db.collection('subscribers')
+        const existingSnap = await firebase_init_1.db.collection('subscribers')
             .where('email', '==', email.toLowerCase())
             .limit(1)
             .get();
@@ -194,9 +193,9 @@ exports.funnelSubscribe = functions.https.onCall(async (data, context) => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
-        const docRef = await db.collection('subscribers').add(subscriberData);
+        const docRef = await firebase_init_1.db.collection('subscribers').add(subscriberData);
         // Trigger welcome sequence
-        await db.collection('automation_triggers').add({
+        await firebase_init_1.db.collection('automation_triggers').add({
             type: 'new_subscriber',
             subscriber_id: docRef.id,
             email: email.toLowerCase(),
@@ -220,10 +219,10 @@ exports.funnelUnsubscribe = functions.https.onCall(async (data, context) => {
     try {
         let docRef;
         if (subscriberId) {
-            docRef = db.collection('subscribers').doc(subscriberId);
+            docRef = firebase_init_1.db.collection('subscribers').doc(subscriberId);
         }
         else {
-            const snap = await db.collection('subscribers')
+            const snap = await firebase_init_1.db.collection('subscribers')
                 .where('email', '==', email.toLowerCase())
                 .limit(1)
                 .get();

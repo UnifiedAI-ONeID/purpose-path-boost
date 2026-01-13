@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
+import { db } from './firebase-init';
 
 export const adminCrosspostList = functions.https.onCall(async (data, context) => {
   // Verify admin auth
@@ -8,7 +8,6 @@ export const adminCrosspostList = functions.https.onCall(async (data, context) =
   }
 
   try {
-    const db = getFirestore();
     const crossposts = await db.collection('crossposts')
       .orderBy('created_at', 'desc')
       .limit(50)

@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import { getFirestore } from 'firebase-admin/firestore';
+import { db } from './firebase-init';
 
 export const adminCrm = functions.https.onCall(async (data, context) => {
   // Verify admin auth
@@ -8,7 +8,6 @@ export const adminCrm = functions.https.onCall(async (data, context) => {
   }
 
   const { action, leadId, updates, filters } = data || {};
-  const db = getFirestore();
 
   try {
     switch (action) {

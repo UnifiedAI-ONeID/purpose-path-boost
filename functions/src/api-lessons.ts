@@ -1,7 +1,6 @@
 import * as functions from 'firebase-functions';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { FieldValue } from 'firebase-admin/firestore';
+import { db } from './firebase-init';
 
 /**
  * Get a lesson by slug
