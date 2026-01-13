@@ -11,7 +11,8 @@
     "lint:fix": "eslint . --fix",
     "gemini:lint:auto": "ts-node tools/auto-lint-fix.ts",
     "preview": "vite preview",
-    "test": "jest"
+    "test": "jest",
+    "generate:icons": "node tools/generate-icons.js"
   },
   "engines": {
     "node": ">=20 <21",
@@ -130,6 +131,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "lovable-tagger": "^1.1.11",
     "postcss": "^8.5.6",
+    "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.2.3",
     "ts-node": "^10.9.2",

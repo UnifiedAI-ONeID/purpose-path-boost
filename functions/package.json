@@ -6,11 +6,13 @@
     "node": "20"
   },
   "dependencies": {
+    "@google-cloud/secret-manager": "^6.1.1",
     "firebase-admin": "^12.1.1",
-    "firebase-functions": "^5.0.1",
+    "firebase-functions": "^5.1.1",
     "json2csv": "^5.0.0"
   },
   "devDependencies": {
+    "@types/json2csv": "^5.0.7",
     "typescript": "^5.5.3"
   },
   "scripts": {

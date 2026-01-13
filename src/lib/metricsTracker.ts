@@ -1,9 +1,12 @@
 /**
  * @file This file provides a comprehensive client-side metrics tracking solution.
- * It queues events and sends them in batches to a telemetry endpoint,
+ * It queues events and sends them in batches to the Firebase telemetry function,
  * handling session management, UTM parameter extraction, and graceful degradation
  * in environments where necessary APIs (like sessionStorage or crypto) are not available.
  */
+
+import { functions } from '@/firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 // --- Type Definitions ---
 
@@ -26,9 +29,16 @@ interface MetricsEvent {
   device?: string;
   lang?: string;
   payload?: MetricPayload;
-  ts: number; // Changed to mandatory
-  sessionId: string; // Changed to mandatory
+  ts: number;
+  sessionId: string;
 }
+
+interface TelemetryPayload {
+  events: MetricsEvent[];
+}
+
+// Firebase callable function reference
+const apiTelemetryLogBatch = httpsCallable<TelemetryPayload, { ok: boolean }>(functions, 'api-telemetry-log-batch');
 
 // --- MetricsTracker Class ---
 
@@ -39,7 +49,6 @@ class MetricsTracker {
   
   private readonly FLUSH_INTERVAL_MS = 5000; // 5 seconds
   private readonly MAX_QUEUE_SIZE = 50;
-  private readonly API_ENDPOINT = '/api/telemetry/log';
 
   constructor() {
     this.sessionId = this.getSessionId();
@@ -135,19 +144,14 @@ class MetricsTracker {
       this.flushTimeout = null;
     }
 
-    const payload = JSON.stringify({ events: eventsToFlush });
-
     try {
-      // Use sendBeacon for unloading, as it's more likely to succeed
+      // Use sendBeacon for unloading with a fallback API endpoint
       if (isUnloading && navigator.sendBeacon) {
-        navigator.sendBeacon(this.API_ENDPOINT, new Blob([payload], { type: 'application/json' }));
+        const payload = JSON.stringify({ events: eventsToFlush });
+        navigator.sendBeacon('/api/telemetry/log', new Blob([payload], { type: 'application/json' }));
       } else {
-        await fetch(this.API_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload,
-          keepalive: isUnloading, // keepalive helps ensure the request is sent even if the page is unloading
-        });
+        // Use Firebase callable function for normal operation
+        await apiTelemetryLogBatch({ events: eventsToFlush });
       }
     } catch (error) {
       console.error('[Metrics] Failed to track events:', error);

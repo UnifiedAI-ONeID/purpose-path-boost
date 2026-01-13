@@ -5,6 +5,7 @@ import { ROUTES } from '@/nav/routes';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SEOHelmet } from '@/components/SEOHelmet';
+import { telemetry } from '@/lib/pwa/telemetry';
 
 function getOrSetDevice() {
   let id = localStorage.getItem('zg.device');
@@ -44,16 +45,8 @@ export default function Home() {
     })
     .catch(err => console.error('Boot error:', err));
 
-    // Track page view
-    fetch('/api/pwa-telemetry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        device_id: device,
-        event: 'view_home',
-        payload: { source: 'pwa' }
-      })
-    }).catch(() => {}); // Silent fail
+    // Track page view using Firebase callable function
+    telemetry.viewHome();
 
   }, [lang]);
 

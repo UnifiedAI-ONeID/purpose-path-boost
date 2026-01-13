@@ -5,7 +5,8 @@ import { SecretManagerServiceClient } from "@google-cloud/secret-manager";
 const secretManager = new SecretManagerServiceClient();
 const PROJECT_ID = process.env.GCLOUD_PROJECT;
 
-async function accessSecretVersion(secretName: string) {
+// Access a secret value from Google Secret Manager
+export async function accessSecretVersion(secretName: string) {
   const [version] = await secretManager.accessSecretVersion({
     name: `projects/${PROJECT_ID}/secrets/${secretName}/versions/latest`,
   });

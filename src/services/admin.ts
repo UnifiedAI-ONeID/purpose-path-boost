@@ -1,5 +1,6 @@
 import { collection, getCountFromServer, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db, functions } from '../firebase/config';
+import { httpsCallable } from 'firebase/functions';
 
 export interface DataHealthStats {
   users: number;
@@ -10,6 +11,9 @@ export interface DataHealthStats {
   posts: number;
   lastUpdated: Record<string, string | null>;
 }
+
+// Firebase callable function references
+const manageSecretsFn = httpsCallable<{ action: string; secrets?: Record<string, string> }, { ok: boolean; secrets?: Record<string, string> }>(functions, 'manage-secrets');
 
 export const adminService = {
   async getDataHealthStats(): Promise<DataHealthStats> {
@@ -57,5 +61,40 @@ export const adminService = {
     const q = query(anomaliesRef, orderBy('createdAt', 'desc'), limit(50));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  /**
+   * Get masked secrets for display (returns partial keys)
+   */
+  async getSecrets(): Promise<Record<string, string>> {
+    try {
+      const result = await manageSecretsFn({ action: 'list' });
+      return result.data.secrets || {};
+    } catch (error) {
+      console.error('[adminService] Failed to get secrets:', error);
+      return {};
+    }
+  },
+
+  /**
+   * Save secrets securely via Cloud Function
+   */
+  async saveSecrets(secrets: Record<string, string>): Promise<boolean> {
+    try {
+      // Filter out empty values
+      const filtered = Object.fromEntries(
+        Object.entries(secrets).filter(([_, v]) => v && v.trim() !== '')
+      );
+      
+      if (Object.keys(filtered).length === 0) {
+        throw new Error('No secrets to save');
+      }
+
+      const result = await manageSecretsFn({ action: 'set', secrets: filtered });
+      return result.data.ok === true;
+    } catch (error) {
+      console.error('[adminService] Failed to save secrets:', error);
+      throw error;
+    }
   }
 };
