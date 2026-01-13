@@ -33,7 +33,7 @@ export const buildCaption = async ({
 
     **Title:** ${title}
     **Summary:** ${summary}
-    **Tags:** ${tags.join(', ' || 'N/A')}
+    **Tags:** ${tags.length > 0 ? tags.join(', ') : 'N/A'}
     **Platform:** ${platform}
     **Language:** ${lang}
     **Link:** ${link}

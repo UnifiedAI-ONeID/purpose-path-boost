@@ -2,7 +2,7 @@ import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nextProvider } from 'react-i18next';
 import { HelmetProvider } from 'react-helmet-async';
 import i18n from './i18n';
@@ -46,7 +46,6 @@ import AdminPricing from "./pages/AdminPricing";
 import AdminExpress from "./pages/AdminExpress";
 import AdminAI from "./pages/AdminAI";
 import AdminBookings from "./pages/AdminBookings";
-import AdminCoaching from "./pages/AdminCoaching";
 import AdminCalEventTypes from "./pages/AdminCalEventTypes";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminSEO from "./pages/AdminSEO";
@@ -195,7 +194,7 @@ function AppRoutes() {
 
         // Initialize version guard last
         setTimeout(() => {
-          bootVersionGuard({ pollMs: 60000 });
+          bootVersionGuard();
         }, 2000);
 
       } catch (error) {

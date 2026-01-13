@@ -15,16 +15,21 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--grad-brand)' }}>
       <div className="text-center space-y-6 p-8">
         <div className="flex justify-center mb-6">
-          <div className="p-4 bg-emerald-500/20 rounded-full border border-emerald-500/30">
-            <Compass className="w-16 h-16 text-emerald-400" />
+          <div className="p-4 rounded-full border" style={{ background: 'rgba(30, 92, 92, 0.2)', borderColor: 'var(--jade-500)' }}>
+            <Compass className="w-16 h-16" style={{ color: 'var(--gold-500)' }} />
           </div>
         </div>
-        <h1 className="text-7xl font-bold bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent">404</h1>
-        <p className="text-xl text-emerald-200">Oops! This path doesn't exist yet</p>
-        <p className="text-emerald-300/70 max-w-md mx-auto">
+        <h1 className="text-7xl font-bold" style={{ 
+          background: 'linear-gradient(to right, var(--jade-500), var(--gold-500))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>404</h1>
+        <p className="text-xl" style={{ color: 'var(--ink-lo)' }}>Oops! This path doesn't exist yet</p>
+        <p className="max-w-md mx-auto" style={{ color: 'var(--gray-500)' }}>
           It seems you've wandered off your purpose path. Let's get you back on track.
         </p>
         <div className="flex gap-4 justify-center pt-4">
