@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, UserPlus, Filter, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/trackEvent';
 
 const getAdminCrm = httpsCallable(functions, 'admin-crm');
 
@@ -15,6 +16,7 @@ export default function CRM() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('admin_crm_view');
     loadData();
   }, []);
 

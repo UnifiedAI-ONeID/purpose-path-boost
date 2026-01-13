@@ -1,9 +1,15 @@
+import { useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import AdminShell from '@/components/admin/AdminShell';
+import { trackEvent } from '@/lib/trackEvent';
 
 export default function Marketing() {
+  useEffect(() => {
+    trackEvent('admin_marketing_view');
+  }, []);
+
   return (
     <AdminShell>
     <div className="space-y-6">

@@ -6,21 +6,72 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, Video, MessageCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { trackEvent } from '@/lib/trackEvent';
-import { COACHING_PACKAGES, type CoachingPackageId } from '@/lib/airwallex';
+import { fetchCoachingPackages, type CoachingPackage, type CoachingPackageId } from '@/lib/airwallex';
 import { toast } from 'sonner';
 import { invokeApi } from '@/lib/api-client';
+
+// Session type interface for UI
+interface SessionType {
+  id: string;
+  icon: typeof Calendar | typeof Video | typeof MessageCircle;
+  title: string;
+  duration: string;
+  price: string;
+  priceAmount: number;
+  description: string;
+  calLink: string;
+  eventType: string;
+  packageId: CoachingPackageId;
+}
 
 export default function MobileBook() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
-  const [selectedSession, setSelectedSession] = useState<typeof sessionTypes[0] | null>(null);
+  const [selectedSession, setSelectedSession] = useState<SessionType | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [calReady, setCalReady] = useState(false);
+  const [sessionTypes, setSessionTypes] = useState<SessionType[]>([]);
+  const [isLoadingPackages, setIsLoadingPackages] = useState(true);
 
   useEffect(() => {
     trackEvent('page_view', { page: 'mobile_book' });
+    
+    // Fetch coaching packages from Firestore
+    const loadPackages = async () => {
+      setIsLoadingPackages(true);
+      try {
+        const packages = await fetchCoachingPackages();
+        const icons = [Calendar, Video, MessageCircle];
+        
+        // Transform packages to session types
+        const sessions: SessionType[] = Object.values(packages)
+          .filter((pkg): pkg is CoachingPackage => pkg !== null && pkg.isActive !== false)
+          .slice(0, 3) // Show first 3 packages
+          .map((pkg, index) => ({
+            id: pkg.id,
+            icon: icons[index % icons.length],
+            title: pkg.name,
+            duration: pkg.duration,
+            price: pkg.price === 0 ? 'Free' : `$${pkg.price}`,
+            priceAmount: pkg.price,
+            description: pkg.description,
+            calLink: pkg.calLink || `zhengrowth/${pkg.id}`,
+            eventType: pkg.eventType || pkg.id,
+            packageId: pkg.id,
+          }));
+        
+        setSessionTypes(sessions);
+      } catch (error) {
+        console.error('[MobileBook] Error loading packages:', error);
+        toast.error('Failed to load coaching packages. Please refresh the page.');
+      } finally {
+        setIsLoadingPackages(false);
+      }
+    };
+    
+    loadPackages();
     
     // Initialize Cal.com
     const initializeCal = () => {
@@ -55,49 +106,10 @@ export default function MobileBook() {
     }
   }, [calReady]);
 
-  const sessionTypes = [
-    {
-      id: 'career',
-      icon: Calendar,
-      title: 'Discovery Session',
-      duration: '30 min',
-      price: 'Free',
-      priceAmount: 0,
-      description: 'Explore if coaching is right for you',
-      calLink: 'zhengrowth/discovery',
-      eventType: 'discovery-30min',
-      packageId: 'discovery' as CoachingPackageId,
-    },
-    {
-      id: 'single',
-      icon: Video,
-      title: 'Single Session',
-      duration: '60 min',
-      price: '$200',
-      priceAmount: 200,
-      description: 'One-on-one focused coaching',
-      calLink: 'zhengrowth/single-session',
-      eventType: 'single-60min',
-      packageId: 'single' as CoachingPackageId,
-    },
-    {
-      id: 'monthly',
-      icon: MessageCircle,
-      title: 'Monthly Package',
-      duration: '4 sessions',
-      price: '$800',
-      priceAmount: 800,
-      description: 'Weekly sessions + email support',
-      calLink: 'zhengrowth/monthly-package',
-      eventType: 'monthly-package',
-      packageId: 'monthly' as CoachingPackageId,
-    },
-  ];
-
   // Handle preselected program from URL
   useEffect(() => {
     const programId = searchParams.get('program');
-    if (programId && calReady) {
+    if (programId && calReady && sessionTypes.length > 0) {
       const program = sessionTypes.find(s => s.id === programId);
       if (program) {
         console.log('[Mobile Book] Auto-selecting program:', program.title);
@@ -106,9 +118,9 @@ export default function MobileBook() {
         setSearchParams({});
       }
     }
-  }, [searchParams, calReady]);
+  }, [searchParams, calReady, sessionTypes]);
 
-  const handleSelectSession = (session: typeof sessionTypes[0]) => {
+  const handleSelectSession = (session: SessionType) => {
     console.log('[Mobile Book] Session selected:', session.title);
     
     trackEvent('booking_initiated', {
@@ -174,7 +186,13 @@ export default function MobileBook() {
     setIsProcessing(true);
 
     try {
-      const packageData = COACHING_PACKAGES[selectedSession.packageId];
+      // Fetch latest package data from Firestore
+      const packages = await fetchCoachingPackages();
+      const packageData = packages[selectedSession.packageId];
+      
+      if (!packageData) {
+        throw new Error('Package not found');
+      }
       
       trackEvent('payment_initiated', {
         session_type: selectedSession.eventType,
@@ -273,46 +291,72 @@ export default function MobileBook() {
             <p className="text-sm text-muted">Choose the format that works for you</p>
           </div>
 
-          <div className="space-y-3">
-            {sessionTypes.map((session, index) => {
-              const Icon = session.icon;
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleSelectSession(session)}
-                  disabled={!calReady && session.priceAmount === 0}
-                  className="w-full p-4 rounded-2xl border border-border bg-surface text-left hover:shadow-md transition-all disabled:opacity-50"
-                >
+          {isLoadingPackages ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-full p-4 rounded-2xl border border-border bg-surface animate-pulse">
                   <div className="flex items-start gap-3">
-                    <Icon className="h-10 w-10 text-accent shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-fg">{session.title}</h3>
-                      <p className="text-xs text-muted mt-1">{session.duration} · {session.description}</p>
-                      <p className="text-lg font-bold text-accent mt-2">{session.price}</p>
+                    <div className="h-10 w-10 rounded-full bg-muted" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-muted rounded w-1/2 mb-2" />
+                      <div className="h-3 bg-muted rounded w-3/4" />
                     </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+              ))}
+            </div>
+          ) : sessionTypes.length === 0 ? (
+            <div className="p-6 rounded-2xl border border-border bg-surface text-center">
+              <p className="text-muted mb-4">No coaching packages available at this time.</p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Refresh
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sessionTypes.map((session, index) => {
+                const Icon = session.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleSelectSession(session)}
+                    disabled={!calReady && session.priceAmount === 0}
+                    className="w-full p-4 rounded-2xl border border-border bg-surface text-left hover:shadow-md transition-all disabled:opacity-50 animate-fade-in"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Icon className="h-10 w-10 text-accent shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-fg">{session.title}</h3>
+                        <p className="text-xs text-muted mt-1">{session.duration} · {session.description}</p>
+                        <p className="text-lg font-bold text-accent mt-2">{session.price}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/10 to-brand/10 border border-accent/30 text-center animate-fade-in">
-            <p className="text-sm text-muted mb-3">Not sure? Start with a free discovery call.</p>
-            <Button 
-              onClick={() => handleSelectSession(sessionTypes[0])}
-              className="w-full bg-accent text-brand hover:bg-accent/90 font-semibold"
-              disabled={!calReady}
-            >
-              {!calReady ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                'Book Free Discovery'
-              )}
-            </Button>
-          </div>
+          {sessionTypes.length > 0 && sessionTypes[0]?.priceAmount === 0 && (
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-accent/10 to-brand/10 border border-accent/30 text-center animate-fade-in">
+              <p className="text-sm text-muted mb-3">Not sure? Start with a free discovery call.</p>
+              <Button 
+                onClick={() => handleSelectSession(sessionTypes[0])}
+                className="w-full bg-accent text-brand hover:bg-accent/90 font-semibold"
+                disabled={!calReady || isLoadingPackages}
+              >
+                {(!calReady || isLoadingPackages) ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Book Free Discovery'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="p-4 space-y-4">

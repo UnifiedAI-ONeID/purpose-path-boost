@@ -4,6 +4,7 @@ import { db } from '@/firebase/config';
 import { collection, query, orderBy, limit, onSnapshot, DocumentData } from 'firebase/firestore';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { trackEvent } from '@/lib/trackEvent';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AdminShell from '@/components/admin/AdminShell';
 
@@ -31,6 +32,7 @@ export default function Leads() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    trackEvent('admin_leads_view');
     const q = query(
       collection(db, 'leads'),
       orderBy('created_at', 'desc'),

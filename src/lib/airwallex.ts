@@ -1,4 +1,7 @@
 // Airwallex Payment Integration
+import { db } from '@/firebase/config';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { invokeApi } from '@/lib/api-client';
 
 export interface PaymentLinkRequest {
   amount: number;
@@ -21,11 +24,85 @@ interface ApiResponse {
   error?: string;
 }
 
+// Coaching package interface matching Firestore schema
+export interface CoachingPackage {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+  duration: string;
+  features: string[];
+  isActive?: boolean;
+  calLink?: string;
+  eventType?: string;
+}
+
+export type CoachingPackageId = string;
+
+// Cache for coaching packages
+let packagesCache: Record<string, CoachingPackage> | null = null;
+let packagesCacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Fetch coaching packages from Firestore
+ */
+export const fetchCoachingPackages = async (): Promise<Record<string, CoachingPackage>> => {
+  // Return cached data if valid
+  if (packagesCache && Date.now() - packagesCacheTime < CACHE_DURATION) {
+    return packagesCache;
+  }
+
+  try {
+    const q = query(
+      collection(db, 'coaching_offers'),
+      where('isActive', '==', true)
+    );
+    const snapshot = await getDocs(q);
+    
+    const packages: Record<string, CoachingPackage> = {};
+    snapshot.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      const id = data.slug || docSnap.id;
+      packages[id] = {
+        id,
+        name: data.title || data.name || 'Coaching Session',
+        price: data.price || 0,
+        currency: data.currency || 'USD',
+        description: data.description || data.summary || '',
+        duration: data.duration || '60 minutes',
+        features: data.features || [],
+        isActive: data.isActive ?? true,
+        calLink: data.calLink || data.cal_link,
+        eventType: data.eventType || data.event_type,
+      };
+    });
+
+    // Update cache
+    packagesCache = packages;
+    packagesCacheTime = Date.now();
+    
+    return packages;
+  } catch (error) {
+    console.error('[Airwallex] Error fetching coaching packages:', error);
+    // Return empty object on error - let callers handle gracefully
+    return {};
+  }
+};
+
+/**
+ * Get a single coaching package by ID
+ */
+export const getCoachingPackage = async (packageId: string): Promise<CoachingPackage | null> => {
+  const packages = await fetchCoachingPackages();
+  return packages[packageId] || null;
+};
+
 export const createPaymentLink = async (
   data: PaymentLinkRequest
 ): Promise<PaymentLinkResponse> => {
   try {
-    const { invokeApi } = await import('@/lib/api-client');
     const result: ApiResponse = await invokeApi('/api/create-payment-link', {
       method: 'POST',
       body: data
@@ -41,66 +118,3 @@ export const createPaymentLink = async (
     throw error;
   }
 };
-
-export const COACHING_PACKAGES = {
-  discovery: {
-    id: 'discovery',
-    name: 'Discovery Session',
-    price: 0,
-    currency: 'USD',
-    description: 'Free 30-minute clarity call',
-    duration: '30 minutes',
-    features: [
-      'Understand your current challenges',
-      'Explore coaching fit',
-      'Create initial action plan',
-    ],
-  },
-  single: {
-    id: 'single',
-    name: 'Single Session',
-    price: 200,
-    currency: 'USD',
-    description: 'One-on-one intensive coaching',
-    duration: '60 minutes',
-    features: [
-      'Deep-dive on specific challenge',
-      'Customized strategies',
-      'Action plan with accountability',
-      'Email follow-up support',
-    ],
-  },
-  monthly: {
-    id: 'monthly',
-    name: 'Monthly Package',
-    price: 800,
-    currency: 'USD',
-    description: '4 sessions + ongoing support',
-    duration: '4 × 60 minutes',
-    features: [
-      '4 weekly coaching sessions',
-      'Unlimited email support',
-      'Custom resources and tools',
-      'Progress tracking dashboard',
-      'Priority scheduling',
-    ],
-  },
-  quarterly: {
-    id: 'quarterly',
-    name: 'Quarterly Intensive',
-    price: 1900,
-    currency: 'USD',
-    description: '12 sessions + VIP support',
-    duration: '3 months',
-    features: [
-      '12 weekly coaching sessions',
-      'Unlimited messaging support',
-      'Custom goal-setting framework',
-      'Monthly progress reviews',
-      'Exclusive resources library',
-      'Priority access to workshops',
-    ],
-  },
-} as const;
-
-export type CoachingPackageId = keyof typeof COACHING_PACKAGES;

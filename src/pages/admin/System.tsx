@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,16 @@ import { fx } from '@/lib/edge';
 import { toast } from 'sonner';
 import AdminShell from '@/components/admin/AdminShell';
 import { auth } from '@/firebase/config';
+import { trackEvent } from '@/lib/trackEvent';
 
 export default function System() {
   const [msg, setMsg] = useState('');
   const [bumping, setBumping] = useState(false);
   const [alerting, setAlerting] = useState(false);
+
+  useEffect(() => {
+    trackEvent('admin_system_view');
+  }, []);
 
   async function handleBumpVersion() {
     setBumping(true);

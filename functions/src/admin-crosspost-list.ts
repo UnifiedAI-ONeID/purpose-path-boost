@@ -19,26 +19,10 @@ export const adminCrosspostList = functions.https.onCall(async (data, context) =
       ...doc.data()
     }));
 
+    // Return actual data from database - no sample/dummy data
     return {
       ok: true,
-      rows: rows.length > 0 ? rows : [
-        {
-          id: '1',
-          platform: 'linkedin',
-          title: 'Sample LinkedIn post',
-          status: 'posted',
-          scheduled_at: null,
-          published_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          platform: 'x',
-          title: 'Sample X post',
-          status: 'queued',
-          scheduled_at: new Date(Date.now() + 86400000).toISOString(),
-          published_at: null,
-        },
-      ],
+      rows: rows,
     };
   } catch (error) {
     console.error('Error fetching crossposts:', error);

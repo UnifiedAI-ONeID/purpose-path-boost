@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle, CreditCard } from 'lucide-react';
-import { COACHING_PACKAGES, type CoachingPackageId, createPaymentLink } from '@/lib/airwallex';
+import { fetchCoachingPackages, getCoachingPackage, type CoachingPackage, type CoachingPackageId, createPaymentLink } from '@/lib/airwallex';
 import { trackEvent } from '@/lib/trackEvent';
 import { toast } from 'sonner';
 import { isCN } from '@/lib/cn-env';
@@ -27,8 +27,9 @@ const Payment = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const packageId = (searchParams.get('package') || 'single') as CoachingPackageId;
-  const selectedPackage = COACHING_PACKAGES[packageId];
   
+  const [selectedPackage, setSelectedPackage] = useState<CoachingPackage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const {
@@ -39,11 +40,29 @@ const Payment = () => {
     resolver: zodResolver(paymentSchema),
   });
 
+  // Fetch package from Firestore
   useEffect(() => {
-    if (!selectedPackage || selectedPackage.price === 0) {
-      navigate('/coaching');
-    }
-  }, [selectedPackage, navigate]);
+    const loadPackage = async () => {
+      setIsLoading(true);
+      try {
+        const pkg = await getCoachingPackage(packageId);
+        if (!pkg || pkg.price === 0) {
+          // Free package or not found - redirect to coaching
+          navigate('/coaching');
+          return;
+        }
+        setSelectedPackage(pkg);
+      } catch (error) {
+        console.error('[Payment] Error loading package:', error);
+        toast.error('Failed to load package details');
+        navigate('/coaching');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadPackage();
+  }, [packageId, navigate]);
 
   const onSubmit = async (data: PaymentFormData) => {
     if (!selectedPackage) return;
@@ -87,6 +106,18 @@ const Payment = () => {
       setIsProcessing(false);
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen py-20 bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading package details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!selectedPackage) {
     return null;

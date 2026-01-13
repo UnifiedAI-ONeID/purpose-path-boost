@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: asia-east1
-  SERVICE_NAME: zhengrowth-app
+  GCP_PROJECT_ID: zhengrowth-71805517-6aa3a
+  GCP_REGION: us-west1
+  SERVICE_NAME: zhengrowth
 
 jobs:
   deploy:

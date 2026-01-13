@@ -9,12 +9,17 @@ import AdminShell from '@/components/admin/AdminShell';
 import { AdminBlogList } from '@/components/admin/AdminBlogList';
 import ContentLeaderboard from '@/components/admin/ContentLeaderboard';
 import { VersionControl } from '@/components/admin/VersionControl';
+import { trackEvent } from '@/lib/trackEvent';
 
 const getContentLeaderboard = httpsCallable(functions, 'content-leaderboard');
 
 export default function Content() {
   const [tab, setTab] = useState<'pages' | 'blog' | 'analytics'>('pages');
   const [topContent, setTopContent] = useState<any[]>([]);
+
+  useEffect(() => {
+    trackEvent('admin_content_view');
+  }, []);
 
   useEffect(() => {
     if (tab === 'analytics') {

@@ -81,6 +81,11 @@ import AdminCRM from "./pages/admin/CRM";
 import AdminAnalytics from "./pages/admin/Analytics";
 import AdminSettings from "./pages/admin/Settings";
 import DataHealth from "./pages/admin/DataHealth"; // Import new page
+import AdminFAQs from "./pages/admin/FAQs"; // FAQ management
+import AdminLessons from "./pages/admin/Lessons"; // Learning content
+import AdminChallenges from "./pages/admin/Challenges"; // Community challenges
+import AdminTestimonials from "./pages/admin/Testimonials"; // Customer testimonials
+import AdminUsers from "./pages/admin/Users"; // User management
 
 // PWA Core
 import { PWAProvider } from "./pwa/core/PWAProvider";
@@ -263,6 +268,11 @@ function AppRoutes() {
         <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminAI /></ProtectedAdminRoute>} />
         <Route path="/admin/bookings" element={<ProtectedAdminRoute><AdminBookings /></ProtectedAdminRoute>} />
         <Route path="/admin/coaching" element={<ProtectedAdminRoute><AdminCoachingNew /></ProtectedAdminRoute>} />
+        <Route path="/admin/faqs" element={<ProtectedAdminRoute><AdminFAQs /></ProtectedAdminRoute>} />
+        <Route path="/admin/lessons" element={<ProtectedAdminRoute><AdminLessons /></ProtectedAdminRoute>} />
+        <Route path="/admin/challenges" element={<ProtectedAdminRoute><AdminChallenges /></ProtectedAdminRoute>} />
+        <Route path="/admin/testimonials" element={<ProtectedAdminRoute><AdminTestimonials /></ProtectedAdminRoute>} />
+        <Route path="/admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
         <Route path="/admin/cal-event-types" element={<ProtectedAdminRoute><AdminCalEventTypes /></ProtectedAdminRoute>} />
         <Route path="/admin/coupons" element={<ProtectedAdminRoute><AdminCoupons /></ProtectedAdminRoute>} />
         <Route path="/admin/seo" element={<ProtectedAdminRoute><AdminSEO /></ProtectedAdminRoute>} />

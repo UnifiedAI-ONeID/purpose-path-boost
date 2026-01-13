@@ -3,86 +3,27 @@
  * Uses Jade & Gold design system
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   HelpCircle, ArrowLeft, MessageCircle, Mail, Phone, 
-  ChevronDown, ChevronUp, Search, Book, Video, Users, Calendar
+  ChevronDown, ChevronUp, Search, Book, Video, Users, Calendar, Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SEOHelmet } from '@/components/SEOHelmet';
 import { cn } from '@/lib/utils';
+import { db } from '@/firebase/config';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 
 interface FAQItem {
+  id: string;
   question: string;
   answer: string;
   category: string;
+  order?: number;
 }
-
-const FAQ_DATA: FAQItem[] = [
-  {
-    category: 'Getting Started',
-    question: 'How do I book my first coaching session?',
-    answer: 'Navigate to the Coaching page, select a program that fits your needs, and click "Book a Free Call" to schedule your discovery session. Our coach will guide you through the process and help you choose the right program.'
-  },
-  {
-    category: 'Getting Started',
-    question: 'What happens during a discovery call?',
-    answer: 'The discovery call is a free 30-minute session where we understand your goals, challenges, and aspirations. We\'ll discuss how coaching can help you and answer any questions about the process.'
-  },
-  {
-    category: 'Coaching',
-    question: 'What coaching programs do you offer?',
-    answer: 'We offer several programs including Career Breakthrough (6-8 weeks), DreamBuilder (3 months), Life Mastery (6 months), and VIP 1:1 coaching. Each program is tailored to different goals and timeframes.'
-  },
-  {
-    category: 'Coaching',
-    question: 'Are sessions conducted in English or Chinese?',
-    answer: 'Our coaching is bilingual! Sessions can be conducted in English, Mandarin Chinese (中文), or a mix of both - whatever makes you most comfortable.'
-  },
-  {
-    category: 'Coaching',
-    question: 'How long are coaching sessions?',
-    answer: 'Standard coaching sessions are 60 minutes. Discovery calls are 30 minutes. Some VIP programs include extended 90-minute deep-dive sessions.'
-  },
-  {
-    category: 'App Features',
-    question: 'How do I track my goals?',
-    answer: 'Use the Goals page to create and manage your goals. You can set milestones, track progress, and categorize goals by area (career, health, relationships, etc.). The Insights page shows your overall progress.'
-  },
-  {
-    category: 'App Features',
-    question: 'What is the Journal feature for?',
-    answer: 'The Journal is your personal reflection space. Record your thoughts, track your mood, and build a daily journaling habit. Regular journaling helps with self-awareness and progress tracking.'
-  },
-  {
-    category: 'App Features',
-    question: 'How does the Community feature work?',
-    answer: 'The Community is where you connect with other members on their growth journey. Share wins, ask questions, find accountability partners, and learn from others\' experiences.'
-  },
-  {
-    category: 'Account',
-    question: 'How do I update my profile?',
-    answer: 'Go to Settings > Profile to update your name, avatar, timezone, and other preferences. You can also manage notification settings and change your password there.'
-  },
-  {
-    category: 'Account',
-    question: 'Can I cancel or reschedule a session?',
-    answer: 'Yes, you can reschedule or cancel sessions up to 24 hours before the scheduled time. Go to My Sessions, find the session, and click the reschedule or cancel option.'
-  },
-  {
-    category: 'Payments',
-    question: 'What payment methods do you accept?',
-    answer: 'We accept all major credit cards (Visa, Mastercard, American Express), as well as various local payment methods depending on your region. All payments are processed securely.'
-  },
-  {
-    category: 'Payments',
-    question: 'Do you offer refunds?',
-    answer: 'We offer a satisfaction guarantee. If you\'re not satisfied after your first paid session, contact us within 7 days for a full refund. See our Terms of Service for full details.'
-  }
-];
 
 const CATEGORIES = ['All', 'Getting Started', 'Coaching', 'App Features', 'Account', 'Payments'];
 
@@ -91,9 +32,43 @@ export default function Help() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [faqData, setFaqData] = useState<FAQItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch FAQs from Firestore
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        setLoading(true);
+        const faqRef = collection(db, 'faqs');
+        const faqQuery = query(
+          faqRef,
+          where('published', '==', true),
+          orderBy('order', 'asc')
+        );
+        
+        const snapshot = await getDocs(faqQuery);
+        const faqs: FAQItem[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          question: doc.data().question || '',
+          answer: doc.data().answer || '',
+          category: doc.data().category || 'Getting Started',
+          order: doc.data().order || 0,
+        }));
+        
+        setFaqData(faqs);
+      } catch (error) {
+        console.error('Failed to fetch FAQs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchFAQs();
+  }, []);
 
   // Filter FAQs
-  const filteredFAQs = FAQ_DATA.filter(faq => {
+  const filteredFAQs = faqData.filter(faq => {
     const matchesSearch = searchQuery === '' || 
       faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
@@ -200,7 +175,11 @@ export default function Help() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {filteredFAQs.length === 0 ? (
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-jade-600" />
+                </div>
+              ) : filteredFAQs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <HelpCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No matching questions found</p>
@@ -208,7 +187,7 @@ export default function Help() {
                 </div>
               ) : (
                 filteredFAQs.map((faq, index) => (
-                  <div key={index} className="border-b border-gray-100 last:border-0">
+                  <div key={faq.id} className="border-b border-gray-100 last:border-0">
                     <button
                       className="w-full py-4 flex items-center justify-between text-left hover:bg-gray-50 px-2 rounded transition-colors"
                       onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}

@@ -161,10 +161,15 @@ const EventTypeCard = ({ eventType, onSave, busy }: { eventType: CalEventType; o
 
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-4">
-      {/* ... form fields for each property of CalEventType, using localData and handleChange ... */}
-      {/* Example for 'title' field */}
+      {/* Form fields for CalEventType */}
       <FormField label="Title">
-        <input value={localData.title} onChange={e => handleChange('title', e.target.value)} />
+        <input 
+          value={localData.title} 
+          onChange={e => handleChange('title', e.target.value)}
+          placeholder="Event type title"
+          aria-label="Event type title"
+          className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </FormField>
       {/* Add other fields similarly */}
       <div className="flex justify-end pt-4 border-t border-border">

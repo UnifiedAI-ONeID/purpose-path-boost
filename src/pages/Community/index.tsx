@@ -5,6 +5,8 @@ import {
   Sparkles, Trophy, Calendar, Clock, UserPlus, CheckCircle,
   Send, X, Loader2, Pin, MoreHorizontal, Edit, Trash2
 } from 'lucide-react';
+import { db } from '@/firebase/config';
+import { collection, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,28 +46,28 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-// Events are still managed separately - could be its own context
-const UPCOMING_EVENTS = [
-  {
-    id: '1',
-    title: 'Weekly Goal Review',
-    date: 'Saturday, 10:00 AM',
-    participants: 23
-  },
-  {
-    id: '2',
-    title: 'Mindfulness Workshop',
-    date: 'Next Monday, 7:00 PM',
-    participants: 45
-  }
-];
+// Types for live data
+interface CommunityEvent {
+  id: string;
+  title: string;
+  date: string;
+  participants: number;
+  startTime?: Timestamp;
+}
 
-// Leaderboard will be computed from user stats
-const LEADERBOARD = [
-  { rank: 1, name: 'Sarah Chen', points: 2450, streak: 30 },
-  { rank: 2, name: 'Michael Wong', points: 2280, streak: 25 },
-  { rank: 3, name: 'Emily Liu', points: 1950, streak: 18 }
-];
+interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  points: number;
+  streak: number;
+  avatarUrl?: string;
+}
+
+interface CommunityStats {
+  memberCount: number;
+  postsToday: number;
+  activeChallenges: number;
+}
 
 const CommunityPage = () => {
   const navigate = useNavigate();
@@ -93,6 +95,152 @@ const CommunityPage = () => {
   const [commentText, setCommentText] = useState('');
   const [postComments, setPostComments] = useState<Record<string, CommunityComment[]>>({});
   const [loadingComments, setLoadingComments] = useState<string | null>(null);
+  
+  // Live data state
+  const [upcomingEvents, setUpcomingEvents] = useState<CommunityEvent[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [communityStats, setCommunityStats] = useState<CommunityStats>({
+    memberCount: 0,
+    postsToday: 0,
+    activeChallenges: 0,
+  });
+
+  // Fetch community stats from Firestore
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Get member count
+        const usersSnapshot = await getDocs(collection(db, 'users'));
+        const memberCount = usersSnapshot.size;
+        
+        // Get posts count for today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const postsRef = collection(db, 'community_posts');
+        const postsQuery = query(
+          postsRef,
+          where('createdAt', '>=', Timestamp.fromDate(today))
+        );
+        const postsSnapshot = await getDocs(postsQuery);
+        const postsToday = postsSnapshot.size;
+        
+        // Get active challenges count
+        const challengesRef = collection(db, 'challenges');
+        const challengesQuery = query(
+          challengesRef,
+          where('status', '==', 'active')
+        );
+        const challengesSnapshot = await getDocs(challengesQuery);
+        const activeChallenges = challengesSnapshot.size;
+        
+        setCommunityStats({
+          memberCount,
+          postsToday,
+          activeChallenges,
+        });
+      } catch (error) {
+        console.error('Failed to fetch community stats:', error);
+      }
+    };
+    
+    fetchStats();
+  }, []);
+
+  // Fetch upcoming events from Firestore
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setEventsLoading(true);
+        const now = new Date();
+        const eventsRef = collection(db, 'events');
+        const eventsQuery = query(
+          eventsRef,
+          where('published', '==', true),
+          where('startTime', '>=', Timestamp.fromDate(now)),
+          orderBy('startTime', 'asc'),
+          limit(5)
+        );
+        
+        const snapshot = await getDocs(eventsQuery);
+        const events: CommunityEvent[] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          const startTime = data.startTime?.toDate();
+          return {
+            id: doc.id,
+            title: data.title || 'Untitled Event',
+            date: startTime ? formatEventDate(startTime) : 'Date TBD',
+            participants: data.participantCount || 0,
+            startTime: data.startTime,
+          };
+        });
+        
+        setUpcomingEvents(events);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    
+    fetchEvents();
+  }, []);
+
+  // Fetch leaderboard from Firestore
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        setLeaderboardLoading(true);
+        const usersRef = collection(db, 'users');
+        const leaderboardQuery = query(
+          usersRef,
+          orderBy('stats.totalPoints', 'desc'),
+          limit(10)
+        );
+        
+        const snapshot = await getDocs(leaderboardQuery);
+        const entries: LeaderboardEntry[] = snapshot.docs
+          .filter(doc => doc.data().stats?.totalPoints > 0)
+          .map((doc, index) => {
+            const data = doc.data();
+            return {
+              rank: index + 1,
+              name: data.displayName || data.name || 'Anonymous',
+              points: data.stats?.totalPoints || 0,
+              streak: data.stats?.currentStreak || 0,
+              avatarUrl: data.photoURL,
+            };
+          });
+        
+        setLeaderboard(entries);
+      } catch (error) {
+        console.error('Failed to fetch leaderboard:', error);
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+    
+    fetchLeaderboard();
+  }, []);
+
+  // Helper to format event date
+  const formatEventDate = (date: Date): string => {
+    const now = new Date();
+    const diffDays = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+    const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    if (diffDays === 0) {
+      return `Today, ${time}`;
+    } else if (diffDays === 1) {
+      return `Tomorrow, ${time}`;
+    } else if (diffDays < 7) {
+      return `${dayName}, ${time}`;
+    } else {
+      return `Next ${dayName}, ${time}`;
+    }
+  };
 
   // Handle create post
   const handleCreatePost = async () => {
@@ -214,21 +362,21 @@ const CommunityPage = () => {
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardContent className="py-4 text-center">
               <Users className="h-5 w-5 mx-auto mb-1 text-gold-400" />
-              <div className="text-2xl font-bold text-white">1,234</div>
+              <div className="text-2xl font-bold text-white">{communityStats.memberCount.toLocaleString()}</div>
               <div className="text-xs text-white/60">Members</div>
             </CardContent>
           </Card>
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardContent className="py-4 text-center">
               <MessageCircle className="h-5 w-5 mx-auto mb-1 text-emerald-400" />
-              <div className="text-2xl font-bold text-white">847</div>
+              <div className="text-2xl font-bold text-white">{communityStats.postsToday.toLocaleString()}</div>
               <div className="text-xs text-white/60">Posts Today</div>
             </CardContent>
           </Card>
           <Card className="bg-white/10 backdrop-blur-sm border-white/20">
             <CardContent className="py-4 text-center">
               <Trophy className="h-5 w-5 mx-auto mb-1 text-amber-400" />
-              <div className="text-2xl font-bold text-white">56</div>
+              <div className="text-2xl font-bold text-white">{communityStats.activeChallenges.toLocaleString()}</div>
               <div className="text-xs text-white/60">Active Challenges</div>
             </CardContent>
           </Card>
@@ -461,8 +609,24 @@ const CommunityPage = () => {
 
           {/* Events Tab */}
           <TabsContent value="events" className="mt-4 space-y-4">
+            {eventsLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gold-400" />
+              </div>
+            )}
+            
+            {!eventsLoading && upcomingEvents.length === 0 && (
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardContent className="py-8 text-center">
+                  <Calendar className="h-12 w-12 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/80">No upcoming events at the moment.</p>
+                  <p className="text-white/60 text-sm mt-1">Check back soon for new community events!</p>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid gap-4">
-              {UPCOMING_EVENTS.map((event) => (
+              {!eventsLoading && upcomingEvents.map((event) => (
                 <Card key={event.id} className="bg-white border-none shadow-lg">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-4">
@@ -503,8 +667,22 @@ const CommunityPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {leaderboardLoading && (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-jade-600" />
+                  </div>
+                )}
+                
+                {!leaderboardLoading && leaderboard.length === 0 && (
+                  <div className="py-8 text-center">
+                    <Trophy className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500">No leaderboard data yet.</p>
+                    <p className="text-gray-400 text-sm mt-1">Start completing goals to appear here!</p>
+                  </div>
+                )}
+                
                 <div className="space-y-3">
-                  {LEADERBOARD.map((entry) => (
+                  {!leaderboardLoading && leaderboard.map((entry) => (
                     <div 
                       key={entry.rank}
                       className={cn(
@@ -518,11 +696,13 @@ const CommunityPage = () => {
                         "h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm",
                         entry.rank === 1 && "bg-gold-500 text-white",
                         entry.rank === 2 && "bg-gray-400 text-white",
-                        entry.rank === 3 && "bg-amber-600 text-white"
+                        entry.rank === 3 && "bg-amber-600 text-white",
+                        entry.rank > 3 && "bg-jade-200 text-jade-700"
                       )}>
                         {entry.rank}
                       </div>
                       <Avatar className="h-10 w-10">
+                        <AvatarImage src={entry.avatarUrl} />
                         <AvatarFallback className="bg-jade-100 text-jade-700">
                           {entry.name[0]}
                         </AvatarFallback>

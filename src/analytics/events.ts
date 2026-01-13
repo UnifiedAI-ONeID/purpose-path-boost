@@ -42,7 +42,30 @@ export type EventName =
   // Navigation
   | 'nav_click'
   | 'cta_click'
-  | 'page_view';
+  | 'page_view'
+  // Admin Events
+  | 'admin_overview_view'
+  | 'admin_analytics_view'
+  | 'admin_leads_view'
+  | 'admin_crm_view'
+  | 'admin_users_view'
+  | 'admin_coaching_view'
+  | 'admin_faqs_view'
+  | 'admin_lessons_view'
+  | 'admin_challenges_view'
+  | 'admin_testimonials_view'
+  | 'admin_content_view'
+  | 'admin_marketing_view'
+  | 'admin_payments_view'
+  | 'admin_settings_view'
+  | 'admin_system_view'
+  // Admin CRUD Actions
+  | 'admin_create'
+  | 'admin_update'
+  | 'admin_delete'
+  | 'admin_seed_data'
+  | 'admin_user_role_change'
+  | 'admin_export';
 
 export interface EventProperties {
   [key: string]: string | number | boolean | undefined;
