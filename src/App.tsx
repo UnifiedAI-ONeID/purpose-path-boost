@@ -86,6 +86,7 @@ import AdminLessons from "./pages/admin/Lessons"; // Learning content
 import AdminChallenges from "./pages/admin/Challenges"; // Community challenges
 import AdminTestimonials from "./pages/admin/Testimonials"; // Customer testimonials
 import AdminUsers from "./pages/admin/Users"; // User management
+import AdminCalendar from "./pages/admin/Calendar"; // Calendar management
 
 // PWA Core
 import { PWAProvider } from "./pwa/core/PWAProvider";
@@ -262,7 +263,7 @@ function AppRoutes() {
         <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
         <Route path="/admin/events/:slug" element={<ProtectedAdminRoute><AdminEventEdit /></ProtectedAdminRoute>} />
         <Route path="/admin/calendar" element={<ProtectedAdminRoute><AdminCalendar /></ProtectedAdminRoute>} />
-        <Route path="/admin/cal-bookings" element={<ProtectedAdminRoute><AdminCalBookings /></ProtectedAdminRoute>} />
+        <Route path="/admin/cal-bookings" element={<ProtectedAdminRoute><AdminCalendar /></ProtectedAdminRoute>} />
         <Route path="/admin/pricing" element={<ProtectedAdminRoute><AdminPricing /></ProtectedAdminRoute>} />
         <Route path="/admin/express" element={<ProtectedAdminRoute><AdminExpress /></ProtectedAdminRoute>} />
         <Route path="/admin/ai" element={<ProtectedAdminRoute><AdminAI /></ProtectedAdminRoute>} />
