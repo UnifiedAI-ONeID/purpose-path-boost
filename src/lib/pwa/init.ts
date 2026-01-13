@@ -62,8 +62,22 @@ const urlBase64ToUint8Array = (base64String: string) => {
 
 // Send subscription to backend
 const sendSubscriptionToServer = async (subscription: PushSubscription) => {
-  // Placeholder - integrate with your backend
-  log.debug('Send subscription to server', { subscription: subscription.toJSON() });
+  try {
+    const deviceId = localStorage.getItem('zg.device') || `device-${Date.now()}`;
+    localStorage.setItem('zg.device', deviceId);
+    
+    await fetch('/api/pwa/push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_id: deviceId,
+        subscription: subscription.toJSON()
+      })
+    });
+    log.debug('Push subscription sent to server', { deviceId });
+  } catch (error) {
+    log.error('Failed to send subscription to server', { error });
+  }
 };
 
 // Online/Offline Event Handling

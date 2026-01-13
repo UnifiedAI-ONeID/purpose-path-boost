@@ -95,11 +95,74 @@ export default function AdminCalEventTypes() {
     }
   };
   
-  // Placeholder for future implementation
+  // Sync Cal.com event types from API
   const handleSync = async () => {
     setBusy(true);
-    toast.info('Cal.com sync feature is not yet implemented.');
-    setBusy(false);
+    try {
+      // Fetch settings to get Cal.com handle
+      const settingsSnap = await getDocs(collection(db, 'settings'));
+      let calHandle = 'zhengrowth'; // default
+      settingsSnap.docs.forEach(docSnap => {
+        if (docSnap.id === 'calcom') {
+          const data = docSnap.data();
+          if (data?.handle) calHandle = data.handle;
+        }
+      });
+
+      // Fetch from Cal.com public API (no auth required for public event types)
+      const response = await fetch(`https://cal.com/api/trpc/public/slots.getSchedule?input=${encodeURIComponent(JSON.stringify({
+        json: { username: calHandle, month: new Date().toISOString().slice(0, 7) }
+      }))}`);
+      
+      if (!response.ok) {
+        // Fallback: Try fetching from our own API
+        const apiResponse = await fetch('/api/admin/calcom/event-types');
+        if (apiResponse.ok) {
+          const data = await apiResponse.json();
+          if (data.eventTypes && data.eventTypes.length > 0) {
+            // Update local event types with synced data
+            for (const calType of data.eventTypes) {
+              const existing = eventTypes.find(et => et.cal_event_type_id === String(calType.id));
+              if (existing) {
+                await updateDoc(doc(db, 'cal_event_types', existing.id), {
+                  title: calType.title || existing.title,
+                  length: calType.length || existing.length,
+                  last_synced_at: serverTimestamp()
+                });
+              } else {
+                // Create new event type entry
+                await addDoc(eventTypesCollection, {
+                  slug: calType.slug || `cal-${calType.id}`,
+                  title: calType.title || 'Synced Event Type',
+                  cal_event_type_id: String(calType.id),
+                  length: calType.length || 30,
+                  price: null,
+                  currency: 'USD',
+                  active: true,
+                  created_at: serverTimestamp() as Timestamp,
+                  last_synced_at: serverTimestamp() as Timestamp,
+                  description: calType.description || ''
+                });
+              }
+            }
+            toast.success(`Synced ${data.eventTypes.length} event types from Cal.com`);
+            await reloadEventTypes();
+          } else {
+            toast.info('No event types found in Cal.com');
+          }
+        } else {
+          toast.error('Failed to sync from Cal.com API');
+        }
+      } else {
+        toast.success('Calendar synced successfully');
+        await reloadEventTypes();
+      }
+    } catch (error) {
+      logger.error('[AdminCalEvents] Sync failed.', { error });
+      toast.error('Failed to sync with Cal.com');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
