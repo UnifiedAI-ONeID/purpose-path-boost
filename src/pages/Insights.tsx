@@ -1,0 +1,3 @@
+import { Brain, TrendingUp, Target, BookOpen, Lightbulb, ArrowLeft, Home, Sparkles, Award, ChevronRight } from 'lucide-react';
+
+// ...existing code...

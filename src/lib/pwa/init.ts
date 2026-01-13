@@ -1,5 +1,5 @@
 
-import { log } from '@/lib/log';
+import { logger as log } from '@/lib/log';
 
 // Service Worker Registration
 const registerServiceWorker = () => {

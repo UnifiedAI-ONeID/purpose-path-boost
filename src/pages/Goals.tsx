@@ -1,0 +1,3 @@
+import { Target, Plus, CheckCircle2, Circle, Calendar, Flag, Trash2, ArrowLeft, Home } from 'lucide-react';
+
+// ...existing code...

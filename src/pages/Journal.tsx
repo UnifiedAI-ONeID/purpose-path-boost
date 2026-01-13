@@ -1,0 +1,3 @@
+import { BookOpen, Plus, Calendar, Tag, Trash2, Search, ArrowLeft, Home, Sparkles, Heart, Target, Lightbulb } from 'lucide-react';
+
+// ...existing code...

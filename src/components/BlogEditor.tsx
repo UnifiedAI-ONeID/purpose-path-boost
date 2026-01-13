@@ -129,7 +129,7 @@ export const BlogEditor = ({ blogId, onClose, onSave }: BlogEditorProps) => {
     setGeneratingPreview(true);
     const { title, excerpt, slug } = getValues();
     try {
-      const res = await invokeApi<{ previews: SocialPost[] },>('/api/social/preview', {
+      const res = await invokeApi<{ previews: SocialPost[] }>('/api/social/preview', {
         method: 'POST',
         body: { title: sanitizeHtml(title), excerpt: sanitizeHtml(excerpt), slug: sanitizeHtml(slug), platforms: socialPlatforms.map(p => p.id) }
       });

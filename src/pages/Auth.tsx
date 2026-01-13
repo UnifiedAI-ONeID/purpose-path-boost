@@ -19,8 +19,8 @@ import {
   updatePassword,
   onAuthStateChanged,
   User,
-  FirebaseError
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 
 export default function Auth() {
   const { lang } = usePrefs();
