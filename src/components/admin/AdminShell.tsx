@@ -30,7 +30,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   }, [location.pathname]);
 
   return (
-    <div className="min-h-[100svh] grid md:grid-cols-[240px_1fr]" style={{ background: 'var(--background)' }}>
+    <div className="min-h-[100svh] grid md:grid-cols-[240px_1fr] bg-background">
       <aside className={`border-r border-border ${open ? 'block' : 'hidden'} md:block`}>
         <div className="p-4 flex items-center gap-2">
           <img 
@@ -57,8 +57,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </aside>
       <main>
         <header 
-          className="rounded-2xl p-4 md:p-6 text-white m-4 mb-0"
-          style={{ background: 'linear-gradient(120deg,#0e7c6b,#0b5f54)' }}
+          className="rounded-2xl p-4 md:p-6 text-white m-4 mb-0 bg-gradient-to-r from-jade-600 to-jade-700"
         >
           <button 
             className="md:hidden mb-2" 

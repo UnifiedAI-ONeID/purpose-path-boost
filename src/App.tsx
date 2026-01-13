@@ -39,6 +39,7 @@ import Pricing from "./pages/Pricing";
 import Payment from "./pages/Payment";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Help from "./pages/Help";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
@@ -314,6 +315,7 @@ function AppRoutes() {
           <Route path="/pay" element={<Payment />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/help" element={<Help />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

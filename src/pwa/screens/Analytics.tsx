@@ -250,6 +250,7 @@ export default function Analytics() {
                         <span className="text-lg w-6">{mood.emoji}</span>
                         <div className="flex-1">
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            {/* eslint-disable-next-line react/forbid-dom-props */}
                             <div 
                               className="h-full bg-jade-500 rounded-full transition-all"
                               style={{ width: `${percentage}%` }}

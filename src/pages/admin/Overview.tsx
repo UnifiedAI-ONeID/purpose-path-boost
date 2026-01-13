@@ -161,6 +161,7 @@ function FunnelStep({ label, value, total }: { label: string; value: number; tot
         <span className="text-muted-foreground">{value}</span>
       </div>
       <div className="h-2 bg-muted rounded-full overflow-hidden">
+        {/* eslint-disable-next-line react/forbid-dom-props */}
         <div 
           className="h-full bg-primary transition-all"
           style={{ width: `${Math.max(5, percentage)}%` }}

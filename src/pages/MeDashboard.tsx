@@ -155,9 +155,36 @@ export default function MeDashboard() {
       const referral = referralSnap.data();
       const ref_url = referral?.ref_code ? `https://zhengrowth.com/?ref=${encodeURIComponent(referral.ref_code)}` : null;
 
-      // 6. Streak (placeholder - requires Cloud Function)
-      // For now, we'll just return a placeholder.
-      const streak = 0; // TODO: Replace with a call to a Cloud Function
+      // 6. Calculate streak from journal entries
+      const journalQuery = query(
+        collection(db, 'me_journal'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(60) // Check last 60 days max
+      );
+      const journalSnapshot = await getDocs(journalQuery);
+      const journalEntries = journalSnapshot.docs.map(doc => doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt));
+      
+      // Calculate streak
+      let streak = 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      for (let i = 0; i < 60; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const hasEntry = journalEntries.some(entryDate => {
+          const d = new Date(entryDate);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime() === checkDate.getTime();
+        });
+        
+        if (hasEntry) {
+          streak++;
+        } else if (i > 0) { // Allow today to be missing
+          break;
+        }
+      }
 
       setData({
         ok: true,
