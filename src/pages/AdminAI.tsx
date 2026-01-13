@@ -88,7 +88,13 @@ const Header = ({ range, setRange, onRefresh }: { range: TimeRange, setRange: (r
   <header className="flex items-center justify-between">
     <h1 className="text-2xl font-semibold">AI System Status</h1>
     <div className="flex gap-2">
-      <select className="select" value={range} onChange={e => setRange(e.target.value as TimeRange)}>
+      <select 
+        className="select" 
+        value={range} 
+        onChange={e => setRange(e.target.value as TimeRange)}
+        title="Select time range"
+        aria-label="Select time range"
+      >
         <option value="1h">Last 1h</option>
         <option value="24h">Last 24h</option>
         <option value="7d">Last 7d</option>

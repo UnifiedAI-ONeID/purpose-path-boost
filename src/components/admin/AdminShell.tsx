@@ -60,7 +60,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           className="rounded-2xl p-4 md:p-6 text-white m-4 mb-0"
           style={{ background: 'linear-gradient(120deg,#0e7c6b,#0b5f54)' }}
         >
-          <button className="md:hidden mb-2" onClick={() => setOpen(o => !o)}>
+          <button 
+            className="md:hidden mb-2" 
+            onClick={() => setOpen(o => !o)}
+            title="Toggle navigation menu"
+            aria-label="Toggle navigation menu"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>

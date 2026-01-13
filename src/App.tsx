@@ -7,6 +7,9 @@ import { I18nextProvider } from 'react-i18next';
 import { HelmetProvider } from 'react-helmet-async';
 import i18n from './i18n';
 import { PrefsProvider } from '@/prefs/PrefsProvider';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { GoalProvider } from '@/contexts/GoalContext';
+import { JournalProvider } from '@/contexts/JournalContext';
 import RouteAnimHook from './components/RouteAnimHook';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
@@ -24,6 +27,9 @@ import MobileBlog from "./pages/MobileBlog";
 import BlogDetail from "./pages/BlogDetail";
 import Contact from "./pages/Contact";
 import MobileMe from "./pages/MobileMe";
+import GoalsPage from "./pages/Goals";
+import JournalPage from "./pages/Journal";
+import InsightsPage from "./pages/Insights";
 import BookSession from "./pages/BookSession";
 import { isChinaBuild } from './lib/region';
 import CommunityPage from "./pages/Community";
@@ -283,6 +289,9 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/me" element={<RequireAuth><MeDashboard /></RequireAuth>} />
+          <Route path="/goals" element={<RequireAuth><GoalsPage /></RequireAuth>} />
+          <Route path="/journal" element={<RequireAuth><JournalPage /></RequireAuth>} />
+          <Route path="/insights" element={<RequireAuth><InsightsPage /></RequireAuth>} />
           <Route path="/community" element={<RequireAuth><CommunityPage /></RequireAuth>} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/about" element={isMobile ? <MePage /> : <About />} />
@@ -320,17 +329,23 @@ const App = () => {
       <HelmetProvider>
         <PrefsProvider>
           <PWAProvider>
-            <I18nextProvider i18n={i18n}>
-              <ErrorBoundary>
-                <BrowserRouter>
-                  <RouteAnimHook />
-                  <AppRoutes />
-                  <Toaster />
-                  <Sonner />
-                </BrowserRouter>
-              </ErrorBoundary>
-              <div id="zg-homeclick-layer" aria-hidden="true" />
-            </I18nextProvider>
+            <AuthProvider>
+              <GoalProvider>
+                <JournalProvider>
+                  <I18nextProvider i18n={i18n}>
+                    <ErrorBoundary>
+                      <BrowserRouter>
+                        <RouteAnimHook />
+                        <AppRoutes />
+                        <Toaster />
+                        <Sonner />
+                      </BrowserRouter>
+                    </ErrorBoundary>
+                    <div id="zg-homeclick-layer" aria-hidden="true" />
+                  </I18nextProvider>
+                </JournalProvider>
+              </GoalProvider>
+            </AuthProvider>
           </PWAProvider>
         </PrefsProvider>
       </HelmetProvider>
