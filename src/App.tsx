@@ -10,6 +10,7 @@ import { PrefsProvider } from '@/prefs/PrefsProvider';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { GoalProvider } from '@/contexts/GoalContext';
 import { JournalProvider } from '@/contexts/JournalContext';
+import { CommunityProvider } from '@/contexts/CommunityContext';
 import RouteAnimHook from './components/RouteAnimHook';
 import { MainLayout } from './layouts/MainLayout';
 import AppShell from './layouts/AppShell';
@@ -332,17 +333,19 @@ const App = () => {
             <AuthProvider>
               <GoalProvider>
                 <JournalProvider>
-                  <I18nextProvider i18n={i18n}>
-                    <ErrorBoundary>
-                      <BrowserRouter>
-                        <RouteAnimHook />
-                        <AppRoutes />
-                        <Toaster />
-                        <Sonner />
-                      </BrowserRouter>
-                    </ErrorBoundary>
-                    <div id="zg-homeclick-layer" aria-hidden="true" />
-                  </I18nextProvider>
+                  <CommunityProvider>
+                    <I18nextProvider i18n={i18n}>
+                      <ErrorBoundary>
+                        <BrowserRouter>
+                          <RouteAnimHook />
+                          <AppRoutes />
+                          <Toaster />
+                          <Sonner />
+                        </BrowserRouter>
+                      </ErrorBoundary>
+                      <div id="zg-homeclick-layer" aria-hidden="true" />
+                    </I18nextProvider>
+                  </CommunityProvider>
                 </JournalProvider>
               </GoalProvider>
             </AuthProvider>

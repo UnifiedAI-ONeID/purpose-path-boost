@@ -1,48 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, MessageCircle, Heart, Share2, ArrowLeft, Plus, 
-  Sparkles, Trophy, Calendar, Clock, UserPlus, CheckCircle
+  Sparkles, Trophy, Calendar, Clock, UserPlus, CheckCircle,
+  Send, X, Loader2, Pin, MoreHorizontal, Edit, Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  useCommunity, 
+  CommunityPost, 
+  CommunityComment, 
+  COMMUNITY_TOPICS, 
+  COMMUNITY_TAGS,
+  formatTimeAgo 
+} from '@/contexts/CommunityContext';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
-// Mock data for community content
-const COMMUNITY_POSTS = [
-  {
-    id: '1',
-    author: { name: 'Sarah Chen', avatar: '', role: 'Growth Champion' },
-    content: 'Just completed my 30-day morning routine challenge! 🌅 The consistency has been transformational for my productivity.',
-    likes: 24,
-    comments: 8,
-    time: '2 hours ago',
-    tags: ['habits', 'morning-routine']
-  },
-  {
-    id: '2',
-    author: { name: 'Michael Wong', avatar: '', role: 'Coach' },
-    content: 'Tip of the day: Start your goal-setting with "Why" before "What". Understanding your motivation is key to sustained progress.',
-    likes: 42,
-    comments: 15,
-    time: '5 hours ago',
-    tags: ['coaching', 'goals']
-  },
-  {
-    id: '3',
-    author: { name: 'Emily Liu', avatar: '', role: 'Member' },
-    content: 'Looking for an accountability partner for my fitness journey. Anyone interested? 💪',
-    likes: 18,
-    comments: 12,
-    time: '1 day ago',
-    tags: ['fitness', 'accountability']
-  }
-];
-
+// Events are still managed separately - could be its own context
 const UPCOMING_EVENTS = [
   {
     id: '1',
@@ -58,6 +60,7 @@ const UPCOMING_EVENTS = [
   }
 ];
 
+// Leaderboard will be computed from user stats
 const LEADERBOARD = [
   { rank: 1, name: 'Sarah Chen', points: 2450, streak: 30 },
   { rank: 2, name: 'Michael Wong', points: 2280, streak: 25 },
@@ -67,7 +70,94 @@ const LEADERBOARD = [
 const CommunityPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { 
+    posts, 
+    loading, 
+    error, 
+    userRole,
+    createPost, 
+    deletePost, 
+    toggleLike, 
+    pinPost,
+    getComments,
+    addComment 
+  } = useCommunity();
+  
   const [activeTab, setActiveTab] = useState('feed');
+  const [showNewPostDialog, setShowNewPostDialog] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostTopic, setNewPostTopic] = useState('general');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [postComments, setPostComments] = useState<Record<string, CommunityComment[]>>({});
+  const [loadingComments, setLoadingComments] = useState<string | null>(null);
+
+  // Handle create post
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim()) {
+      toast.error('Please enter some content');
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      await createPost(newPostContent, newPostTopic, selectedTags);
+      setNewPostContent('');
+      setNewPostTopic('general');
+      setSelectedTags([]);
+      setShowNewPostDialog(false);
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Toggle tag selection
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
+  // Load comments for a post
+  const handleExpandComments = async (postId: string) => {
+    if (expandedComments === postId) {
+      setExpandedComments(null);
+      return;
+    }
+    
+    setExpandedComments(postId);
+    setLoadingComments(postId);
+    
+    try {
+      const comments = await getComments(postId);
+      setPostComments(prev => ({ ...prev, [postId]: comments }));
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    } finally {
+      setLoadingComments(null);
+    }
+  };
+
+  // Submit a comment
+  const handleAddComment = async (postId: string) => {
+    if (!commentText.trim()) return;
+    
+    try {
+      await addComment(postId, commentText);
+      setCommentText('');
+      // Refresh comments
+      const comments = await getComments(postId);
+      setPostComments(prev => ({ ...prev, [postId]: comments }));
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-jade-900 via-jade-800 to-jade-700">
@@ -91,7 +181,10 @@ const CommunityPage = () => {
               <p className="text-sm text-white/60">Connect • Inspire • Grow</p>
             </div>
           </div>
-          <Button className="bg-gold-500 hover:bg-gold-600 text-jade-900 font-semibold">
+          <Button 
+            className="bg-gold-500 hover:bg-gold-600 text-jade-900 font-semibold"
+            onClick={() => setShowNewPostDialog(true)}
+          >
             <Plus className="h-4 w-4 mr-1" /> Post
           </Button>
         </div>
@@ -157,58 +250,210 @@ const CommunityPage = () => {
 
           {/* Feed Tab */}
           <TabsContent value="feed" className="mt-4 space-y-4">
-            {COMMUNITY_POSTS.map((post) => (
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gold-400" />
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <Card className="bg-rose-100 border-rose-200">
+                <CardContent className="py-4 text-center text-rose-700">
+                  {error}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && posts.length === 0 && (
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardContent className="py-8 text-center">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-3 text-white/40" />
+                  <p className="text-white/80">No posts yet. Be the first to share!</p>
+                  <Button 
+                    className="mt-4 bg-gold-500 hover:bg-gold-600 text-jade-900"
+                    onClick={() => setShowNewPostDialog(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Create Post
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Posts List */}
+            {!loading && posts.map((post) => (
               <Card key={post.id} className="bg-white border-none shadow-lg">
                 <CardContent className="p-5">
                   {/* Author */}
                   <div className="flex items-center gap-3 mb-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={post.author.avatar} />
+                      <AvatarImage src={post.authorAvatar} />
                       <AvatarFallback className="bg-jade-100 text-jade-700">
-                        {post.author.name[0]}
+                        {post.authorName[0]}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-800">{post.author.name}</span>
-                        {post.author.role === 'Coach' && (
+                        <span className="font-semibold text-gray-800">{post.authorName}</span>
+                        {post.authorRole === 'coach' && (
                           <Badge className="bg-gold-100 text-gold-700 text-xs">Coach</Badge>
                         )}
-                        {post.author.role === 'Growth Champion' && (
-                          <Badge className="bg-emerald-100 text-emerald-700 text-xs">Champion</Badge>
+                        {post.authorRole === 'admin' && (
+                          <Badge className="bg-jade-100 text-jade-700 text-xs">Admin</Badge>
+                        )}
+                        {post.isPinned && (
+                          <Pin className="h-4 w-4 text-gold-500" />
                         )}
                       </div>
-                      <span className="text-xs text-gray-500">{post.time}</span>
+                      <span className="text-xs text-gray-500">{formatTimeAgo(post.createdAt)}</span>
                     </div>
+                    
+                    {/* Post Actions Menu */}
+                    {(user?.uid === post.authorId || userRole === 'admin' || userRole === 'coach') && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {(userRole === 'admin' || userRole === 'coach') && (
+                            <DropdownMenuItem onClick={() => pinPost(post.id, !post.isPinned)}>
+                              <Pin className="h-4 w-4 mr-2" />
+                              {post.isPinned ? 'Unpin' : 'Pin'}
+                            </DropdownMenuItem>
+                          )}
+                          {user?.uid === post.authorId && (
+                            <DropdownMenuItem 
+                              onClick={() => deletePost(post.id)}
+                              className="text-rose-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
+                  
+                  {/* Topic Badge */}
+                  {post.topic && (
+                    <Badge className="mb-2 bg-jade-100 text-jade-700">
+                      {COMMUNITY_TOPICS.find(t => t.value === post.topic)?.emoji}{' '}
+                      {COMMUNITY_TOPICS.find(t => t.value === post.topic)?.label || post.topic}
+                    </Badge>
+                  )}
                   
                   {/* Content */}
-                  <p className="text-gray-700 mb-3">{post.content}</p>
+                  <p className="text-gray-700 mb-3 whitespace-pre-wrap">{post.content}</p>
                   
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {post.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs text-jade-600 border-jade-200">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  {post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {post.tags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-xs text-jade-600 border-jade-200">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   
                   {/* Actions */}
                   <div className="flex items-center gap-4 pt-3 border-t">
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-rose-500 transition-colors">
-                      <Heart className="h-4 w-4" />
-                      <span className="text-sm">{post.likes}</span>
+                    <button 
+                      onClick={() => toggleLike(post.id)}
+                      className={cn(
+                        "flex items-center gap-1 transition-colors",
+                        post.hasLiked 
+                          ? "text-rose-500" 
+                          : "text-gray-500 hover:text-rose-500"
+                      )}
+                    >
+                      <Heart className={cn("h-4 w-4", post.hasLiked && "fill-current")} />
+                      <span className="text-sm">{post.likesCount}</span>
                     </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-jade-600 transition-colors">
+                    <button 
+                      onClick={() => handleExpandComments(post.id)}
+                      className="flex items-center gap-1 text-gray-500 hover:text-jade-600 transition-colors"
+                    >
                       <MessageCircle className="h-4 w-4" />
-                      <span className="text-sm">{post.comments}</span>
+                      <span className="text-sm">{post.commentsCount}</span>
                     </button>
-                    <button className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors">
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href + '?post=' + post.id);
+                        toast.success('Link copied!');
+                      }}
+                      className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors"
+                    >
                       <Share2 className="h-4 w-4" />
                       <span className="text-sm">Share</span>
                     </button>
                   </div>
+
+                  {/* Comments Section */}
+                  {expandedComments === post.id && (
+                    <div className="mt-4 pt-4 border-t space-y-3">
+                      {/* Loading Comments */}
+                      {loadingComments === post.id && (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-jade-600" />
+                        </div>
+                      )}
+
+                      {/* Comments List */}
+                      {postComments[post.id]?.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={comment.authorAvatar} />
+                            <AvatarFallback className="bg-jade-100 text-jade-700 text-xs">
+                              {comment.authorName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm text-gray-800">
+                                {comment.authorName}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {formatTimeAgo(comment.createdAt)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add Comment */}
+                      {user && (
+                        <div className="flex gap-2 mt-3">
+                          <Input
+                            placeholder="Add a comment..."
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleAddComment(post.id);
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button 
+                            size="icon"
+                            onClick={() => handleAddComment(post.id)}
+                            disabled={!commentText.trim()}
+                            className="bg-jade-600 hover:bg-jade-700"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -297,6 +542,99 @@ const CommunityPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* New Post Dialog */}
+        <Dialog open={showNewPostDialog} onOpenChange={setShowNewPostDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-jade-800">
+                <Plus className="h-5 w-5" />
+                Create New Post
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Topic Select */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Topic</label>
+                <Select value={newPostTopic} onValueChange={setNewPostTopic}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a topic" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMMUNITY_TOPICS.map((topic) => (
+                      <SelectItem key={topic.value} value={topic.value}>
+                        {topic.emoji} {topic.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Content</label>
+                <Textarea
+                  placeholder="Share your thoughts, wins, or questions..."
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Tags (optional)</label>
+                <div className="flex flex-wrap gap-2">
+                  {COMMUNITY_TAGS.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer transition-colors",
+                        selectedTags.includes(tag)
+                          ? "bg-jade-600 text-white hover:bg-jade-700"
+                          : "text-jade-600 border-jade-300 hover:bg-jade-50"
+                      )}
+                      onClick={() => toggleTag(tag)}
+                    >
+                      #{tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowNewPostDialog(false)}
+                  disabled={submitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-jade-600 hover:bg-jade-700 text-white"
+                  onClick={handleCreatePost}
+                  disabled={submitting || !newPostContent.trim()}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Posting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Post
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
