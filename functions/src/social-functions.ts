@@ -6,6 +6,7 @@
 
 import * as functions from 'firebase-functions';
 import { db } from './firebase-init';
+import { publishToPlatform, testPlatformConnection as testConnection, PlatformConfig } from './social-api-integrations';
 
 // Helper to verify admin role
 async function verifyAdmin(context: functions.https.CallableContext): Promise<void> {
@@ -282,8 +283,8 @@ export const adminCrosspostPublish = functions.https.onCall(async (data, context
 
     const queueData = queueDoc.data()!;
     
-    // Attempt to publish
-    const result = await publishToPlatform(queueData.platform, queueData.text, queueData.media);
+    // Attempt to publish using real API integration
+    const result = await publishToPlatformWrapper(queueData.platform, queueData.text, queueData.media);
 
     // Update queue status
     await queueDoc.ref.update({
@@ -333,12 +334,14 @@ function generatePostSuggestions(
 }
 
 async function testPlatformConnection(platform: string, config: any) {
-  // Placeholder for actual API testing
-  return {
-    success: true,
-    message: `Successfully connected to ${platform}`,
-    details: { accountName: config?.accountName || 'Unknown' }
+  const platformConfig: PlatformConfig = {
+    accessToken: config?.accessToken || config?.access_token,
+    pageId: config?.pageId || config?.page_id,
+    accountId: config?.accountId || config?.account_id,
+    bearerToken: config?.bearerToken || config?.bearer_token
   };
+  
+  return testConnection(platform, platformConfig);
 }
 
 function generatePlatformVariant(content: any, platform: string): string {
@@ -367,16 +370,51 @@ function generateHashtags(content: any, platform: string): string[] {
   return tags.slice(0, 5);
 }
 
-async function publishToPlatform(platform: string, text: string, media: unknown[]): Promise<{
+async function publishToPlatformWrapper(platform: string, text: string, media: unknown[]): Promise<{
   success: boolean;
   message: string;
   postId: string;
   error?: string;
 }> {
-  // Placeholder for actual publishing logic
-  return {
-    success: true,
-    message: `Published to ${platform}`,
-    postId: `${platform}_${Date.now()}`
-  };
+  try {
+    // Get platform config from database
+    const configDoc = await db.collection('social_config').doc(platform).get();
+    
+    if (!configDoc.exists) {
+      return {
+        success: false,
+        message: `${platform} not configured`,
+        postId: '',
+        error: 'PLATFORM_NOT_CONFIGURED'
+      };
+    }
+
+    const configData = configDoc.data();
+    const platformConfig: PlatformConfig = {
+      accessToken: configData?.accessToken || configData?.access_token,
+      pageId: configData?.pageId || configData?.page_id,
+      accountId: configData?.accountId || configData?.account_id,
+      bearerToken: configData?.bearerToken || configData?.bearer_token
+    };
+
+    // Convert media to string array
+    const mediaUrls = (media as string[]).filter((m): m is string => typeof m === 'string');
+
+    // Call real API integration
+    const result = await publishToPlatform(platform, text, mediaUrls, platformConfig);
+
+    return {
+      success: result.success,
+      message: result.message,
+      postId: result.postId || `${platform}_${Date.now()}`,
+      error: result.error
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to publish to ${platform}`,
+      postId: '',
+      error: String(error)
+    };
+  }
 }

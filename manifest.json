@@ -1,5 +1,5 @@
 {
-  "name": "ZhenGrowth",
+  "name": "ZhenGrowth - Career Coaching & Personal Development",
   "short_name": "ZhenGrowth",
   "description": "Transform your career and life with personalized coaching. Expert guidance for professionals seeking clarity, confidence, and sustainable growth.",
   "start_url": "/",
@@ -46,40 +46,118 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/app-icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/app-icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "categories": ["lifestyle", "education", "productivity"],
+  "categories": ["lifestyle", "education", "productivity", "business", "health"],
   "screenshots": [
     {
-      "src": "/app-icon-512.png",
-      "sizes": "512x512",
+      "src": "/screenshots/home-desktop.png",
+      "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "ZhenGrowth Home"
+      "label": "ZhenGrowth Home - Desktop View"
+    },
+    {
+      "src": "/screenshots/coaching-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Coaching Programs - Mobile View"
     }
   ],
   "shortcuts": [
     {
       "name": "Coaching",
       "short_name": "Coaching",
-      "description": "Access coaching resources",
+      "description": "Browse coaching programs and book sessions",
       "url": "/coaching",
-      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Lessons",
       "short_name": "Lessons",
-      "description": "View your lessons",
+      "description": "Access your learning materials and video lessons",
       "url": "/lessons",
-      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Book Session",
       "short_name": "Book",
-      "description": "Book a coaching session",
+      "description": "Schedule your next coaching session",
       "url": "/booking",
-      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your progress and analytics",
+      "url": "/dashboard",
+      "icons": [{ "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+zhengrowth",
+      "url": "/?action=%s"
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "file_handlers": [
+    {
+      "action": "/open-pdf",
+      "accept": {
+        "application/pdf": [".pdf"]
+      }
+    }
+  ]
 }

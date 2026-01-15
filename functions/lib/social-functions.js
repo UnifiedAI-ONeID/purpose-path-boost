@@ -8,6 +8,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminCrosspostPublish = exports.adminCrosspostQueue = exports.adminCrosspostVariants = exports.testSocialConnection = exports.manageSocialConfig = exports.postSuggestions = exports.socialWorker = void 0;
 const functions = require("firebase-functions");
 const firebase_init_1 = require("./firebase-init");
+const social_api_integrations_1 = require("./social-api-integrations");
 // Helper to verify admin role
 async function verifyAdmin(context) {
     if (!context.auth) {
@@ -237,8 +238,8 @@ exports.adminCrosspostPublish = functions.https.onCall(async (data, context) => 
             throw new functions.https.HttpsError('not-found', 'Queued post not found');
         }
         const queueData = queueDoc.data();
-        // Attempt to publish
-        const result = await publishToPlatform(queueData.platform, queueData.text, queueData.media);
+        // Attempt to publish using real API integration
+        const result = await publishToPlatformWrapper(queueData.platform, queueData.text, queueData.media);
         // Update queue status
         await queueDoc.ref.update({
             status: result.success ? 'published' : 'failed',
@@ -278,12 +279,13 @@ function generatePostSuggestions(topic, platform, tone, contentType) {
     ];
 }
 async function testPlatformConnection(platform, config) {
-    // Placeholder for actual API testing
-    return {
-        success: true,
-        message: `Successfully connected to ${platform}`,
-        details: { accountName: (config === null || config === void 0 ? void 0 : config.accountName) || 'Unknown' }
+    const platformConfig = {
+        accessToken: (config === null || config === void 0 ? void 0 : config.accessToken) || (config === null || config === void 0 ? void 0 : config.access_token),
+        pageId: (config === null || config === void 0 ? void 0 : config.pageId) || (config === null || config === void 0 ? void 0 : config.page_id),
+        accountId: (config === null || config === void 0 ? void 0 : config.accountId) || (config === null || config === void 0 ? void 0 : config.account_id),
+        bearerToken: (config === null || config === void 0 ? void 0 : config.bearerToken) || (config === null || config === void 0 ? void 0 : config.bearer_token)
     };
+    return (0, social_api_integrations_1.testPlatformConnection)(platform, platformConfig);
 }
 function generatePlatformVariant(content, platform) {
     var _a;
@@ -308,12 +310,43 @@ function generateHashtags(content, platform) {
     }
     return tags.slice(0, 5);
 }
-async function publishToPlatform(platform, text, media) {
-    // Placeholder for actual publishing logic
-    return {
-        success: true,
-        message: `Published to ${platform}`,
-        postId: `${platform}_${Date.now()}`
-    };
+async function publishToPlatformWrapper(platform, text, media) {
+    try {
+        // Get platform config from database
+        const configDoc = await firebase_init_1.db.collection('social_config').doc(platform).get();
+        if (!configDoc.exists) {
+            return {
+                success: false,
+                message: `${platform} not configured`,
+                postId: '',
+                error: 'PLATFORM_NOT_CONFIGURED'
+            };
+        }
+        const configData = configDoc.data();
+        const platformConfig = {
+            accessToken: (configData === null || configData === void 0 ? void 0 : configData.accessToken) || (configData === null || configData === void 0 ? void 0 : configData.access_token),
+            pageId: (configData === null || configData === void 0 ? void 0 : configData.pageId) || (configData === null || configData === void 0 ? void 0 : configData.page_id),
+            accountId: (configData === null || configData === void 0 ? void 0 : configData.accountId) || (configData === null || configData === void 0 ? void 0 : configData.account_id),
+            bearerToken: (configData === null || configData === void 0 ? void 0 : configData.bearerToken) || (configData === null || configData === void 0 ? void 0 : configData.bearer_token)
+        };
+        // Convert media to string array
+        const mediaUrls = media.filter((m) => typeof m === 'string');
+        // Call real API integration
+        const result = await (0, social_api_integrations_1.publishToPlatform)(platform, text, mediaUrls, platformConfig);
+        return {
+            success: result.success,
+            message: result.message,
+            postId: result.postId || `${platform}_${Date.now()}`,
+            error: result.error
+        };
+    }
+    catch (error) {
+        return {
+            success: false,
+            message: `Failed to publish to ${platform}`,
+            postId: '',
+            error: String(error)
+        };
+    }
 }
 //# sourceMappingURL=social-functions.js.map
