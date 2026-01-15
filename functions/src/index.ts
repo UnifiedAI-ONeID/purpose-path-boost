@@ -172,10 +172,8 @@ exports.api = {
     mark: { watch: apiPaywallMarkWatch },
   },
   telemetry: {
-    log: {
-      single: apiTelemetryLog,
-      batch: apiTelemetryLogBatch,
-    },
+    log: apiTelemetryLog,
+    logBatch: apiTelemetryLogBatch,
   },
 };
 
@@ -251,3 +249,109 @@ exports.og = {
 
 // Simple top-level exports for functions without hyphens
 exports.getPublicConfig = getConfig;
+
+// ============================================================================
+// DUAL EXPORTS: Add hyphenated bracket notation for 1st Gen Cloud Functions
+// These exports allow 1st Gen runtime to find functions using their original
+// hyphenated names while maintaining nested structure for 2nd Gen functions
+// ============================================================================
+
+// Admin crosspost functions
+exports['admin-crosspost-list'] = adminCrosspostList;
+exports['admin-crosspost-variants'] = adminCrosspostVariants;
+exports['admin-crosspost-queue'] = adminCrosspostQueue;
+exports['admin-crosspost-publish'] = adminCrosspostPublish;
+
+// Admin check and version functions
+exports['admin-check-role'] = adminCheckRole;
+exports['admin-get-version'] = adminGetVersion;
+exports['admin-bump-version'] = apiAdminBumpVersion;
+
+// Admin CRM and referrals
+exports['admin-crm'] = adminCrm;
+exports['admin-referrals-overview'] = adminReferralsOverview;
+exports['admin-referrals-settings'] = adminReferralsSettings;
+exports['admin-referrals-create'] = adminReferralsCreate;
+
+// API admin functions
+exports['api-admin-bump-version'] = apiAdminBumpVersion;
+exports['api-admin-seo-alert'] = apiAdminSeoAlert;
+exports['api-admin-seo-resolve'] = apiAdminSeoResolve;
+exports['api-admin-blog-list'] = apiAdminBlogList;
+exports['api-admin-blog-delete'] = apiAdminBlogDelete;
+exports['api-admin-cache-bust'] = apiAdminCacheBust;
+exports['api-admin-sitemap-rebuild'] = apiAdminSitemapRebuild;
+exports['api-admin-fx-rates'] = apiAdminFxRates;
+exports['api-admin-fx-update'] = apiAdminFxUpdate;
+exports['api-admin-calendar-feed'] = apiAdminCalendarFeed;
+exports['api-admin-metrics-summary'] = apiAdminMetricsSummary;
+exports['api-admin-crm'] = adminCrm;
+
+// API admin leads functions (2nd Gen, but add for consistency)
+exports['api-admin-leads-list'] = list;
+exports['api-admin-leads-update'] = update;
+exports['api-admin-leads-export'] = exportCsv;
+
+// API admin calendar functions (2nd Gen, but add for consistency)
+exports['api-admin-calendar-bookings'] = getCalendarBookings;
+exports['api-admin-calendar-sync'] = syncCalendarBookings;
+exports['api-admin-calendar-delete'] = deleteCalendarBooking;
+
+// Config and secrets
+exports['api-public-config'] = getConfig;
+exports['api-manage-secrets'] = secrets;
+
+// Lessons functions
+exports['api-lessons-get'] = apiLessonsGet;
+exports['api-lessons-continue'] = apiLessonsContinue;
+exports['api-lessons-progress'] = apiLessonsProgress;
+exports['api-lessons-event'] = apiLessonsEvent;
+
+// Paywall functions (2nd Gen, but add for consistency)
+exports['api-paywall-can-watch'] = apiPaywallCanWatch;
+exports['api-paywall-mark-watch'] = apiPaywallMarkWatch;
+
+// Telemetry functions (2nd Gen, but add for consistency)
+exports['api-telemetry-log'] = apiTelemetryLog;
+exports['api-telemetry-log-batch'] = apiTelemetryLogBatch;
+
+// PWA functions
+exports['pwa-boot'] = pwaBoot;
+exports['pwa-quiz-answer'] = pwaQuizAnswer;
+exports['pwa-ai-suggest'] = pwaAiSuggest;
+exports['pwa-coaching-recommend'] = pwaCoachingRecommend;
+exports['pwa-me-summary'] = pwaMeSummary;
+exports['pwa-me-goals'] = pwaMeGoals;
+
+// Dashboard functions
+exports['dashboard-admin-metrics'] = dashboardAdminMetrics;
+exports['dashboard-user-summary'] = dashboardUserSummary;
+exports['dashboard-user-analytics'] = dashboardUserAnalytics;
+
+// Social media functions
+exports['social-worker'] = socialWorker;
+exports['post-suggestions'] = postSuggestions;
+exports['manage-social-config'] = manageSocialConfig;
+exports['test-social-connection'] = testSocialConnection;
+
+// Funnel/email functions
+exports['funnel-send-email'] = funnelSendEmail;
+exports['funnel-process-queue'] = funnelProcessQueue;
+exports['funnel-campaign-create'] = funnelCampaignCreate;
+exports['funnel-campaign-list'] = funnelCampaignList;
+exports['funnel-subscribe'] = funnelSubscribe;
+exports['funnel-unsubscribe'] = funnelUnsubscribe;
+
+// Content and SEO functions
+exports['content-leaderboard'] = contentLeaderboard;
+exports['seo-watch'] = seoWatch;
+
+// Capture functions
+exports['capture-quiz-lead'] = captureQuizLead;
+
+// AI functions
+exports['ai-suggest-topics'] = aiSuggestTopics;
+
+// OG image functions
+exports['og-render-all'] = ogRenderAll;
+exports['og-render-single'] = ogRenderSingle;
