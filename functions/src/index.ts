@@ -1,9 +1,15 @@
+/**
+ * Firebase Functions Index
+ * 
+ * Exports functions using nested object structure to match Firebase's dot-notation entryPoints
+ */
+
 import { list, update, exportCsv } from './api';
 import { adminCrm } from './admin-crm';
 import { adminCrosspostList } from './admin-crosspost-list';
 import { getCalendarBookings, syncCalendarBookings, deleteCalendarBooking } from './admin-calendar';
-import { getPublicConfig } from './config';
-import { manageSecrets } from './internals/secrets';
+import { getPublicConfig as getConfig } from './config';
+import { manageSecrets as secrets } from './internals/secrets';
 
 // Dashboard user functions
 import {
@@ -92,105 +98,156 @@ import {
   funnelUnsubscribe,
 } from './funnel-functions';
 
-// Firebase callable functions use the export name as the callable name.
-// Since JS doesn't allow hyphens in variable names, we use bracket notation.
+/**
+ * Export functions using nested object structure for Firebase's dot-notation entryPoints
+ * Use exports.xxx format (CommonJS) instead of export const (ES6)
+ */
 
-// Admin crosspost functions (called as 'admin-crosspost-list')
-exports['admin-crosspost-list'] = adminCrosspostList;
+// Create nested export structure
+exports.admin = {
+  crosspost: {
+    list: adminCrosspostList,
+    variants: adminCrosspostVariants,
+    queue: adminCrosspostQueue,
+    publish: adminCrosspostPublish,
+  },
+  check: {
+    role: adminCheckRole,
+  },
+  get: {
+    version: adminGetVersion,
+  },
+  bump: {
+    version: apiAdminBumpVersion,
+  },
+  crm: adminCrm,
+  referrals: {
+    overview: adminReferralsOverview,
+    settings: adminReferralsSettings,
+    create: adminReferralsCreate,
+  },
+};
 
-// Admin system functions
-exports['api-admin-bump-version'] = apiAdminBumpVersion;
-exports['api-admin-seo-alert'] = apiAdminSeoAlert;
-exports['api-admin-seo-resolve'] = apiAdminSeoResolve;
-exports['api-admin-blog-list'] = apiAdminBlogList;
-exports['api-admin-blog-delete'] = apiAdminBlogDelete;
-exports['api-admin-cache-bust'] = apiAdminCacheBust;
-exports['api-admin-sitemap-rebuild'] = apiAdminSitemapRebuild;
-exports['api-admin-fx-rates'] = apiAdminFxRates;
-exports['api-admin-fx-update'] = apiAdminFxUpdate;
-exports['api-admin-calendar-feed'] = apiAdminCalendarFeed;
-exports['api-admin-metrics-summary'] = apiAdminMetricsSummary;
+exports.api = {
+  admin: {
+    bump: { version: apiAdminBumpVersion },
+    seo: {
+      alert: apiAdminSeoAlert,
+      resolve: apiAdminSeoResolve,
+    },
+    blog: {
+      list: apiAdminBlogList,
+      delete: apiAdminBlogDelete,
+    },
+    cache: { bust: apiAdminCacheBust },
+    sitemap: { rebuild: apiAdminSitemapRebuild },
+    fx: {
+      rates: apiAdminFxRates,
+      update: apiAdminFxUpdate,
+    },
+    calendar: {
+      feed: apiAdminCalendarFeed,
+      bookings: getCalendarBookings,
+      sync: syncCalendarBookings,
+      delete: deleteCalendarBooking,
+    },
+    metrics: { summary: apiAdminMetricsSummary },
+    crm: adminCrm,
+    leads: {
+      list,
+      update,
+      export: exportCsv,
+    },
+  },
+  public: { config: getConfig },
+  manage: { secrets },
+  lessons: {
+    get: apiLessonsGet,
+    continue: apiLessonsContinue,
+    progress: apiLessonsProgress,
+    event: apiLessonsEvent,
+  },
+  paywall: {
+    can: { watch: apiPaywallCanWatch },
+    mark: { watch: apiPaywallMarkWatch },
+  },
+  telemetry: {
+    log: {
+      single: apiTelemetryLog,
+      batch: apiTelemetryLogBatch,
+    },
+  },
+};
 
-// Admin CRM/leads functions
-exports['api-admin-crm'] = adminCrm;
-exports['api-admin-leads-list'] = list;
-exports['api-admin-leads-update'] = update;
-exports['api-admin-leads-export'] = exportCsv;
+exports.pwa = {
+  boot: pwaBoot,
+  quiz: { answer: pwaQuizAnswer },
+  ai: { suggest: pwaAiSuggest },
+  coaching: { recommend: pwaCoachingRecommend },
+  me: {
+    summary: pwaMeSummary,
+    goals: pwaMeGoals,
+  },
+};
 
-// Admin calendar functions
-exports['api-admin-calendar-bookings'] = getCalendarBookings;
-exports['api-admin-calendar-sync'] = syncCalendarBookings;
-exports['api-admin-calendar-delete'] = deleteCalendarBooking;
+exports.dashboard = {
+  admin: { metrics: dashboardAdminMetrics },
+  user: {
+    summary: dashboardUserSummary,
+    analytics: dashboardUserAnalytics,
+  },
+};
 
-// System/config functions
-exports['api-public-config'] = getPublicConfig;
-exports['api-manage-secrets'] = manageSecrets;
+exports.social = {
+  worker: socialWorker,
+};
 
-// Lessons functions
-exports['api-lessons-get'] = apiLessonsGet;
-exports['api-lessons-continue'] = apiLessonsContinue;
-exports['api-lessons-progress'] = apiLessonsProgress;
-exports['api-lessons-event'] = apiLessonsEvent;
+exports.post = {
+  suggestions: postSuggestions,
+};
 
-// Paywall functions
-exports['api-paywall-can-watch'] = apiPaywallCanWatch;
-exports['api-paywall-mark-watch'] = apiPaywallMarkWatch;
+exports.manage = {
+  social: { config: manageSocialConfig },
+  secrets,
+};
 
-// Telemetry
-exports['api-telemetry-log'] = apiTelemetryLog;
-exports['api-telemetry-log-batch'] = apiTelemetryLogBatch;
+exports.test = {
+  social: { connection: testSocialConnection },
+};
 
-// PWA functions
-exports['pwa-boot'] = pwaBoot;
-exports['pwa-quiz-answer'] = pwaQuizAnswer;
-exports['pwa-ai-suggest'] = pwaAiSuggest;
-exports['pwa-coaching-recommend'] = pwaCoachingRecommend;
-exports['pwa-me-summary'] = pwaMeSummary;
-exports['pwa-me-goals'] = pwaMeGoals;
+exports.funnel = {
+  send: { email: funnelSendEmail },
+  process: { queue: funnelProcessQueue },
+  campaign: {
+    create: funnelCampaignCreate,
+    list: funnelCampaignList,
+  },
+  subscribe: funnelSubscribe,
+  unsubscribe: funnelUnsubscribe,
+};
 
-// Admin dashboard & auth functions
-exports['admin-check-role'] = adminCheckRole;
-exports['admin-get-version'] = adminGetVersion;
-exports['admin-bump-version'] = apiAdminBumpVersion; // Also export with old name for compatibility
-exports['dashboard-admin-metrics'] = dashboardAdminMetrics;
-exports['admin-crm'] = adminCrm; // Also export with old name for compatibility
-exports['content-leaderboard'] = contentLeaderboard;
-exports['seo-watch'] = seoWatch;
-exports['capture-quiz-lead'] = captureQuizLead;
+exports.content = {
+  leaderboard: contentLeaderboard,
+};
 
-// Admin referrals
-exports['admin-referrals-overview'] = adminReferralsOverview;
-exports['admin-referrals-settings'] = adminReferralsSettings;
-exports['admin-referrals-create'] = adminReferralsCreate;
+exports.seo = {
+  watch: seoWatch,
+};
 
-// Social media functions
-exports['social-worker'] = socialWorker;
-exports['post-suggestions'] = postSuggestions;
-exports['manage-social-config'] = manageSocialConfig;
-exports['test-social-connection'] = testSocialConnection;
-exports['admin-crosspost-variants'] = adminCrosspostVariants;
-exports['admin-crosspost-queue'] = adminCrosspostQueue;
-exports['admin-crosspost-publish'] = adminCrosspostPublish;
+exports.capture = {
+  quiz: { lead: captureQuizLead },
+};
 
-// Funnel/email functions
-exports['funnel-send-email'] = funnelSendEmail;
-exports['funnel-process-queue'] = funnelProcessQueue;
-exports['funnel-campaign-create'] = funnelCampaignCreate;
-exports['funnel-campaign-list'] = funnelCampaignList;
-exports['funnel-subscribe'] = funnelSubscribe;
-exports['funnel-unsubscribe'] = funnelUnsubscribe;
+exports.ai = {
+  suggest: { topics: aiSuggestTopics },
+};
 
-// Dashboard user functions
-exports['dashboard-user-summary'] = dashboardUserSummary;
-exports['dashboard-user-analytics'] = dashboardUserAnalytics;
+exports.og = {
+  render: {
+    all: ogRenderAll,
+    single: ogRenderSingle,
+  },
+};
 
-// AI content functions
-exports['ai-suggest-topics'] = aiSuggestTopics;
-
-// OG image functions
-exports['og-render-all'] = ogRenderAll;
-exports['og-render-single'] = ogRenderSingle;
-
-// Config functions with old names for compatibility
-exports['getPublicConfig'] = getPublicConfig;
-exports['manage-secrets'] = manageSecrets;
+// Simple top-level exports for functions without hyphens
+exports.getPublicConfig = getConfig;
